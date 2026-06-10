@@ -1,6 +1,5 @@
 package br.com.porteirointeligente.ui.home
 
-import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,27 +21,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.R
 import br.com.porteirointeligente.domain.model.Owner
-import br.com.porteirointeligente.domain.model.Visit
-import br.com.porteirointeligente.ui.owner.OwnerDetailsActivity
-import br.com.porteirointeligente.ui.owner.OwnerRegistrationActivity
-import br.com.porteirointeligente.ui.scanner.ScannerActivity
-import br.com.porteirointeligente.ui.visit.VisitRegistrationActivity
+import br.com.porteirointeligente.ui.components.VisitItem
 import coil.compose.AsyncImage
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun HomeScreen(
     onNavigateToScanner: () -> Unit,
     onNavigateToVisitRegistration: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val condominio by viewModel.condominio.collectAsState()
     val apartamento by viewModel.apartamento.collectAsState()
     val visitas by viewModel.visitasRecentes.collectAsState()
@@ -79,13 +73,7 @@ fun HomeScreen(
                 ActionButtons(
                     hasMorador = morador != null,
                     onScannerClick = onNavigateToScanner,
-                    onProfileClick = {
-                        if (morador != null) {
-                            context.startActivity(Intent(context, OwnerDetailsActivity::class.java))
-                        } else {
-                            context.startActivity(Intent(context, OwnerRegistrationActivity::class.java))
-                        }
-                    }
+                    onProfileClick = onNavigateToProfile
                 )
             }
 
@@ -114,7 +102,7 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Criado por: Gledson Crist\nBy Família Venâncio",
+                    text = stringResource(R.string.credits_created_by),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.fillMaxWidth(),
@@ -285,69 +273,3 @@ fun ActionButtons(
     }
 }
 
-@Composable
-fun VisitItem(visit: Visit) {
-    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val dateSdf = SimpleDateFormat("dd MMM", Locale.getDefault())
-    
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        MaterialTheme.colorScheme.secondaryContainer,
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = visit.nome.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = visit.nome,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = visit.motivo,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = sdf.format(Date(visit.dataEntrada)),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = dateSdf.format(Date(visit.dataEntrada)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-        }
-    }
-}

@@ -83,4 +83,6 @@
     <string name="visits_history_exit_success">Saída registrada!</string>
 
     <string name="nav_settings">Ajustes</string>
+
+    <string name="credits_created_by">Criado por: Gledson Crist\nBy Família Venâncio</string>
 </resources>
