@@ -32,6 +32,9 @@ class SettingsViewModel @Inject constructor(
     private val _owner = MutableStateFlow<Owner?>(null)
     val owner: StateFlow<Owner?> = _owner
 
+    private val _backupState = MutableStateFlow<BackupState>(BackupState.Idle)
+    val backupState: StateFlow<BackupState> = _backupState
+
     init {
         loadOwner()
     }
@@ -52,8 +55,18 @@ class SettingsViewModel @Inject constructor(
 
     fun performBackup() {
         viewModelScope.launch {
-            backupManager.generateBackupAndShare()
+            _backupState.value = BackupState.Loading
+            try {
+                backupManager.generateBackupAndShare()
+                _backupState.value = BackupState.Success
+            } catch (e: Exception) {
+                _backupState.value = BackupState.Error(e.message ?: "Erro ao gerar backup")
+            }
         }
+    }
+
+    fun resetBackupState() {
+        _backupState.value = BackupState.Idle
     }
 
     fun updateOfflineStatus(
@@ -66,11 +79,11 @@ class SettingsViewModel @Inject constructor(
         val until = if (durationMillis != null) {
             System.currentTimeMillis() + durationMillis
         } else {
-            null // Para sempre
+            null
         }
 
         viewModelScope.launch {
-            ownerRepository.insertOwner(
+            ownerRepository.updateOwner(
                 currentOwner.copy(
                     isOffline = isOffline,
                     offlineMessage = message,
@@ -78,5 +91,12 @@ class SettingsViewModel @Inject constructor(
                 )
             )
         }
+    }
+
+    sealed class BackupState {
+        object Idle : BackupState()
+        object Loading : BackupState()
+        object Success : BackupState()
+        data class Error(val message: String) : BackupState()
     }
 }

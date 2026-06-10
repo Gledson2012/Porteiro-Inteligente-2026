@@ -20,6 +20,13 @@ class ScannerViewModel @Inject constructor(
     val uiEvent: SharedFlow<ScannerUiEvent> = _uiEvent
 
     fun onQrCodeDetected(content: String) {
+        if (!content.startsWith("https://wa.me/")) {
+            viewModelScope.launch {
+                _uiEvent.emit(ScannerUiEvent.InvalidQrCode)
+            }
+            return
+        }
+
         viewModelScope.launch {
             val owner = ownerRepository.observeAllOwners().first().firstOrNull()
             if (owner != null && owner.isCurrentlyOffline()) {
@@ -33,5 +40,6 @@ class ScannerViewModel @Inject constructor(
     sealed class ScannerUiEvent {
         data class OpenWhatsApp(val url: String) : ScannerUiEvent()
         data class ShowOfflineMessage(val message: String, val url: String) : ScannerUiEvent()
+        object InvalidQrCode : ScannerUiEvent()
     }
 }

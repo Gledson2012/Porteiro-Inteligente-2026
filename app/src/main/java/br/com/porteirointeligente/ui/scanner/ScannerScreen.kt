@@ -6,6 +6,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -14,6 +15,8 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,6 +43,8 @@ fun ScannerScreen(
     
     var hasCameraPermission by remember { mutableStateOf(false) }
     var isScanning by remember { mutableStateOf(true) }
+    var isTorchOn by remember { mutableStateOf(false) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
     var showOfflineDialog by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -66,6 +71,10 @@ fun ScannerScreen(
                 is ScannerViewModel.ScannerUiEvent.ShowOfflineMessage -> {
                     showOfflineDialog = event.message to event.url
                 }
+                is ScannerViewModel.ScannerUiEvent.InvalidQrCode -> {
+                    Toast.makeText(context, "QR Code inválido. Escaneie um QR Code de morador.", Toast.LENGTH_SHORT).show()
+                    isScanning = true
+                }
             }
         }
     }
@@ -77,6 +86,19 @@ fun ScannerScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    if (hasCameraPermission) {
+                        IconButton(onClick = {
+                            isTorchOn = !isTorchOn
+                            camera?.cameraControl?.enableTorch(isTorchOn)
+                        }) {
+                            Icon(
+                                if (isTorchOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
+                                contentDescription = if (isTorchOn) "Desligar lanterna" else "Ligar lanterna"
+                            )
+                        }
                     }
                 }
             )
@@ -113,7 +135,7 @@ fun ScannerScreen(
 
                             try {
                                 cameraProvider.unbindAll()
-                                cameraProvider.bindToLifecycle(
+                                camera = cameraProvider.bindToLifecycle(
                                     lifecycleOwner,
                                     CameraSelector.DEFAULT_BACK_CAMERA,
                                     preview,
@@ -128,16 +150,6 @@ fun ScannerScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-                
-                // Overlay para ajudar a mirar
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(64.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Aqui poderia ter uma borda desenhada ou algo similar
-                }
             } else {
                 Text(
                     "Permissão de câmera necessária",

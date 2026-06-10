@@ -1,21 +1,22 @@
 package br.com.porteirointeligente.ui.owner
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.domain.model.Owner
+import br.com.porteirointeligente.util.PhotoSaver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel para o cadastro de moradores com mais detalhes.
- */
 @HiltViewModel
 class OwnerRegistrationViewModel @Inject constructor(
-    private val ownerRepository: OwnerRepository
+    private val ownerRepository: OwnerRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _registrationEvent = MutableSharedFlow<RegistrationUiEvent>()
@@ -38,6 +39,12 @@ class OwnerRegistrationViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            val persistedPhotoUri = if (photoUri != null && photoUri.startsWith("content://")) {
+                PhotoSaver.savePhotoToInternalStorage(context, android.net.Uri.parse(photoUri))
+            } else {
+                photoUri
+            }
+
             val formattedPhone = if (cleanPhone.startsWith("55")) cleanPhone else "55$cleanPhone"
             val payload = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
             
@@ -49,10 +56,15 @@ class OwnerRegistrationViewModel @Inject constructor(
                 cep = cep.trim(),
                 apartamento = apartamento.trim(),
                 telefone = cleanPhone,
-                photoUri = photoUri,
+                photoUri = persistedPhotoUri,
                 qrCodePayload = payload
             )
-            ownerRepository.insertOwner(owner)
+
+            if (id > 0L) {
+                ownerRepository.updateOwner(owner)
+            } else {
+                ownerRepository.insertOwner(owner)
+            }
             _registrationEvent.emit(RegistrationUiEvent.Success)
         }
     }
