@@ -86,6 +86,12 @@ dependencies {
     // Coil (Image Loading)
     implementation("io.coil-kt:coil-compose:2.6.0")
 
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // JSON Parsing (Backup)
+    implementation("com.google.code.gson:gson:2.11.0")
+
     // Core / Material (Legacy support)
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")

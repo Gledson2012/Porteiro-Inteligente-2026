@@ -2,19 +2,23 @@ package br.com.porteirointeligente.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Urban Slate Palette - Refined for 2026
+// Uma paleta mais vibrante e com melhor contraste para acessibilidade
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Light Theme
+val SlateDark = Color(0xFF1E293B)      // Slate 800 - Deep Slate
+val SlateMedium = Color(0xFF334155)    // Slate 700
+val BurntOrange = Color(0xFFF59E0B)    // Amber 500 - Vibrant Orange (Primary)
+val DeepOrange = Color(0xFFEA580C)     // Orange 600 - Secondary/Alert
 
-// Porteiro Inteligente Palette (Indigo based)
-val IndigoPrimary = Color(0xFF3F51B5)
-val IndigoSecondary = Color(0xFF303F9F)
-val IndigoTertiary = Color(0xFFFF4081)
+val BackgroundLight = Color(0xFFF8FAFC) // Slate 50 - Off White
+val SurfaceLight = Color(0xFFFFFFFF)
+val OnSurfaceLight = Color(0xFF0F172A)  // Slate 900
 
-val LightBackground = Color(0xFFF8F9FA)
-val LightSurface = Color(0xFFFFFFFF)
-val LightError = Color(0xFFB00020)
+// Dark Theme
+val BackgroundDark = Color(0xFF0F172A)  // Slate 900
+val SurfaceDark = Color(0xFF1E293B)     // Slate 800
+val OnSurfaceDark = Color(0xFFF8FAFC)   // Slate 50
+
+val OrangeDark = Color(0xFFFBBF24)      // Amber 400 - Softer Orange for Dark Mode
+val TealAccent = Color(0xFF2DD4BF)      // Teal 400 - Cool accent for variety

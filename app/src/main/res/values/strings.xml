@@ -1,0 +1,86 @@
+<resources>
+    <string name="app_name">Porteiro Inteligente</string>
+
+    <!-- Tela inicial -->
+    <string name="home_label_condominio">Condomínio</string>
+    <string name="home_label_apartamento">Apartamento</string>
+    <string name="home_label_visitas_recentes">Visitas Recentes</string>
+    <string name="home_condominio_padrao">Condomínio Porteiro Inteligente</string>
+    <string name="home_apartamento_padrao">Administração</string>
+    <string name="home_empty_visits">Nenhuma visita registrada hoje.</string>
+    <string name="home_visit_item_format">%1$s - Ap %2$s</string>
+    <!-- Tela de Cadastro de Morador -->
+    <string name="owner_reg_title">Seu Perfil</string>
+    <string name="owner_reg_subtitle">Cadastre seus dados para gerar seu QR Code de acesso.</string>
+    <string name="owner_reg_hint_nome">Nome completo</string>
+    <string name="owner_reg_hint_apartamento">Número do Apartamento</string>
+    <string name="owner_reg_hint_telefone">WhatsApp (com DDD)</string>
+    <string name="owner_reg_hint_endereco">Endereço (Rua, Número)</string>
+    <string name="owner_reg_hint_cep">CEP</string>
+    <string name="owner_reg_photo_label">Foto de Perfil</string>
+    <string name="owner_reg_button_salvar">Criar meu QR Code</string>
+    <string name="owner_reg_success">Cadastro realizado com sucesso!</string>
+    <string name="owner_reg_error_fields">Por favor, preencha todos os campos.</string>
+    <string name="owner_reg_error_phone">Informe um número de telefone válido.</string>
+    <!-- Tela de Detalhes do Morador / QR Code -->
+    <string name="owner_details_title">Meu QR Code</string>
+    <string name="owner_details_label_nome">Morador:</string>
+    <string name="owner_details_label_apartamento">Apartamento:</string>
+    <string name="owner_details_label_telefone">Telefone:</string>
+    <string name="owner_details_qr_desc">Apresente este QR Code ao entregador para facilitar o contato.</string>
+    <string name="owner_details_button_share">Compartilhar</string>
+    <string name="owner_details_button_save">Salvar Foto</string>
+    <string name="owner_details_button_pdf">Baixar PDF</string>
+    <string name="owner_details_button_edit">Editar Perfil</string>
+    <string name="owner_details_button_delete">Excluir Perfil</string>
+    <string name="owner_details_delete_confirm">Deseja realmente excluir seu perfil? Esta ação não pode ser desfeita.</string>
+    <string name="owner_details_delete_success">Perfil excluído com sucesso.</string>
+    <string name="owner_details_save_success">QR Code salvo na galeria!</string>
+    <string name="owner_details_save_error">Erro ao salvar imagem.</string>
+    <string name="owner_details_pdf_success">PDF gerado na pasta Downloads!</string>
+    <string name="owner_details_pdf_error">Erro ao gerar PDF.</string>
+    <string name="owner_details_share_title">Meu QR Code de Acesso</string>
+    <!-- Tela de Leitura de QR Code (Scanner) -->
+    <string name="scanner_title">Ler QR Code</string>
+    <string name="scanner_hint">Aponte a câmera para o QR Code do morador</string>
+    <string name="scanner_permission_denied">Permissão de câmera é necessária para ler o QR Code.</string>
+    <!-- Tela de Cadastro de Visitante -->
+    <string name="visit_reg_title">Registrar Entrada</string>
+    <string name="visit_reg_subtitle">Registre os dados do visitante para controle de acesso.</string>
+    <string name="visit_reg_hint_nome">Nome do Visitante</string>
+    <string name="visit_reg_hint_documento">Documento (RG/CPF)</string>
+    <string name="visit_reg_hint_apartamento">Apartamento de Destino</string>
+    <string name="visit_reg_hint_telefone">Telefone de Contato</string>
+    <string name="visit_reg_hint_motivo">Motivo da Visita</string>
+    <string name="visit_reg_button_registrar">Registrar Entrada</string>
+    <string name="visit_reg_success">Entrada registrada com sucesso!</string>
+    <string name="visit_reg_error_fields">Este campo é obrigatório.</string>
+    <string name="visit_reg_error_generic">Por favor, preencha os dados obrigatórios.</string>
+    <!-- Configurações / Modo Online-Offline -->
+    <string name="settings_title">Configurações</string>
+    <string name="settings_offline_mode">Modo Offline</string>
+    <string name="settings_offline_desc">Desativa chamadas e notificações temporariamente.</string>
+    <string name="settings_offline_duration">Duração do bloqueio</string>
+    <string name="settings_offline_message_hint">Mensagem para o visitante (ex: Estou descansando)</string>
+    <string name="settings_duration_2h">2 Horas</string>
+    <string name="settings_duration_8h">8 Horas</string>
+    <string name="settings_duration_1w">1 Semana</string>
+    <string name="settings_duration_forever">Para Sempre</string>
+    <string name="settings_button_save">Salvar Configurações</string>
+    <string name="settings_save_success">Configurações atualizadas!</string>
+    <string name="settings_theme_title">Tema do Aplicativo</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Escuro</string>
+    <string name="settings_theme_system">Padrão do Sistema</string>
+    <!-- Tela de Histórico de Visitas -->
+    <string name="visits_history_title">Histórico de Visitas</string>
+    <string name="visits_history_empty">Nenhum histórico encontrado.</string>
+    <string name="visits_history_filter_all">Todas</string>
+    <string name="visits_history_filter_active">No Prédio</string>
+    <string name="visits_history_label_entrada">Entrada:</string>
+    <string name="visits_history_label_saida">Saída:</string>
+    <string name="visits_history_register_exit">Registrar Saída</string>
+    <string name="visits_history_exit_success">Saída registrada!</string>
+
+    <string name="nav_settings">Ajustes</string>
+</resources>

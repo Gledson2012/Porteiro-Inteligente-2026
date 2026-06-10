@@ -1,0 +1,13 @@
+## Local properties (NÃO COMMITAR)
+## Este arquivo é um modelo. Copie para `local.properties` e ajuste os caminhos
+## para o seu ambiente local.
+##
+## O `local.properties` é gerado automaticamente pelo Android Studio ao abrir
+## o projeto, mas caso queira criá-lo manualmente, basta copiar este template
+## e preencher os valores.
+
+# Caminho para o Android SDK
+# Exemplo macOS: /Users/seu-usuario/Library/Android/sdk
+# Exemplo Linux: /home/seu-usuario/Android/Sdk
+# Exemplo Windows: C\:\\Users\\seu-usuario\\AppData\\Local\\Android\\Sdk
+sdk.dir=/caminho/para/seu/Android/Sdk

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Save
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.util.AppTheme
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +24,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val owner by viewModel.owner.collectAsState()
+    val themeState by viewModel.themeState.collectAsState()
     
     var isOffline by remember { mutableStateOf(false) }
     var offlineMessage by remember { mutableStateOf("") }
@@ -58,14 +61,15 @@ fun SettingsScreen(
         ) {
             SettingsSection(title = "Aparência", icon = Icons.Default.Brightness6) {
                 Text("Tema do Aplicativo", style = MaterialTheme.typography.bodyLarge)
-                var themeIndex by remember { mutableIntStateOf(0) }
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     val options = listOf("Claro", "Escuro", "Sistema")
+                    val themes = listOf(AppTheme.LIGHT, AppTheme.DARK, AppTheme.SYSTEM)
+                    
                     options.forEachIndexed { index, label ->
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                            onClick = { themeIndex = index },
-                            selected = index == themeIndex
+                            onClick = { viewModel.setTheme(themes[index]) },
+                            selected = themeState == themes[index]
                         ) {
                             Text(label)
                         }
@@ -111,6 +115,22 @@ fun SettingsScreen(
                             }
                         }
                     }
+                }
+            }
+
+            SettingsSection(title = "Dados e Segurança", icon = Icons.Default.Backup) {
+                Text(
+                    "Proteja suas informações gerando um arquivo de backup com seu perfil e histórico de visitas.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = { viewModel.performBackup() },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.Backup, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("FAZER BACKUP DOS DADOS")
                 }
             }
 

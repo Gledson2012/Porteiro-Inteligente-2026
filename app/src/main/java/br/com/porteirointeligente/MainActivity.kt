@@ -28,13 +28,27 @@ import br.com.porteirointeligente.ui.visit.VisitHistoryScreen
 import br.com.porteirointeligente.ui.visit.VisitRegistrationScreen
 import dagger.hilt.android.AndroidEntryPoint
 
+import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import br.com.porteirointeligente.util.AppTheme
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    
+    private val appViewModel: AppViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PorteiroInteligenteTheme {
+            val themeState by appViewModel.themeState.collectAsState()
+            val darkTheme = when (themeState) {
+                AppTheme.LIGHT -> false
+                AppTheme.DARK -> true
+                AppTheme.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            PorteiroInteligenteTheme(darkTheme = darkTheme) {
                 MainScreen()
             }
         }

@@ -1,27 +1,38 @@
 package br.com.porteirointeligente.ui.home
 
 import android.content.Intent
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.ui.owner.OwnerDetailsActivity
 import br.com.porteirointeligente.ui.owner.OwnerRegistrationActivity
 import br.com.porteirointeligente.ui.scanner.ScannerActivity
 import br.com.porteirointeligente.ui.visit.VisitRegistrationActivity
+import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,11 +47,7 @@ fun HomeScreen(
     val apartamento by viewModel.apartamento.collectAsState()
     val visitas by viewModel.visitasRecentes.collectAsState()
     val morador by viewModel.moradorCadastrado.collectAsState()
-
-    // Configuração inicial se estiver vazio (apenas para exemplo)
-    if (condominio.isEmpty()) {
-        viewModel.configurarIdentificacao("Condomínio das Palmeiras", "Bloco A - 102")
-    }
+    val qrCode by viewModel.qrCodeMorador.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -57,7 +64,11 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                HomeHeader(condominio, apartamento)
+                HomeHeader(condominio, apartamento, morador)
+            }
+
+            item {
+                ResidentSkin(morador, qrCode)
             }
 
             item {
@@ -99,53 +110,147 @@ fun HomeScreen(
                     VisitItem(visit)
                 }
             }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Criado por: Gledson Crist\nBy Família Venâncio",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
         }
     }
 }
 
 @Composable
-fun HomeHeader(condominio: String, apartamento: String) {
-    Column {
-        Text(
-            text = "Bem-vindo,",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Text(
-            text = condominio,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = apartamento,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.secondary
-        )
+fun HomeHeader(condominio: String, apartamento: String, morador: Owner?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = if (morador != null) "Olá, ${morador.nome.split(" ").first()}" else "Bem-vindo,",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Text(
+                text = condominio,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = apartamento,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+
+        if (morador != null) {
+            AsyncImage(
+                model = morador.photoUri,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
+
+@Composable
+fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
+    if (morador != null && qrCode != null) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            shape = MaterialTheme.shapes.large,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+                        .padding(8.dp)
+                ) {
+                    Image(
+                        bitmap = qrCode.asImageBitmap(),
+                        contentDescription = "Meu QR Code",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Seu QR Code",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Apresente este código para identificação rápida no condomínio.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun StatsCard(count: Int) {
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondary // SlateDark
+        ),
+        shape = MaterialTheme.shapes.large
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Row(
+            modifier = Modifier.padding(24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = "Visitas no Período",
-                style = MaterialTheme.typography.labelLarge
-            )
-            Text(
-                text = count.toString(),
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Column {
+                Text(
+                    text = "Movimentação Hoje",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
+                )
+                Text(
+                    text = "$count Visitas",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
+            }
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                shape = CircleShape,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.TrendingUp,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -185,9 +290,12 @@ fun VisitItem(visit: Visit) {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateSdf = SimpleDateFormat("dd MMM", Locale.getDefault())
     
-    OutlinedCard(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -196,30 +304,34 @@ fun VisitItem(visit: Visit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(48.dp)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        MaterialTheme.colorScheme.secondaryContainer,
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = visit.nome.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
+                Text(
+                    text = visit.nome.take(1).uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = visit.nome,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = visit.motivo,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }
 
@@ -227,12 +339,13 @@ fun VisitItem(visit: Visit) {
                 Text(
                     text = sdf.format(Date(visit.dataEntrada)),
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = dateSdf.format(Date(visit.dataEntrada)),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
         }

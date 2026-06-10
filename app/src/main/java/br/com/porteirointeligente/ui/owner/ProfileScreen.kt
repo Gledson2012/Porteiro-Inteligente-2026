@@ -158,6 +158,7 @@ fun OwnerRegistrationForm(
     viewModel: OwnerRegistrationViewModel
 ) {
     var nome by remember { mutableStateOf(owner?.nome ?: "") }
+    var nomeCondominio by remember { mutableStateOf(owner?.nomeCondominio ?: "") }
     var endereco by remember { mutableStateOf(owner?.endereco ?: "") }
     var cep by remember { mutableStateOf(owner?.cep ?: "") }
     var apartamento by remember { mutableStateOf(owner?.apartamento ?: "") }
@@ -217,6 +218,14 @@ fun OwnerRegistrationForm(
         )
 
         OutlinedTextField(
+            value = nomeCondominio,
+            onValueChange = { nomeCondominio = it },
+            label = { Text("Nome do Condomínio") },
+            leadingIcon = { Icon(Icons.Default.Apartment, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
             value = endereco,
             onValueChange = { endereco = it },
             label = { Text("Endereço") },
@@ -254,6 +263,7 @@ fun OwnerRegistrationForm(
                     viewModel.registerOwner(
                         id = owner?.id ?: 0L,
                         nome = nome,
+                        nomeCondominio = nomeCondominio,
                         endereco = endereco,
                         cep = cep,
                         apartamento = apartamento,
