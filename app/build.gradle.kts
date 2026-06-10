@@ -83,6 +83,9 @@ dependencies {
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Coil (Image Loading)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
     // Core / Material (Legacy support)
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")

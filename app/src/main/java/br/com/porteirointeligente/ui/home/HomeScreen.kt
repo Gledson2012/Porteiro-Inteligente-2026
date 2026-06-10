@@ -27,6 +27,8 @@ import java.util.*
 
 @Composable
 fun HomeScreen(
+    onNavigateToScanner: () -> Unit,
+    onNavigateToVisitRegistration: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -42,9 +44,7 @@ fun HomeScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { 
-                context.startActivity(Intent(context, VisitRegistrationActivity::class.java))
-            }) {
+            FloatingActionButton(onClick = onNavigateToVisitRegistration) {
                 Icon(Icons.Default.Add, contentDescription = "Registrar Visita")
             }
         }
@@ -67,9 +67,7 @@ fun HomeScreen(
             item {
                 ActionButtons(
                     hasMorador = morador != null,
-                    onScannerClick = {
-                        context.startActivity(Intent(context, ScannerActivity::class.java))
-                    },
+                    onScannerClick = onNavigateToScanner,
                     onProfileClick = {
                         if (morador != null) {
                             context.startActivity(Intent(context, OwnerDetailsActivity::class.java))
@@ -184,37 +182,59 @@ fun ActionButtons(
 
 @Composable
 fun VisitItem(visit: Visit) {
-    val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-    Card(
+    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+    val dateSdf = SimpleDateFormat("dd MMM", Locale.getDefault())
+    
+    OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        shape = MaterialTheme.shapes.medium
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier.size(48.dp)
             ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = visit.nome.take(1).uppercase(),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = visit.nome,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = visit.status.name,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    text = visit.motivo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(
-                text = "Motivo: ${visit.motivo}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Text(
-                text = "Entrada: ${sdf.format(Date(visit.dataEntrada))}",
-                style = MaterialTheme.typography.bodySmall
-            )
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = sdf.format(Date(visit.dataEntrada)),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = dateSdf.format(Date(visit.dataEntrada)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
         }
     }
 }
