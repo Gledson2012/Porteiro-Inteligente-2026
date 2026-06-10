@@ -27,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import br.com.porteirointeligente.ui.home.HomeScreen
 import br.com.porteirointeligente.ui.theme.PorteiroInteligenteTheme
+import br.com.porteirointeligente.ui.visit.VisitHistoryScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -89,7 +90,7 @@ fun MainScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.History) { /* TODO: Implementar HistoryScreen */ Text("Histórico") }
+            composable(Screen.History.route) { VisitHistoryScreen() }
             composable(Screen.Profile.route) { /* TODO: Implementar ProfileScreen */ Text("Perfil") }
             composable(Screen.Settings.route) { /* TODO: Implementar SettingsScreen */ Text("Configurações") }
         }

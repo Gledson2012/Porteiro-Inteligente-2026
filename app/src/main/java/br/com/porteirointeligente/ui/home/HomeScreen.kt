@@ -1,5 +1,6 @@
 package br.com.porteirointeligente.ui.home
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,10 +13,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.domain.model.Visit
+import br.com.porteirointeligente.ui.owner.OwnerDetailsActivity
+import br.com.porteirointeligente.ui.owner.OwnerRegistrationActivity
+import br.com.porteirointeligente.ui.scanner.ScannerActivity
+import br.com.porteirointeligente.ui.visit.VisitRegistrationActivity
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +29,7 @@ import java.util.*
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val condominio by viewModel.condominio.collectAsState()
     val apartamento by viewModel.apartamento.collectAsState()
     val visitas by viewModel.visitasRecentes.collectAsState()
@@ -35,7 +42,9 @@ fun HomeScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { /* TODO: Navegar para Registro de Visita */ }) {
+            FloatingActionButton(onClick = { 
+                context.startActivity(Intent(context, VisitRegistrationActivity::class.java))
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "Registrar Visita")
             }
         }
@@ -56,7 +65,19 @@ fun HomeScreen(
             }
 
             item {
-                ActionButtons(morador != null)
+                ActionButtons(
+                    hasMorador = morador != null,
+                    onScannerClick = {
+                        context.startActivity(Intent(context, ScannerActivity::class.java))
+                    },
+                    onProfileClick = {
+                        if (morador != null) {
+                            context.startActivity(Intent(context, OwnerDetailsActivity::class.java))
+                        } else {
+                            context.startActivity(Intent(context, OwnerRegistrationActivity::class.java))
+                        }
+                    }
+                )
             }
 
             item {
@@ -132,13 +153,17 @@ fun StatsCard(count: Int) {
 }
 
 @Composable
-fun ActionButtons(hasMorador: Boolean) {
+fun ActionButtons(
+    hasMorador: Boolean,
+    onScannerClick: () -> Unit,
+    onProfileClick: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Button(
-            onClick = { /* TODO: Abrir Scanner */ },
+            onClick = onScannerClick,
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(12.dp)
         ) {
@@ -148,7 +173,7 @@ fun ActionButtons(hasMorador: Boolean) {
         }
         
         OutlinedButton(
-            onClick = { /* TODO: Perfil */ },
+            onClick = onProfileClick,
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(12.dp)
         ) {
