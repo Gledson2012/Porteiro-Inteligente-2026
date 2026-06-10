@@ -181,3 +181,4 @@ Representa o morador/proprietário cadastrado no aplicativo.
 ## Licença
 
 Este projeto é privado e de uso restrito.
+# Porteiro-Inteligente-2026
