@@ -1,184 +1,227 @@
 # Porteiro Inteligente
 
-Aplicativo nativo Android para gestão de portaria em condomínios.
+<p align="center">
+  <img src="https://img.shields.io/badge/Kotlin-2.0-purple?logo=kotlin" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Compose-BOM%202024.09-brightgreen?logo=jetpackcompose" alt="Compose">
+  <img src="https://img.shields.io/badge/Min%20SDK-23-orange?logo=android" alt="Min SDK 23">
+  <img src="https://img.shields.io/badge/Target%20SDK-35-green?logo=android" alt="Target SDK 35">
+  <img src="https://img.shields.io/badge/Architecture-MVVM-blue" alt="MVVM">
+  <img src="https://img.shields.io/badge/DI-Hilt-cyan" alt="Hilt">
+</p>
 
-## Sobre
+Aplicativo Android nativo para gestão de portaria em condomínios. Moradores cadastram seu perfil, geram QR Code de acesso, e entregadores escaneiam para contato via WhatsApp.
 
-O **Porteiro Inteligente** é um aplicativo Android nativo desenvolvido em Kotlin que visa modernizar e simplificar a gestão de portaria em condomínios. Ele oferece funcionalidades de cadastro de visitantes, registro de entradas e saídas, cadastro de moradores/proprietários com geração de QR Code, leitura de QR Code via câmera e redirecionamento automático para o WhatsApp do morador.
+---
 
-## Tecnologia
+##   Funcionalidades
 
-- **Linguagem:** Kotlin
-- **Plataforma:** Android Nativo
-- **Interface:** Jetpack Compose com Material Design 3 (Material You)
-- **Navegação:** Navigation Compose (Single Activity)
-- **Arquitetura:** MVVM / MVI Ready
-- **Persistência local:** Room
-- **Injeção de dependência:** Hilt
-- **Carregamento de Imagem:** Coil
-- **MinSdk:** 23 (Android 6.0 Marshmallow)
-- **TargetSdk:** 35 (Android 15)
-- **CompileSdk:** 35
+###   Navegação principal
+| Aba | Descrição |
+|-----|-----------|
+| **Início** | Visão geral com boas-vindas, QR Code do morador, estatísticas do dia e visitas recentes |
+| **Histórico** | Registro completo de visitas com filtro (Todas / Ativas) e ação de registrar saída |
+| **Perfil/QR** | Cadastro e edição do morador, exibição do QR Code de acesso |
+| **Ajustes** | Tema (Claro/Escuro/Sistema), Modo Offline com mensagem personalizada, Backup e Restauração de dados |
 
-## Estrutura do projeto
+###   Recursos implementados
 
-```text
-PorteiroInteligente/
-├── app/
-│   ├── build.gradle.kts
-│   ├── proguard-rules.pro
-│   └── src/
-│       └── main/
-│           ├── AndroidManifest.xml
-│           ├── java/
-│           │   └── br/com/porteirointeligente/
-│           │       ├── PorteiroInteligenteApp.kt
-│           │       ├── data/
-│           │       │   ├── local/
-│           │       │   │   ├── AppDatabase.kt
-│           │       │   │   ├── dao/
-│           │       │   │   │   └── VisitDao.kt
-│           │       │   │   └── entity/
-│           │       │   │       └── VisitEntity.kt
-│           │       │   └── repository/
-│           │       │       └── VisitRepository.kt
-│           │       ├── di/
-│           │       │   └── AppModule.kt
-│           │       ├── domain/
-│           │       │   └── model/
-│           │       │       └── Visit.kt
-│           │       └── ui/
-│           │           └── home/
-│           │               ├── HomeActivity.kt
-│           │               └── HomeViewModel.kt
-│           └── res/
-│               ├── drawable/
-│               │   └── ic_launcher_foreground.xml
-│               ├── layout/
-│               │   └── activity_home.xml
-│               ├── mipmap-anydpi-v26/
-│               │   └── ic_launcher.xml
-│               ├── values/
-│               │   ├── colors.xml
-│               │   ├── strings.xml
-│               │   └── themes.xml
-│               └── values-night/
-│                   └── themes.xml
-├── build.gradle.kts
-├── gradle.properties
-├── gradle/
-│   └── wrapper/
-│       ├── gradle-wrapper.jar
-│       └── gradle-wrapper.properties
-├── gradlew
-├── gradlew.bat
-├── settings.gradle.kts
-└── README.md
+- **Cadastro de morador** com foto, nome, condomínio, endereço, CEP, apartamento e WhatsApp
+- **QR Code dinâmico** — gerado automaticamente com payload criptografado para redirecionamento ao WhatsApp
+- **Scanner de QR Code** com CameraX, lanterna e detecção em tempo real
+- **Modo Offline** — permite configurar mensagem de ausência exibida ao escanear o QR Code
+- **Registro de visitas** com nome, documento, apartamento, telefone e motivo
+- **Histórico com filtros** — visitas ativas (no prédio) e concluídas
+- **Backup e restauração** completo em JSON (perfil + visitas)
+- **Tema dinâmico** Material You (Android 12+) opcional
+- **Modo escuro** completo
+- **Skeleton loading** animado no carregamento inicial
+- **Snapshot de QR Code** para salvar na galeria
+
+---
+
+##   Capturas de Tela
+
+| Início | Histórico | Perfil | Ajustes | Scanner |
+|--------|-----------|--------|---------|---------|
+| *(screenshot)* | *(screenshot)* | *(screenshot)* | *(screenshot)* | *(screenshot)* |
+
+---
+
+##   Tecnologias
+
+| Camada | Tecnologia |
+|--------|-----------|
+| **Linguagem** | Kotlin 2.0 |
+| **UI** | Jetpack Compose + Material Design 3 (Material You) |
+| **Navegação** | Navigation Compose (Single Activity) |
+| **Arquitetura** | MVVM com ViewModel + StateFlow |
+| **Injeção** | Dagger Hilt + KSP |
+| **Banco local** | Room |
+| **Câmera** | CameraX (Preview + ImageAnalysis) |
+| **QR Code** | ZXing (geração) + CameraX Analyzer (leitura) |
+| **Imagens** | Coil (AsyncImage) |
+| **Tema persistente** | DataStore Preferences |
+| **Backup** | Gson (JSON export/import) |
+| **SDK mínimo** | 23 (Android 6.0) |
+| **SDK alvo** | 35 (Android 15) |
+
+---
+
+##   Projeto
+
+```
+app/
+├── src/main/java/br/com/porteirointeligente/
+│   ├── PorteiroInteligenteApp.kt          # @HiltAndroidApp
+│   ├── MainActivity.kt                     # Single Activity
+│   ├── AppViewModel.kt                     # Estado global do tema
+│   ├── data/
+│   │   ├── local/
+│   │   │   ├── AppDatabase.kt              # Room Database (v6)
+│   │   │   ├── dao/OwnerDao.kt             # CRUD morador
+│   │   │   ├── dao/VisitDao.kt             # CRUD visitas
+│   │   │   ├── entity/OwnerEntity.kt
+│   │   │   └── entity/VisitEntity.kt
+│   │   └── repository/
+│   │       ├── OwnerRepository.kt
+│   │       └── VisitRepository.kt
+│   ├── di/AppModule.kt                     # Hilt module
+│   ├── domain/model/
+│   │   ├── Owner.kt
+│   │   └── Visit.kt + VisitStatus
+│   ├── util/
+│   │   ├── ThemeManager.kt                 # DataStore tema
+│   │   ├── QrCodeGenerator.kt
+│   │   ├── QrCodeAnalyzer.kt               # CameraX analyzer
+│   │   ├── CryptoUtil.kt                   # Criptografia payload
+│   │   ├── PhotoSaver.kt                   # Salvar QR na galeria
+│   │   └── BackupManager.kt               # JSON backup
+│   └── ui/
+│       ├── theme/                          # Color, Theme, Shape, Type
+│       ├── navigation/NavGraph.kt          # Bottom nav + rotas
+│       ├── components/
+│       │   ├── VisitItem.kt                # Card de visita
+│       │   └── ShimmerEffect.kt            # Skeleton loading
+│       ├── home/HomeScreen.kt + ViewModel
+│       ├── visit/VisitHistoryScreen.kt + ViewModel
+│       ├── visit/VisitRegistrationScreen.kt + ViewModel
+│       ├── owner/ProfileScreen.kt + ViewModels
+│       ├── scanner/ScannerScreen.kt + ViewModel
+│       └── settings/SettingsScreen.kt + ViewModel
+└── src/main/res/
+    ├── values/colors.xml, strings.xml, themes.xml
+    └── values-night/themes.xml
 ```
 
-## Configuração do ambiente
+---
+
+## ⚙️ Configuração
 
 ### Pré-requisitos
 
-- **Android Studio** Hedgehog (2023.1.1) ou superior
-- **JDK 17** ou superior
-- **Android SDK** com plataforma Android 35 instalada
-- **Gradle 8.7** (gerenciado pelo wrapper)
+- Android Studio Hedgehog (2023.1.1) ou superior
+- JDK 17+
+- Android SDK 35
+- Gradle 8.7 (wrapper incluso)
 
-### Importando o projeto
-
-1. Abra o Android Studio.
-2. Selecione `File > Open` e aponte para a pasta raiz do projeto (`PorteiroInteligente/`).
-3. Aguarde o Gradle sincronizar as dependências.
-4. Conecte um dispositivo Android ou inicie um emulador.
-5. Execute o app no botão `Run`.
-
-### Gerando o gradle-wrapper.jar
-
-Caso o arquivo `gradle/wrapper/gradle-wrapper.jar` não esteja presente, você pode gerá-lo de duas formas:
-
-1. Pelo Android Studio (ao abrir o projeto, o IDE oferece a opção de gerar o wrapper).
-2. Pelo terminal, na raiz do projeto:
+### Passos
 
 ```bash
-gradle wrapper --gradle-version 8.7
+git clone https://github.com/seu-usuario/Porteiro-Inteligente-2026.git
+cd Porteiro-Inteligente-2026
+./gradlew assembleDebug
 ```
 
-## Funcionalidades
+Ou abra a pasta no Android Studio e clique em **Run**.
 
-### Implementadas (estrutura base)
+---
 
-- Tela inicial (`HomeActivity`) com identificação do condomínio/apartamento.
-- Configuração de MVVM com `HomeViewModel`.
-- Persistência local com Room (`AppDatabase`, `VisitDao`, `VisitEntity`).
-- Injeção de dependência com Hilt (`AppModule`, `PorteiroInteligenteApp`).
-- Modelos de domínio (`Visit`, com `VisitStatus`).
+##   Arquitetura
 
-### Próximos passos
+O app segue o padrão **MVVM** com camadas bem definidas:
 
-- Tela de login/cadastro de moradores.
-- Cadastro de proprietário/morador com nome, apartamento e número de celular.
-- Geração e exibição do QR Code do proprietário.
-- Leitura de QR Code pela câmera do entregador.
-- Redirecionamento automático para o WhatsApp do morador com mensagem padrão.
-- Tela de cadastro de visitante.
-- Tela de histórico de visitas.
-- Integração com câmera para leitura de QR Code ou reconhecimento facial.
-- API/backend para comunicação entre portaria e moradores.
-- Notificações push.
-- Integração com interfone.
+```
+UI (Compose) → ViewModel → Repository → Room / DataStore
+```
 
-## Modelos de domínio
+- **UI**: Telas em Compose observam `StateFlow` dos ViewModels
+- **ViewModel**: Gerencia estado e lógica de apresentação
+- **Repository**: Abstrai fonte de dados (Room)
+- **Room**: Banco SQLite local com DAOs
+
+### Fluxo do QR Code
+
+```
+Morador cadastra perfil
+       ↓
+App gera QR Code com payload criptografado (whatsapp://send?phone=...)
+       ↓
+Entregador escaneia com câmera do app
+       ↓
+App decodifica e abre WhatsApp com mensagem padrão
+       ↓
+Visita registrada no histórico
+```
+
+---
+
+##   Modelos
 
 ### Visit
 
-Representa uma visita registrada no aplicativo.
-
-| Campo        | Tipo           | Descrição                              |
-|--------------|----------------|----------------------------------------|
-| `id`         | `Long`         | Identificador único                    |
-| `nome`       | `String`       | Nome do visitante                      |
-| `documento`  | `String`       | Documento de identificação             |
-| `apartamento`| `String`       | Apartamento de destino                 |
-| `telefone`   | `String`       | Telefone de contato                    |
-| `motivo`     | `String`       | Motivo da visita                       |
-| `dataEntrada`| `Long` (epoch) | Data/hora de entrada                   |
-| `dataSaida`  | `Long?` (epoch)| Data/hora de saída (opcional)          |
-| `status`     | `VisitStatus`  | Status atual da visita                 |
-
-Status possíveis:
-
-- `ENTRADA_REGISTRADA`
-- `SAIDA_REGISTRADA`
-- `CANCELADA`
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | `Long` | Identificador único |
+| `nome` | `String` | Nome do visitante |
+| `documento` | `String` | Documento (RG/CPF) |
+| `apartamento` | `String` | Unidade de destino |
+| `telefone` | `String` | Contato |
+| `motivo` | `String` | Motivo da visita |
+| `dataEntrada` | `Long` | Epoch de entrada |
+| `dataSaida` | `Long?` | Epoch de saída |
+| `status` | `VisitStatus` | `ENTRADA_REGISTRADA`, `SAIDA_REGISTRADA` ou `CANCELADA` |
 
 ### Owner
 
-Representa o morador/proprietário cadastrado no aplicativo.
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | `Long` | Identificador único |
+| `nome` | `String` | Nome completo |
+| `nomeCondominio` | `String` | Condomínio |
+| `apartamento` | `String` | Unidade |
+| `telefone` | `String` | WhatsApp |
+| `endereco` | `String` | Endereço |
+| `cep` | `String` | CEP |
+| `photoUri` | `String?` | URI da foto de perfil |
+| `qrCodePayload` | `String` | Payload do QR Code |
+| `isOffline` | `Boolean` | Modo offline ativo |
+| `offlineMessage` | `String` | Mensagem de ausência |
+| `offlineUntil` | `Long?` | Data limite do modo offline |
+| `dataCadastro` | `Long` | Epoch de cadastro |
 
-| Campo           | Tipo           | Descrição                                     |
-|-----------------|----------------|-----------------------------------------------|
-| `id`            | `Long`         | Identificador único                           |
-| `nome`          | `String`       | Nome do morador                               |
-| `apartamento`   | `String`       | Número do apartamento                         |
-| `telefone`      | `String`       | Número de celular (com DDD)                   |
-| `qrCodePayload` | `String`       | Conteúdo codificado no QR Code do morador     |
-| `dataCadastro`  | `Long` (epoch) | Data/hora do cadastro                         |
+---
 
-## Regra do QR Code
+##   Melhorias futuras
 
-- O proprietário informa o número de celular.
-- O app gera um QR Code contendo um link/payload que redireciona para o WhatsApp do morador.
-- O entregador lê o QR Code com a câmera do celular.
-- Após a leitura, o app abre automaticamente o WhatsApp com uma mensagem padrão sobre a entrega.
+- [ ] Notificações push (Firebase Cloud Messaging)
+- [ ] Sincronização com backend REST
+- [ ] Múltiplos moradores por unidade
+- [ ] Tour guiado na primeira execução
+- [ ] Suporte a tablets com layout adaptativo
+- [ ] Testes instrumentados (Compose Test)
+- [ ] CI/CD com GitHub Actions
+- [ ] Tradução para outros idiomas
 
-## Como contribuir
+---
 
-1. Crie uma branch a partir de `main`: `git checkout -b feature/minha-feature`
-2. Faça commits pequenos e descritivos.
-3. Abra um Pull Request descrevendo as mudanças.
+##   Contribuição
 
-## Licença
+1. `git checkout -b feature/nova-feature`
+2. Faça commits descritivos
+3. Abra um Pull Request
 
-Este projeto é privado e de uso restrito.
-# Porteiro-Inteligente-2026
+---
+
+##   Licença
+
+Uso privado — todos os direitos reservados.
