@@ -23,6 +23,7 @@ import br.com.porteirointeligente.ui.home.HomeScreen
 import br.com.porteirointeligente.ui.owner.ProfileScreen
 import br.com.porteirointeligente.ui.scanner.ScannerScreen
 import br.com.porteirointeligente.ui.settings.SettingsScreen
+import br.com.porteirointeligente.ui.splash.SplashScreen
 import br.com.porteirointeligente.ui.visit.VisitHistoryScreen
 import br.com.porteirointeligente.ui.visit.VisitRegistrationScreen
 
@@ -32,6 +33,7 @@ sealed class Screen(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 ) {
+    object Splash : Screen("splash", "Splash", Icons.Filled.Home, Icons.Outlined.Home)
     object Home : Screen("home", "In\u00edcio", Icons.Filled.Home, Icons.Outlined.Home)
     object History : Screen("history", "Hist\u00f3rico", Icons.Filled.History, Icons.Outlined.History)
     object Profile : Screen("profile", "Perfil/QR", Icons.Filled.QrCode, Icons.Outlined.QrCode)
@@ -99,9 +101,16 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Splash.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(onSplashFinished = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                })
+            }
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigateToScanner = { navController.navigate(Screen.Scanner.route) },

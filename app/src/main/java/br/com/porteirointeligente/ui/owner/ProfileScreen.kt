@@ -1,6 +1,13 @@
 package br.com.porteirointeligente.ui.owner
 
+import android.content.ContentValues
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -22,9 +29,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.print.PrintHelper
 import coil.compose.AsyncImage
 import br.com.porteirointeligente.domain.model.Owner
+import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun ProfileScreen(
@@ -198,6 +209,44 @@ fun OwnerDetailsView(
                             color = MaterialTheme.colorScheme.outline,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            val qrBitmap = it
+                            val context = LocalContext.current
+
+                            OutlinedButton(
+                                onClick = { saveQrToGallery(context, qrBitmap) },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(4.dp)
+                            ) {
+                                Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Salvar", style = MaterialTheme.typography.labelSmall)
+                            }
+
+                            OutlinedButton(
+                                onClick = { shareQrCode(context, qrBitmap) },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(4.dp)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Compartilhar", style = MaterialTheme.typography.labelSmall)
+                            }
+
+                            OutlinedButton(
+                                onClick = { printQrCode(context, qrBitmap) },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(4.dp)
+                            ) {
+                                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Imprimir", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
                     }
                 }
             }
@@ -267,6 +316,67 @@ private fun formatPhone(raw: String): String {
             "(${clean.substring(0, 2)}) ${clean.substring(2, 6)}-${clean.substring(6, 10)}"
         }
         else -> clean
+    }
+}
+
+private fun saveQrToGallery(context: Context, bitmap: Bitmap) {
+    try {
+        val filename = "QR_Porteiro_${System.currentTimeMillis()}.jpg"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/PorteiroInteligente")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            val uri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            uri?.let {
+                context.contentResolver.openOutputStream(it)?.use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 95, stream)
+                }
+                val updateValues = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
+                context.contentResolver.update(it, updateValues, null, null)
+            }
+        } else {
+            MediaStore.Images.Media.insertImage(
+                context.contentResolver, bitmap, filename, "QR Code Porteiro Inteligente"
+            )
+        }
+        Toast.makeText(context, "QR Code salvo na galeria!", Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+        Toast.makeText(context, "Erro ao salvar imagem.", Toast.LENGTH_LONG).show()
+        e.printStackTrace()
+    }
+}
+
+private fun shareQrCode(context: Context, bitmap: Bitmap) {
+    try {
+        val file = File(context.cacheDir, "qr_code_compartilhar.png")
+        FileOutputStream(file).use { stream ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Compartilhar QR Code"))
+    } catch (e: Exception) {
+        Toast.makeText(context, "Erro ao compartilhar.", Toast.LENGTH_LONG).show()
+        e.printStackTrace()
+    }
+}
+
+private fun printQrCode(context: Context, bitmap: Bitmap) {
+    try {
+        val printHelper = PrintHelper(context).apply {
+            scaleMode = PrintHelper.SCALE_MODE_FIT
+        }
+        printHelper.printBitmap("QR Code - Porteiro Inteligente", bitmap)
+    } catch (e: Exception) {
+        Toast.makeText(context, "Erro ao imprimir.", Toast.LENGTH_LONG).show()
+        e.printStackTrace()
     }
 }
 
