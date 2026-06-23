@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porteiro Inteligente — Gestão de Portaria Simplificada</title>
+    <meta name="description" content="Aplicativo Android para gestão de portaria em condomínios. QR Code, registro de visitas, modo offline e mais.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #F59E0B;
+            --primary-dark: #D97706;
+            --secondary: #1E293B;
+            --accent: #2DD4BF;
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --text: #0F172A;
+            --text-muted: #64748B;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header / Hero */
+        .hero {
+            background: linear-gradient(135deg, var(--secondary) 0%, #0F172A 100%);
+            color: white;
+            padding: 80px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .hero-text { flex: 1; }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 span { color: var(--primary); }
+
+        .hero p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.75);
+            max-width: 520px;
+            margin-bottom: 32px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--secondary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 1.5px solid rgba(255,255,255,0.25);
+        }
+
+        .btn-outline:hover {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .hero-visual {
+            flex: 0 0 320px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .phone-mock {
+            width: 280px;
+            height: 560px;
+            background: var(--secondary);
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+            border-radius: 28px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .phone-status {
+            padding: 12px 16px 4px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .phone-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .phone-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .phone-card-sm {
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .phone-dot {
+            width: 6px;
+            border-radius: 3px;
+            background: var(--primary);
+        }
+
+        .phone-line {
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 6px;
+        }
+
+        .phone-line-sm { width: 60%; height: 8px; }
+        .phone-line-xs { width: 40%; height: 8px; }
+        .phone-line-lg { width: 85%; height: 12px; }
+
+        .phone-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .phone-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 9px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .phone-nav-item.active { color: var(--primary); }
+
+        .phone-nav-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .phone-nav-icon.active { background: var(--primary); }
+
+        /* Sections */
+        section { padding: 80px 0; }
+
+        .section-label {
+            display: inline-block;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+            color: var(--secondary);
+        }
+
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 1px solid #E2E8F0;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.orange { background: #FEF3C7; color: #D97706; }
+        .feature-icon.slate { background: #E2E8F0; color: #1E293B; }
+        .feature-icon.teal { background: #CCFBF1; color: #0D9488; }
+        .feature-icon.red { background: #FEE2E2; color: #DC2626; }
+        .feature-icon.purple { background: #EDE9FE; color: #7C3AED; }
+        .feature-icon.blue { background: #DBEAFE; color: #2563EB; }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Steps */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 0 8px;
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--secondary);
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .step h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .tech-tag {
+            padding: 10px 20px;
+            border-radius: 100px;
+            background: var(--surface);
+            border: 1px solid #E2E8F0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .tech-tag:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* CTA */
+        .cta {
+            background: linear-gradient(135deg, var(--secondary) 0%, #0F172A 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.65);
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        .btn-large {
+            padding: 18px 40px;
+            font-size: 18px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 32px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid #E2E8F0;
+        }
+
+        footer strong { color: var(--secondary); }
+
+        @media (max-width: 860px) {
+            .hero { padding: 60px 0 80px; }
+            .hero h1 { font-size: 36px; }
+            .hero-content { flex-direction: column; text-align: center; }
+            .hero p { margin: 0 auto 32px; }
+            .hero-buttons { justify-content: center; }
+            .hero-visual { flex: 0 0 auto; margin-top: 32px; }
+            .phone-mock { width: 240px; height: 480px; }
+            .section-title { font-size: 28px; }
+            .features { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 28px; }
+            .hero { padding: 40px 0 60px; }
+            .steps { grid-template-columns: 1fr; }
+            .phone-mock { width: 200px; height: 400px; }
+            section { padding: 48px 0; }
+            .btn-large { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">Aplicativo Android</div>
+                <h1>Porteiro <span>Inteligente</span></h1>
+                <p>Modernize a gestão da portaria do seu condomínio com QR Code, registro digital de visitas e modo offline — tudo offline, sem necessidade de internet.</p>
+                <div class="hero-buttons">
+                    <a href="#funcionalidades" class="btn btn-primary">Ver Funcionalidades</a>
+                    <a href="#como-funciona" class="btn btn-outline">Como Funciona</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="phone-mock">
+                    <div class="phone-screen">
+                        <div class="phone-status">
+                            <span>09:41</span>
+                            <span>&#128247;</span>
+                        </div>
+                        <div class="phone-content">
+                            <div>
+                                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px;">Ol&aacute;,</div>
+                                <div style="font-size:16px;font-weight:700;color:var(--primary);">Residencial Parque</div>
+                                <div style="font-size:11px;color:rgba(255,255,255,0.5);">Apto 42</div>
+                            </div>
+                            <div class="phone-card" style="display:flex;align-items:center;gap:10px;">
+                                <div style="width:60px;height:60px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:rgba(255,255,255,0.3);">&#9632;&#9632;</div>
+                                <div>
+                                    <div style="font-size:11px;font-weight:600;">Seu QR Code de Acesso</div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Apresente na portaria</div>
+                                </div>
+                            </div>
+                            <div class="phone-card" style="display:flex;align-items:center;justify-content:space-between;">
+                                <div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Movimenta&ccedil;&atilde;o Hoje</div>
+                                    <div style="font-size:22px;font-weight:800;color:white;">3 Visitas</div>
+                                </div>
+                                <div style="width:40px;height:40px;border-radius:50%;background:rgba(245,158,11,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">&#8593;</div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <div style="flex:1;text-align:center;padding:10px;border-radius:10px;background:var(--primary);font-size:12px;font-weight:700;color:var(--secondary);">Sou Entregador</div>
+                                <div style="flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);font-size:12px;color:white;">Ver meu QR</div>
+                            </div>
+                            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);">Visitas Recentes</div>
+                            <div class="phone-card-sm">
+                                <div class="phone-dot"></div>
+                                <div style="width:32px;height:32px;border-radius:50%;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--primary);">C</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:11px;font-weight:600;">Carlos</div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Entrega &bull; Ap 42</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:10px;font-weight:600;">14:30</div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.3);">20 jan</div>
+                                </div>
+                            </div>
+                            <div class="phone-card-sm">
+                                <div class="phone-dot" style="background:var(--accent);"></div>
+                                <div style="width:32px;height:32px;border-radius:50%;background:rgba(45,212,191,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent);">M</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:11px;font-weight:600;">Maria</div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Visita &bull; Ap 15</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:10px;font-weight:600;">11:10</div>
+                                    <div style="font-size:9px;color:rgba(255,255,255,0.3);">20 jan</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="phone-nav">
+                            <div class="phone-nav-item active"><div class="phone-nav-icon active"></div>In&iacute;cio</div>
+                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Hist&oacute;rico</div>
+                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Perfil/QR</div>
+                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Ajustes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="funcionalidades">
+        <div class="container">
+            <div class="section-label">Funcionalidades</div>
+            <h2 class="section-title">Tudo que voc&ecirc; precisa em um s&oacute; app</h2>
+            <p class="section-subtitle">O Porteiro Inteligente substitui o livro de visitas f&iacute;sico por um sistema digital r&aacute;pido, seguro e offline.</p>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon orange">&#9632;&#9632;</div>
+                    <h3>QR Code de Acesso</h3>
+                    <p>Gere um QR Code &uacute;nico e criptografado com seus dados. O entregador escaneia e j&aacute; abre o WhatsApp automaticamente.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon slate">&#128247;</div>
+                    <h3>Scanner de C&acirc;mera</h3>
+                    <p>Leitura de QR Code em tempo real com CameraX e lanterna integrada. Detecta, descriptografa e redireciona em segundos.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon teal">&#128221;</div>
+                    <h3>Registro de Visitas</h3>
+                    <p>Cadastre visitantes com nome, documento, apartamento e motivo. Tudo armazenado localmente com hist&oacute;rico completo.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon red">&#128274;</div>
+                    <h3>Modo Offline</h3>
+                    <p>Avise quando n&atilde;o estiver em casa. Configure uma mensagem personalizada e dura&ccedil;&atilde;o. O entregador ver&aacute; ao escanear.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon purple">&#128190;</div>
+                    <h3>Backup em JSON</h3>
+                    <p>Exporte seu perfil e hist&oacute;rico de visitas para um arquivo JSON. Restaure quando precisar. Seus dados seguros com voc&ecirc;.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon blue">&#127769;</div>
+                    <h3>Tema Din&acirc;mico</h3>
+                    <p>Suporte a tema Claro, Escuro e Sistema (Material You). A escolha &eacute; sua e a prefer&ecirc;ncia fica salva.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="como-funciona" style="background:#F1F5F9;">
+        <div class="container">
+            <div class="section-label">Como funciona</div>
+            <h2 class="section-title">Simples, r&aacute;pido e seguro</h2>
+            <p class="section-subtitle">Dois fluxos principais que resolvem o dia a dia da portaria.</p>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Morador cadastra</h4>
+                    <p>Preenche nome, apartamento e WhatsApp. O app gera automaticamente um QR Code criptografado.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Entregador escaneia</h4>
+                    <p>Ao chegar na portaria, o entregador abre o app e escaneia o QR Code com a c&acirc;mera.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>WhatsApp aberto</h4>
+                    <p>O app abre o WhatsApp do morador automaticamente com a mensagem: "Ol&aacute;, sou o entregador e estou na portaria."</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h4>Visita registrada</h4>
+                    <p>O porteiro registra a entrada do visitante. Tudo fica salvo no hist&oacute;rico para consulta futura.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="section-label">Stack</div>
+            <h2 class="section-title">Tecnologias utilizadas</h2>
+            <p class="section-subtitle">Constru&iacute;do com as melhores ferramentas do ecossistema Android moderno.</p>
+
+            <div class="tech-grid">
+                <span class="tech-tag">Kotlin</span>
+                <span class="tech-tag">Jetpack Compose</span>
+                <span class="tech-tag">Material Design 3</span>
+                <span class="tech-tag">MVVM</span>
+                <span class="tech-tag">Hilt</span>
+                <span class="tech-tag">Room</span>
+                <span class="tech-tag">CameraX</span>
+                <span class="tech-tag">ZXing</span>
+                <span class="tech-tag">Coil</span>
+                <span class="tech-tag">DataStore</span>
+                <span class="tech-tag">Gson</span>
+                <span class="tech-tag">Navigation Compose</span>
+                <span class="tech-tag">Min SDK 23</span>
+                <span class="tech-tag">Target SDK 35</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta" id="download">
+        <div class="container">
+            <h2>Pronto para modernizar sua portaria?</h2>
+            <p>O aplicativo est&aacute; em desenvolvimento. Cadastre-se para ser avisado quando estiver dispon&iacute;vel na Google Play.</p>
+            <a href="#" class="btn btn-primary btn-large" onclick="alert('Em breve na Google Play! Deixe seu contato conosco.'); return false;">Receber novidades</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>
+                <strong>Porteiro Inteligente</strong> — 
+                Criado por <strong>Gledson Crist Ribeiro dos Santos</strong> — 
+                By Fam&iacute;lia Ven&acirc;ncio
+            </p>
+            <p style="margin-top:8px;font-size:12px;">
+                &copy; 2026 Porteiro Inteligente. Todos os direitos reservados.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
