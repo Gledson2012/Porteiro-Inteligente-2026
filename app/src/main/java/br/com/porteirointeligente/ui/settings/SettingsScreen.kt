@@ -1,5 +1,8 @@
 package br.com.porteirointeligente.ui.settings
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -12,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +29,37 @@ fun SettingsScreen(
 ) {
     val owner by viewModel.owner.collectAsState()
     val themeState by viewModel.themeState.collectAsState()
+    val backupState by viewModel.backupState.collectAsState()
+    val restoreState by viewModel.restoreState.collectAsState()
+
+    val context = LocalContext.current
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let { viewModel.restoreBackup(it) }
+        }
+    )
+
+    LaunchedEffect(backupState) {
+        if (backupState is SettingsViewModel.BackupState.Success) {
+            Toast.makeText(context, "Backup gerado com sucesso!", Toast.LENGTH_SHORT).show()
+            viewModel.resetBackupState()
+        } else if (backupState is SettingsViewModel.BackupState.Error) {
+            Toast.makeText(context, (backupState as SettingsViewModel.BackupState.Error).message, Toast.LENGTH_LONG).show()
+            viewModel.resetBackupState()
+        }
+    }
+
+    LaunchedEffect(restoreState) {
+        if (restoreState is SettingsViewModel.RestoreState.Success) {
+            Toast.makeText(context, "Dados restaurados com sucesso!", Toast.LENGTH_SHORT).show()
+            viewModel.resetRestoreState()
+        } else if (restoreState is SettingsViewModel.RestoreState.Error) {
+            Toast.makeText(context, (restoreState as SettingsViewModel.RestoreState.Error).message, Toast.LENGTH_LONG).show()
+            viewModel.resetRestoreState()
+        }
+    }
     
     var isOffline by remember { mutableStateOf(false) }
     var offlineMessage by remember { mutableStateOf("") }
@@ -120,7 +155,7 @@ fun SettingsScreen(
 
             SettingsSection(title = "Dados e Segurança", icon = Icons.Default.Backup) {
                 Text(
-                    "Proteja suas informações gerando um arquivo de backup com seu perfil e histórico de visitas.",
+                    "Proteja suas informações gerando um arquivo de backup com seu perfil e histórico de visitas ou restaure seus dados a partir de um backup.",
                     style = MaterialTheme.typography.bodySmall
                 )
                 OutlinedButton(
@@ -131,6 +166,16 @@ fun SettingsScreen(
                     Icon(Icons.Default.Backup, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text("FAZER BACKUP DOS DADOS")
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { filePickerLauncher.launch("application/json") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.Backup, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("RESTAURAR BACKUP (IMPORTAR JSON)")
                 }
             }
 

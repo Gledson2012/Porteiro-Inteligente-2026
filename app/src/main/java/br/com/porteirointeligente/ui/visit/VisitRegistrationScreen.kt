@@ -104,7 +104,25 @@ fun VisitRegistrationScreen(
 
             OutlinedTextField(
                 value = telefone,
-                onValueChange = { telefone = it },
+                onValueChange = { input ->
+                    val clean = input.replace(Regex("[^0-9]"), "")
+                    if (clean.length <= 11) {
+                        telefone = when {
+                            clean.length > 7 -> {
+                                val ddd = clean.take(2)
+                                val firstPart = clean.substring(2, clean.length - 4)
+                                val secondPart = clean.substring(clean.length - 4)
+                                "($ddd) $firstPart-$secondPart"
+                            }
+                            clean.length > 2 -> {
+                                val ddd = clean.take(2)
+                                val firstPart = clean.substring(2)
+                                "($ddd) $firstPart"
+                            }
+                            else -> clean
+                        }
+                    }
+                },
                 label = { Text("Telefone") },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),

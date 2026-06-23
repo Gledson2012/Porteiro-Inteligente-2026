@@ -38,6 +38,14 @@ class OwnerRegistrationViewModel @Inject constructor(
             return
         }
 
+        val cleanCep = cep.replace(Regex("[^0-9]"), "")
+        if (cleanCep.isNotEmpty() && cleanCep.length != 8) {
+            viewModelScope.launch {
+                _registrationEvent.emit(RegistrationUiEvent.ErrorCep)
+            }
+            return
+        }
+
         viewModelScope.launch {
             val persistedPhotoUri = if (photoUri != null && photoUri.startsWith("content://")) {
                 PhotoSaver.savePhotoToInternalStorage(context, android.net.Uri.parse(photoUri))
@@ -46,15 +54,31 @@ class OwnerRegistrationViewModel @Inject constructor(
             }
 
             val formattedPhone = if (cleanPhone.startsWith("55")) cleanPhone else "55$cleanPhone"
-            val payload = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+            
+            // Cria um payload JSON estruturado com as informações necessárias do morador
+            val cleanName = nome.trim()
+            val cleanCondo = nomeCondominio.trim()
+            val cleanAp = apartamento.trim()
+            val cleanAddress = endereco.trim()
+            
+            val jsonPayload = """{"phone":"$formattedPhone","name":"$cleanName","ap":"$cleanAp","condo":"$cleanCondo"}"""
+            val encryptedPayload = br.com.porteirointeligente.util.CryptoUtil.encrypt(jsonPayload)
+            
+            // O payload final é uma URL amigável que contém o dado criptografado.
+            // Se lida fora do app, direciona para o site institucional. Se lida no app, decifra o morador.
+            val payload = if (encryptedPayload != null) {
+                "https://porteirointeligente.com/scan?data=$encryptedPayload"
+            } else {
+                "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+            }
             
             val owner = Owner(
                 id = id,
-                nome = nome.trim(),
-                nomeCondominio = nomeCondominio.trim(),
-                endereco = endereco.trim(),
-                cep = cep.trim(),
-                apartamento = apartamento.trim(),
+                nome = cleanName,
+                nomeCondominio = cleanCondo,
+                endereco = cleanAddress,
+                cep = cleanCep,
+                apartamento = cleanAp,
                 telefone = cleanPhone,
                 photoUri = persistedPhotoUri,
                 qrCodePayload = payload
@@ -73,5 +97,6 @@ class OwnerRegistrationViewModel @Inject constructor(
         object Success : RegistrationUiEvent()
         object ErrorFields : RegistrationUiEvent()
         object ErrorPhone : RegistrationUiEvent()
+        object ErrorCep : RegistrationUiEvent()
     }
 }

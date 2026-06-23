@@ -20,19 +20,48 @@ class ScannerViewModel @Inject constructor(
     val uiEvent: SharedFlow<ScannerUiEvent> = _uiEvent
 
     fun onQrCodeDetected(content: String) {
-        if (!content.startsWith("https://wa.me/")) {
-            viewModelScope.launch {
-                _uiEvent.emit(ScannerUiEvent.InvalidQrCode)
-            }
-            return
-        }
-
         viewModelScope.launch {
-            val owner = ownerRepository.observeAllOwners().first().firstOrNull()
-            if (owner != null && owner.isCurrentlyOffline()) {
-                _uiEvent.emit(ScannerUiEvent.ShowOfflineMessage(owner.offlineMessage, content))
+            var finalUrl: String? = null
+            var targetApartment: String? = null
+
+            if (content.startsWith("https://wa.me/")) {
+                // Formato legado em texto puro
+                finalUrl = content
+                val firstOwner = ownerRepository.observeAllOwners().first().firstOrNull()
+                targetApartment = firstOwner?.apartamento
+            } else if (content.startsWith("https://porteirointeligente.com/scan?data=")) {
+                // Novo formato criptografado para privacidade
+                val encryptedData = content.substringAfter("https://porteirointeligente.com/scan?data=")
+                val decryptedJson = br.com.porteirointeligente.util.CryptoUtil.decrypt(encryptedData)
+                if (decryptedJson != null) {
+                    try {
+                        val json = com.google.gson.JsonParser.parseString(decryptedJson).asJsonObject
+                        val phone = json.get("phone").asString
+                        val ap = json.get("ap").asString
+                        targetApartment = ap
+                        finalUrl = "https://wa.me/$phone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+
+            if (finalUrl == null) {
+                _uiEvent.emit(ScannerUiEvent.InvalidQrCode)
+                return@launch
+            }
+
+            // Busca o morador pelo apartamento do QR Code para verificar status offline
+            val owner = if (targetApartment != null) {
+                ownerRepository.getOwnerByApartamento(targetApartment)
             } else {
-                _uiEvent.emit(ScannerUiEvent.OpenWhatsApp(content))
+                ownerRepository.observeAllOwners().first().firstOrNull()
+            }
+
+            if (owner != null && owner.isCurrentlyOffline()) {
+                _uiEvent.emit(ScannerUiEvent.ShowOfflineMessage(owner.offlineMessage, finalUrl))
+            } else {
+                _uiEvent.emit(ScannerUiEvent.OpenWhatsApp(finalUrl))
             }
         }
     }

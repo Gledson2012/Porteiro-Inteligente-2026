@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -25,6 +27,16 @@ class HomeViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
     private val ownerRepository: OwnerRepository
 ) : ViewModel() {
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    init {
+        viewModelScope.launch {
+            ownerRepository.observeAllOwners().first()
+            _isLoading.value = false
+        }
+    }
 
     private val _condominioPadrao = MutableStateFlow("Condomínio")
     private val _apartamentoPadrao = MutableStateFlow("Unidade")

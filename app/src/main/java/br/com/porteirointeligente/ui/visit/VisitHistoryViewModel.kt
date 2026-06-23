@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -25,6 +26,16 @@ class VisitHistoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow<Filter>(Filter.ALL)
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    init {
+        viewModelScope.launch {
+            visitRepository.observeAllVisits().first()
+            _isLoading.value = false
+        }
+    }
 
     val owner: StateFlow<Owner?> = ownerRepository
         .observeAllOwners()

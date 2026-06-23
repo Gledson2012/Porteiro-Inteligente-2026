@@ -18,63 +18,88 @@ fun VisitItem(visit: Visit) {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateSdf = SimpleDateFormat("dd MMM", Locale.getDefault())
     
+    // Define a cor de destaque com base no status da visita
+    val statusColor = when (visit.status) {
+        br.com.porteirointeligente.domain.model.VisitStatus.ENTRADA_REGISTRADA -> MaterialTheme.colorScheme.primary // Laranja/Destaque
+        br.com.porteirointeligente.domain.model.VisitStatus.SAIDA_REGISTRADA -> MaterialTheme.colorScheme.secondary // Slate ou Teal se definido
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large, // Cantos mais suaves e modernos (16.dp)
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+        tonalElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Barra lateral indicadora de status
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        MaterialTheme.colorScheme.secondaryContainer,
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
+                    .width(6.dp)
+                    .fillMaxHeight()
+                    .align(Alignment.CenterVertically)
+                    .background(statusColor)
+                    .height(80.dp) // Altura fixa sutil para consistência
+            )
+
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = visit.nome.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
+                // Avatar circular com iniciais
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(
+                            statusColor.copy(alpha = 0.15f),
+                            CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = visit.nome.take(1).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor
+                    )
+                }
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = visit.nome,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = visit.motivo,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
+                // Dados textuais do visitante
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = visit.nome,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "${visit.motivo} • Ap ${visit.apartamento}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = sdf.format(Date(visit.dataEntrada)),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = dateSdf.format(Date(visit.dataEntrada)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                // Data e Hora de entrada
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = sdf.format(Date(visit.dataEntrada)),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = dateSdf.format(Date(visit.dataEntrada)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }

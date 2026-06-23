@@ -35,6 +35,9 @@ class SettingsViewModel @Inject constructor(
     private val _backupState = MutableStateFlow<BackupState>(BackupState.Idle)
     val backupState: StateFlow<BackupState> = _backupState
 
+    private val _restoreState = MutableStateFlow<RestoreState>(RestoreState.Idle)
+    val restoreState: StateFlow<RestoreState> = _restoreState
+
     init {
         loadOwner()
     }
@@ -93,10 +96,34 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun restoreBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _restoreState.value = RestoreState.Loading
+            val success = backupManager.restoreBackup(uri)
+            if (success) {
+                _restoreState.value = RestoreState.Success
+                loadOwner() // Recarrega o morador no ViewModel
+            } else {
+                _restoreState.value = RestoreState.Error("Falha ao importar o arquivo de backup.")
+            }
+        }
+    }
+
+    fun resetRestoreState() {
+        _restoreState.value = RestoreState.Idle
+    }
+
     sealed class BackupState {
         object Idle : BackupState()
         object Loading : BackupState()
         object Success : BackupState()
         data class Error(val message: String) : BackupState()
+    }
+
+    sealed class RestoreState {
+        object Idle : RestoreState()
+        object Loading : RestoreState()
+        object Success : RestoreState()
+        data class Error(val message: String) : RestoreState()
     }
 }

@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.R
 import br.com.porteirointeligente.domain.model.Owner
-import br.com.porteirointeligente.ui.components.VisitItem
+import br.com.porteirointeligente.ui.components.*
 import coil.compose.AsyncImage
 
 @Composable
@@ -42,6 +42,7 @@ fun HomeScreen(
     val visitas by viewModel.visitasRecentes.collectAsState()
     val morador by viewModel.moradorCadastrado.collectAsState()
     val qrCode by viewModel.qrCodeMorador.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -53,61 +54,78 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                HomeHeader(condominio, apartamento, morador)
-            }
-
-            item {
-                ResidentSkin(morador, qrCode)
-            }
-
-            item {
-                StatsCard(visitas.size)
-            }
-
-            item {
-                ActionButtons(
-                    hasMorador = morador != null,
-                    onScannerClick = onNavigateToScanner,
-                    onProfileClick = onNavigateToProfile
-                )
-            }
-
-            item {
-                Text(
-                    text = "Visitas Recentes",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            if (visitas.isEmpty()) {
+            if (isLoading) {
+                item { ShimmerHeader() }
+                item { ShimmerBox(modifier = Modifier.fillMaxWidth().height(140.dp), shape = MaterialTheme.shapes.large) }
+                item { ShimmerStatsCard() }
                 item {
-                    Text(
-                        text = "Nenhuma visita recente registrada.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 16.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ShimmerBox(modifier = Modifier.weight(1f).height(48.dp), shape = MaterialTheme.shapes.medium)
+                        ShimmerBox(modifier = Modifier.weight(1f).height(48.dp), shape = MaterialTheme.shapes.medium)
+                    }
+                }
+                item { ShimmerTextLine(width = 140.dp, height = 20.dp) }
+                repeat(3) { item { ShimmerVisitItem() } }
+            } else {
+                item {
+                    HomeHeader(condominio, apartamento, morador)
+                }
+
+                item {
+                    ResidentSkin(morador, qrCode)
+                }
+
+                item {
+                    StatsCard(visitas.size)
+                }
+
+                item {
+                    ActionButtons(
+                        hasMorador = morador != null,
+                        onScannerClick = onNavigateToScanner,
+                        onProfileClick = onNavigateToProfile
                     )
                 }
-            } else {
-                items(visitas) { visit ->
-                    VisitItem(visit)
-                }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(R.string.credits_created_by),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                )
+                item {
+                    Text(
+                        text = "Visitas Recentes",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (visitas.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nenhuma visita recente registrada.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                } else {
+                    items(visitas) { visit ->
+                        VisitItem(visit)
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = stringResource(R.string.credits_created_by),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -115,39 +133,49 @@ fun HomeScreen(
 
 @Composable
 fun HomeHeader(condominio: String, apartamento: String, morador: Owner?) {
-    Row(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column {
-            Text(
-                text = if (morador != null) "Olá, ${morador.nome.split(" ").first()}" else "Bem-vindo,",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Text(
-                text = condominio,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = apartamento,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.secondary
-            )
-        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (morador != null) "Olá, ${morador.nome.split(" ").first()}" else "Bem-vindo,",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = condominio,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = apartamento,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
 
-        if (morador != null) {
-            AsyncImage(
-                model = morador.photoUri,
-                contentDescription = "Foto de perfil",
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (morador != null) {
+                AsyncImage(
+                    model = morador.photoUri,
+                    contentDescription = "Foto de perfil",
+                    modifier = Modifier
+                        .size(68.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
     }
 }
@@ -158,10 +186,11 @@ fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = MaterialTheme.colorScheme.surface
             ),
             shape = MaterialTheme.shapes.large,
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -170,8 +199,9 @@ fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
             ) {
                 Box(
                     modifier = Modifier
-                        .size(100.dp)
-                        .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+                        .size(90.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
+                        .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
                         .padding(8.dp)
                 ) {
                     Image(
@@ -183,10 +213,12 @@ fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Seu QR Code",
+                        text = "Seu QR Code de Acesso",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = "Apresente este código para identificação rápida no condomínio.",
                         style = MaterialTheme.typography.bodySmall,
@@ -200,15 +232,24 @@ fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
 
 @Composable
 fun StatsCard(count: Int) {
+    val gradientBrush = androidx.compose.ui.graphics.Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+        )
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondary // SlateDark
-        ),
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier
+                .background(gradientBrush)
+                .padding(24.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -216,8 +257,10 @@ fun StatsCard(count: Int) {
                 Text(
                     text = "Movimentação Hoje",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
+                    fontWeight = FontWeight.Medium
                 )
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = "$count Visitas",
                     style = MaterialTheme.typography.headlineMedium,
@@ -226,7 +269,7 @@ fun StatsCard(count: Int) {
                 )
             }
             Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                 shape = CircleShape,
                 modifier = Modifier.size(56.dp)
             ) {

@@ -2,6 +2,7 @@ package br.com.porteirointeligente.util
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
@@ -10,8 +11,10 @@ import br.com.porteirointeligente.domain.model.Visit
 import com.google.gson.GsonBuilder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -68,6 +71,38 @@ class BackupManager @Inject constructor(
 
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    /**
+     * Restaura os dados a partir de um arquivo de backup JSON selecionado.
+     */
+    suspend fun restoreBackup(uri: Uri): Boolean {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return false
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val jsonString = reader.use { it.readText() }
+
+            val backup = gson.fromJson(jsonString, BackupData::class.java) ?: return false
+
+            // Limpa o banco de dados antes da restauração
+            ownerRepository.deleteAll()
+            visitRepository.clearAll()
+
+            // Insere o morador recuperado
+            backup.owner?.let {
+                ownerRepository.insertOwner(it)
+            }
+
+            // Insere o histórico de visitas recuperado
+            backup.visits.forEach { visit ->
+                visitRepository.insertVisit(visit)
+            }
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 }
