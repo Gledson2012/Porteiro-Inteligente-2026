@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.util.AppTheme
 import java.util.concurrent.TimeUnit
 
-private const val LANDING_PAGE_URL = "https://porteiro-inteligente.vercel.app"
+private const val LANDING_PAGE_URL = "https://project-v6x0x.vercel.app"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
