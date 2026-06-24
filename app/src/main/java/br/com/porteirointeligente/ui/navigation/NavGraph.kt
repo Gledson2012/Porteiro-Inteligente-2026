@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import br.com.porteirointeligente.ui.home.HomeScreen
+import br.com.porteirointeligente.ui.owner.OwnerManagementScreen
 import br.com.porteirointeligente.ui.owner.ProfileScreen
 import br.com.porteirointeligente.ui.scanner.ScannerScreen
 import br.com.porteirointeligente.ui.settings.SettingsScreen
@@ -40,6 +41,7 @@ sealed class Screen(
     object Settings : Screen("settings", "Ajustes", Icons.Filled.Settings, Icons.Outlined.Settings)
     object Scanner : Screen("scanner", "Scanner", Icons.Filled.QrCodeScanner, Icons.Outlined.QrCodeScanner)
     object VisitRegistration : Screen("visit_registration", "Registrar Visita", Icons.Filled.Add, Icons.Outlined.Add)
+    object OwnerManagement : Screen("owner_management", "Gerenciar", Icons.Filled.People, Icons.Outlined.People)
 }
 
 @Composable
@@ -120,12 +122,33 @@ fun MainScreen() {
             }
             composable(Screen.History.route) { VisitHistoryScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onNavigateToOwnerManagement = {
+                        navController.navigate(Screen.OwnerManagement.route)
+                    }
+                )
+            }
             composable(Screen.Scanner.route) {
                 ScannerScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(Screen.VisitRegistration.route) {
                 VisitRegistrationScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Screen.OwnerManagement.route) {
+                OwnerManagementScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onEditOwner = { owner ->
+                        // Navega de volta ao perfil - o usuário edita pela ProfileScreen
+                        navController.navigate(Screen.Profile.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
             }
         }
     }

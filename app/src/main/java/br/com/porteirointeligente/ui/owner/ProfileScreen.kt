@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.print.PrintHelper
 import coil.compose.AsyncImage
 import br.com.porteirointeligente.domain.model.Owner
+import br.com.porteirointeligente.util.StringUtils
 import java.io.File
 import java.io.FileOutputStream
 
@@ -44,12 +46,25 @@ fun ProfileScreen(
 ) {
     val uiState by detailsViewModel.uiState.collectAsState()
     var isEditing by remember { mutableStateOf(false) }
+    var editingOwner by remember { mutableStateOf<Owner?>(null) }
+    var showOwnerList by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        detailsViewModel.loadOwner()
+        // O init do ViewModel já carrega os moradores
     }
 
-    Scaffold { padding ->
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    editingOwner = null
+                    isEditing = true
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Adicionar morador")
+            }
+        }
+    ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             when (val state = uiState) {
                 is OwnerDetailsViewModel.OwnerDetailsUiState.Loading -> {
@@ -58,31 +73,170 @@ fun ProfileScreen(
                 is OwnerDetailsViewModel.OwnerDetailsUiState.Success -> {
                     if (isEditing) {
                         OwnerRegistrationForm(
-                            owner = state.owner,
-                            onSave = { 
+                            owner = editingOwner,
+                            onSave = {
                                 isEditing = false
-                                detailsViewModel.loadOwner()
+                                editingOwner = null
                             },
-                            onCancel = { isEditing = false },
+                            onCancel = {
+                                isEditing = false
+                                editingOwner = null
+                            },
                             viewModel = registrationViewModel
                         )
                     } else {
                         OwnerDetailsView(
                             owner = state.owner,
                             qrCode = state.qrCode,
-                            onEdit = { isEditing = true },
-                            onDelete = { detailsViewModel.deleteOwner() }
+                            allOwners = state.allOwners,
+                            onEdit = {
+                                editingOwner = state.owner
+                                isEditing = true
+                            },
+                            onDelete = { detailsViewModel.deleteOwner(state.owner.id) },
+                            onSelectOwner = { detailsViewModel.selecionarOwner(it.id) },
+                            onShowList = { showOwnerList = !showOwnerList }
                         )
+
+                        if (showOwnerList) {
+                            OwnerListOverlay(
+                                owners = state.allOwners,
+                                selectedOwnerId = state.owner.id,
+                                onSelect = {
+                                    detailsViewModel.selecionarOwner(it.id)
+                                    showOwnerList = false
+                                },
+                                onDismiss = { showOwnerList = false }
+                            )
+                        }
                     }
                 }
                 is OwnerDetailsViewModel.OwnerDetailsUiState.Empty -> {
-                    OwnerRegistrationForm(
-                        owner = null,
-                        onSave = { detailsViewModel.loadOwner() },
-                        onCancel = { /* Pode voltar para Home */ },
-                        viewModel = registrationViewModel
+                    if (isEditing) {
+                        OwnerRegistrationForm(
+                            owner = null,
+                            onSave = {
+                                isEditing = false
+                            },
+                            onCancel = { isEditing = false },
+                            viewModel = registrationViewModel
+                        )
+                    } else {
+                        // Tela vazia com botão de cadastro
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                Icons.Default.PersonAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = "Nenhum morador cadastrado",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = { isEditing = true }) {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Cadastrar Morador")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OwnerListOverlay(
+    owners: List<Owner>,
+    selectedOwnerId: Long,
+    onSelect: (Owner) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .padding(32.dp)
+                .widthIn(max = 400.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Moradores",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider()
+                owners.forEach { owner ->
+                    OwnerListItem(
+                        owner = owner,
+                        isSelected = owner.id == selectedOwnerId,
+                        onClick = { onSelect(owner) }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OwnerListItem(owner: Owner, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            AsyncImage(
+                model = owner.photoUri,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = owner.nome,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Apto ${owner.apartamento}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (isSelected) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = "Selecionado",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
@@ -92,8 +246,11 @@ fun ProfileScreen(
 fun OwnerDetailsView(
     owner: Owner,
     qrCode: Bitmap?,
+    allOwners: List<Owner> = emptyList(),
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onSelectOwner: (Owner) -> Unit = {},
+    onShowList: () -> Unit = {}
 ) {
     val gradient = androidx.compose.ui.graphics.Brush.linearGradient(
         colors = listOf(
@@ -114,7 +271,22 @@ fun OwnerDetailsView(
                 .fillMaxWidth()
                 .height(130.dp)
                 .background(gradient)
-        )
+        ) {
+            if (allOwners.size > 1) {
+                IconButton(
+                    onClick = onShowList,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.SwapHoriz,
+                        contentDescription = "Trocar morador",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
 
         // Foto de Perfil sobreposta ao Banner
         Box(
@@ -151,7 +323,18 @@ fun OwnerDetailsView(
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            
+
+            // Indicador de múltiplos moradores
+            if (allOwners.size > 1) {
+                AssistChip(
+                    onClick = onShowList,
+                    label = { Text("${allOwners.size} moradores") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                )
+            }
+
             // Detalhes do Morador em um Cartão
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -165,7 +348,7 @@ fun OwnerDetailsView(
                 ) {
                     DetailRow(icon = Icons.Default.Apartment, label = "Condomínio", value = owner.nomeCondominio.ifBlank { "Não informado" })
                     DetailRow(icon = Icons.Default.Home, label = "Unidade", value = "Apto ${owner.apartamento}")
-                    DetailRow(icon = Icons.Default.Phone, label = "Contato", value = formatPhone(owner.telefone))
+                    DetailRow(icon = Icons.Default.Phone, label = "Contato", value = StringUtils.formatPhone(owner.telefone))
                     if (owner.endereco.isNotBlank()) {
                         DetailRow(icon = Icons.Default.LocationOn, label = "Endereço", value = owner.endereco)
                     }
@@ -306,19 +489,6 @@ fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Stri
     }
 }
 
-private fun formatPhone(raw: String): String {
-    val clean = raw.replace(Regex("[^0-9]"), "")
-    return when {
-        clean.length >= 11 -> {
-            "(${clean.substring(0, 2)}) ${clean.substring(2, 7)}-${clean.substring(7, 11)}"
-        }
-        clean.length == 10 -> {
-            "(${clean.substring(0, 2)}) ${clean.substring(2, 6)}-${clean.substring(6, 10)}"
-        }
-        else -> clean
-    }
-}
-
 private fun saveQrToGallery(context: Context, bitmap: Bitmap) {
     try {
         val filename = "QR_Porteiro_${System.currentTimeMillis()}.jpg"
@@ -380,15 +550,6 @@ private fun printQrCode(context: Context, bitmap: Bitmap) {
     }
 }
 
-private fun formatCep(raw: String): String {
-    val clean = raw.replace(Regex("[^0-9]"), "")
-    return if (clean.length == 8) {
-        "${clean.substring(0, 5)}-${clean.substring(5)}"
-    } else {
-        clean
-    }
-}
-
 @Composable
 fun OwnerRegistrationForm(
     owner: Owner?,
@@ -400,9 +561,9 @@ fun OwnerRegistrationForm(
     var nome by remember { mutableStateOf(owner?.nome ?: "") }
     var nomeCondominio by remember { mutableStateOf(owner?.nomeCondominio ?: "") }
     var endereco by remember { mutableStateOf(owner?.endereco ?: "") }
-    var cep by remember { mutableStateOf(owner?.cep?.let { formatCep(it) } ?: "") }
+    var cep by remember { mutableStateOf(owner?.cep?.let { StringUtils.formatCep(it) } ?: "") }
     var apartamento by remember { mutableStateOf(owner?.apartamento ?: "") }
-    var telefone by remember { mutableStateOf(owner?.telefone?.let { formatPhone(it) } ?: "") }
+    var telefone by remember { mutableStateOf(owner?.telefone?.let { StringUtils.formatPhone(it) } ?: "") }
     var photoUri by remember { mutableStateOf(owner?.photoUri) }
 
     val pickImageLauncher = rememberLauncherForActivityResult(
@@ -513,25 +674,7 @@ fun OwnerRegistrationForm(
 
         OutlinedTextField(
             value = telefone,
-            onValueChange = { input ->
-                val clean = input.replace(Regex("[^0-9]"), "")
-                if (clean.length <= 11) {
-                    telefone = when {
-                        clean.length > 7 -> {
-                            val ddd = clean.take(2)
-                            val firstPart = clean.substring(2, clean.length - 4)
-                            val secondPart = clean.substring(clean.length - 4)
-                            "($ddd) $firstPart-$secondPart"
-                        }
-                        clean.length > 2 -> {
-                            val ddd = clean.take(2)
-                            val firstPart = clean.substring(2)
-                            "($ddd) $firstPart"
-                        }
-                        else -> clean
-                    }
-                }
-            },
+            onValueChange = { telefone = StringUtils.maskPhone(it) },
             label = { Text("WhatsApp *") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(

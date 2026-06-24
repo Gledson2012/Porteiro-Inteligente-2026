@@ -32,7 +32,11 @@ object AppModule {
         AppDatabase::class.java,
         AppDatabase.DATABASE_NAME
     )
-        .fallbackToDestructiveMigration()
+        // Para versão de produção, adicione migrações explícitas em AppDatabase.MIGRATIONS
+        // .addMigrations(*AppDatabase.MIGRATIONS)
+        // fallbackToDestructiveMigration() removido propositalmente:
+        // se houver mudança de esquema sem migração, o app irá crashar
+        // em vez de perder dados silenciosamente.
         .build()
 
     @Provides

@@ -42,12 +42,15 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         compose = true
     }
 
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
+    }
+
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     packaging {
@@ -94,9 +97,7 @@ dependencies {
 
     // Core / Material (Legacy support)
     implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity-ktx:1.9.2")
-    implementation("androidx.fragment:fragment-ktx:1.8.3")
 
     // Lifecycle / ViewModel / LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
@@ -128,8 +129,18 @@ dependencies {
     // Print
     implementation("androidx.print:print:1.0.0")
 
+    // Networking (Retrofit + OkHttp para sync REST)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // Test
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("io.mockk:mockk:1.13.13")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

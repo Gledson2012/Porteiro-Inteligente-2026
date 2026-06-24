@@ -6,6 +6,7 @@ import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.AppTheme
 import br.com.porteirointeligente.util.BackupManager
+import br.com.porteirointeligente.util.OwnerSelectionManager
 import br.com.porteirointeligente.util.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val ownerRepository: OwnerRepository,
     private val themeManager: ThemeManager,
-    private val backupManager: BackupManager
+    private val backupManager: BackupManager,
+    private val ownerSelectionManager: OwnerSelectionManager
 ) : ViewModel() {
 
     val themeState: StateFlow<AppTheme> = themeManager.themeFlow
@@ -32,6 +34,12 @@ class SettingsViewModel @Inject constructor(
     private val _owner = MutableStateFlow<Owner?>(null)
     val owner: StateFlow<Owner?> = _owner
 
+    private val _allOwners = MutableStateFlow<List<Owner>>(emptyList())
+    val allOwners: StateFlow<List<Owner>> = _allOwners
+
+    /** ID do morador selecionado para configurações */
+    private val _selectedOwnerForSettings = MutableStateFlow<Long?>(null)
+
     private val _backupState = MutableStateFlow<BackupState>(BackupState.Idle)
     val backupState: StateFlow<BackupState> = _backupState
 
@@ -39,14 +47,27 @@ class SettingsViewModel @Inject constructor(
     val restoreState: StateFlow<RestoreState> = _restoreState
 
     init {
-        loadOwner()
+        loadOwners()
     }
 
-    private fun loadOwner() {
+    private fun loadOwners() {
         viewModelScope.launch {
             ownerRepository.observeAllOwners().collect { owners ->
-                _owner.value = owners.firstOrNull()
+                _allOwners.value = owners
+                // Sincroniza com o OwnerSelectionManager
+                val selectedId = ownerSelectionManager.getSelectedOwnerId()
+                val current = if (selectedId != null) owners.find { it.id == selectedId }
+                              else owners.firstOrNull()
+                _owner.value = current
+                _selectedOwnerForSettings.value = current?.id
             }
+        }
+    }
+
+    /** Troca o morador ativo das configurações */
+    fun selecionarMorador(ownerId: Long) {
+        viewModelScope.launch {
+            ownerSelectionManager.selectOwner(ownerId)
         }
     }
 
@@ -96,13 +117,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /** Seleciona um morador para visualizar/editar configurações */
+    fun selecionarOwnerParaConfig(ownerId: Long) {
+        _selectedOwnerForSettings.value = ownerId
+        _owner.value = _allOwners.value.find { it.id == ownerId }
+    }
+
     fun restoreBackup(uri: android.net.Uri) {
         viewModelScope.launch {
             _restoreState.value = RestoreState.Loading
             val success = backupManager.restoreBackup(uri)
             if (success) {
                 _restoreState.value = RestoreState.Success
-                loadOwner() // Recarrega o morador no ViewModel
+                loadOwners() // Recarrega os moradores no ViewModel
             } else {
                 _restoreState.value = RestoreState.Error("Falha ao importar o arquivo de backup.")
             }

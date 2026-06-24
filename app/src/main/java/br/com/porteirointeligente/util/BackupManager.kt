@@ -29,19 +29,21 @@ class BackupManager @Inject constructor(
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
     data class BackupData(
-        val version: Int = 1,
+        val version: Int = 2,
         val exportDate: String,
         val owner: Owner?,
+        val owners: List<Owner> = emptyList(),
         val visits: List<Visit>
     )
 
     suspend fun generateBackupAndShare() {
-        val owner = ownerRepository.observeAllOwners().first().firstOrNull()
+        val owners = ownerRepository.observeAllOwners().first()
         val visits = visitRepository.observeAllVisits().first()
 
         val backup = BackupData(
             exportDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()),
-            owner = owner,
+            owner = owners.firstOrNull(),
+            owners = owners,
             visits = visits
         )
 
@@ -89,9 +91,14 @@ class BackupManager @Inject constructor(
             ownerRepository.deleteAll()
             visitRepository.clearAll()
 
-            // Insere o morador recuperado
-            backup.owner?.let {
-                ownerRepository.insertOwner(it)
+            // Insere os moradores recuperados (suporta versão 2+ com múltiplos owners)
+            val ownersToRestore = if (backup.version >= 2 && backup.owners.isNotEmpty()) {
+                backup.owners
+            } else {
+                backup.owner?.let { listOf(it) } ?: emptyList()
+            }
+            ownersToRestore.forEach { owner ->
+                ownerRepository.insertOwner(owner)
             }
 
             // Insere o histórico de visitas recuperado

@@ -10,12 +10,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,10 +45,15 @@ fun HomeScreen(
     val apartamento by viewModel.apartamento.collectAsState()
     val visitas by viewModel.visitasRecentes.collectAsState()
     val morador by viewModel.moradorCadastrado.collectAsState()
+    val todosMoradores by viewModel.todosMoradores.collectAsState()
     val qrCode by viewModel.qrCodeMorador.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
+        /*⚠️ WARNING: the HomeScreen currently uses `viewModel.moradorCadastrado` to access the selected resident.
+          This remains consistent as `moradorCadastrado` is now an alias for `moradorSelecionado`.
+          The HomeHeader composable also receives the selected resident.*/
+
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToVisitRegistration) {
                 Icon(Icons.Default.Add, contentDescription = "Registrar Visita")
@@ -75,7 +84,13 @@ fun HomeScreen(
                 repeat(3) { item { ShimmerVisitItem() } }
             } else {
                 item {
-                    HomeHeader(condominio, apartamento, morador)
+                    HomeHeader(
+                        condominio = condominio,
+                        apartamento = apartamento,
+                        morador = morador,
+                        todosMoradores = todosMoradores,
+                        onOwnerSelected = { viewModel.selecionarMorador(it.id) }
+                    )
                 }
 
                 item {
@@ -132,7 +147,15 @@ fun HomeScreen(
 }
 
 @Composable
-fun HomeHeader(condominio: String, apartamento: String, morador: Owner?) {
+fun HomeHeader(
+    condominio: String,
+    apartamento: String,
+    morador: Owner?,
+    todosMoradores: List<Owner> = emptyList(),
+    onOwnerSelected: (Owner) -> Unit = {}
+) {
+    var showOwnerMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -165,16 +188,57 @@ fun HomeHeader(condominio: String, apartamento: String, morador: Owner?) {
                 )
             }
 
-            if (morador != null) {
-                AsyncImage(
-                    model = morador.photoUri,
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier
-                        .size(68.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Seletor de morador (dropdown)
+                if (todosMoradores.size > 1) {
+                    Box {
+                        IconButton(onClick = { showOwnerMenu = true }) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Trocar morador",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showOwnerMenu,
+                            onDismissRequest = { showOwnerMenu = false }
+                        ) {
+                            todosMoradores.forEach { owner ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            owner.nome.split(" ").first(),
+                                            fontWeight = if (owner.id == morador?.id) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    onClick = {
+                                        onOwnerSelected(owner)
+                                        showOwnerMenu = false
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            if (owner.id == morador?.id) Icons.Default.CheckCircle else Icons.Default.Circle,
+                                            contentDescription = null,
+                                            tint = if (owner.id == morador?.id) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (morador != null) {
+                    AsyncImage(
+                        model = morador.photoUri,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier
+                            .size(68.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
         }
     }

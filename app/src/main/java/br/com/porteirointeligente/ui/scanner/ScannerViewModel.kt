@@ -3,7 +3,8 @@ package br.com.porteirointeligente.ui.scanner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.OwnerRepository
-import br.com.porteirointeligente.domain.model.Owner
+import br.com.porteirointeligente.util.CryptoUtil
+import com.google.gson.JsonParser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScannerViewModel @Inject constructor(
-    private val ownerRepository: OwnerRepository
+    private val ownerRepository: OwnerRepository,
+    private val cryptoUtil: CryptoUtil
 ) : ViewModel() {
 
     private val _uiEvent = MutableSharedFlow<ScannerUiEvent>()
@@ -32,10 +34,10 @@ class ScannerViewModel @Inject constructor(
             } else if (content.startsWith("https://porteirointeligente.com/scan?data=")) {
                 // Novo formato criptografado para privacidade
                 val encryptedData = content.substringAfter("https://porteirointeligente.com/scan?data=")
-                val decryptedJson = br.com.porteirointeligente.util.CryptoUtil.decrypt(encryptedData)
+                val decryptedJson = cryptoUtil.decrypt(encryptedData)
                 if (decryptedJson != null) {
                     try {
-                        val json = com.google.gson.JsonParser.parseString(decryptedJson).asJsonObject
+                        val json = JsonParser.parseString(decryptedJson).asJsonObject
                         val phone = json.get("phone").asString
                         val ap = json.get("ap").asString
                         targetApartment = ap

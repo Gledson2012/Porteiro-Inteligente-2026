@@ -30,13 +30,20 @@ class VisitHistoryViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _allOwners = MutableStateFlow<List<Owner>>(emptyList())
+    val allOwners: StateFlow<List<Owner>> = _allOwners
+
     init {
         viewModelScope.launch {
             visitRepository.observeAllVisits().first()
+            ownerRepository.observeAllOwners().collect { owners ->
+                _allOwners.value = owners
+            }
             _isLoading.value = false
         }
     }
 
+    /** Morador mais antigo para compatibilidade com a UI existente */
     val owner: StateFlow<Owner?> = ownerRepository
         .observeAllOwners()
         .map { it.firstOrNull() }

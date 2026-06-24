@@ -18,14 +18,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.R
 import br.com.porteirointeligente.util.AppTheme
 import java.util.concurrent.TimeUnit
-
-private const val LANDING_PAGE_URL = "https://project-v6x0x.vercel.app"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onNavigateToOwnerManagement: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val owner by viewModel.owner.collectAsState()
@@ -196,6 +196,22 @@ fun SettingsScreen(
                 Text("SALVAR ALTERAÇÕES")
             }
 
+            SettingsSection(title = "Moradores", icon = Icons.Default.People) {
+                Text(
+                    "Visualize, edite ou exclua todos os moradores cadastrados no aplicativo.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                OutlinedButton(
+                    onClick = onNavigateToOwnerManagement,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Icon(Icons.Default.People, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("GERENCIAR MORADORES")
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
             SobreSection()
         }
@@ -247,21 +263,22 @@ private fun SobreSection() {
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedButton(
-                    onClick = {
-                        try {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(LANDING_PAGE_URL))
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Erro ao abrir o link.", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Acessar site do app", style = MaterialTheme.typography.labelMedium)
-                }
+                        onClick = {
+                            try {
+                                val url = context.getString(R.string.landing_page_url)
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Erro ao abrir o link.", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Acessar site do app", style = MaterialTheme.typography.labelMedium)
+                    }
             }
         }
     }

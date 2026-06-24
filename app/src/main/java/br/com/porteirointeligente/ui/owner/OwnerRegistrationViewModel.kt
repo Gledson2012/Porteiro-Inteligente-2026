@@ -1,10 +1,12 @@
 package br.com.porteirointeligente.ui.owner
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.domain.model.Owner
+import br.com.porteirointeligente.util.CryptoUtil
 import br.com.porteirointeligente.util.PhotoSaver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class OwnerRegistrationViewModel @Inject constructor(
     private val ownerRepository: OwnerRepository,
+    private val cryptoUtil: CryptoUtil,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -48,22 +51,22 @@ class OwnerRegistrationViewModel @Inject constructor(
 
         viewModelScope.launch {
             val persistedPhotoUri = if (photoUri != null && photoUri.startsWith("content://")) {
-                PhotoSaver.savePhotoToInternalStorage(context, android.net.Uri.parse(photoUri))
+                PhotoSaver.savePhotoToInternalStorage(context, Uri.parse(photoUri))
             } else {
                 photoUri
             }
 
             val formattedPhone = if (cleanPhone.startsWith("55")) cleanPhone else "55$cleanPhone"
-            
+
             // Cria um payload JSON estruturado com as informações necessárias do morador
             val cleanName = nome.trim()
             val cleanCondo = nomeCondominio.trim()
             val cleanAp = apartamento.trim()
             val cleanAddress = endereco.trim()
-            
+
             val jsonPayload = """{"phone":"$formattedPhone","name":"$cleanName","ap":"$cleanAp","condo":"$cleanCondo"}"""
-            val encryptedPayload = br.com.porteirointeligente.util.CryptoUtil.encrypt(jsonPayload)
-            
+            val encryptedPayload = cryptoUtil.encrypt(jsonPayload)
+
             // O payload final é uma URL amigável que contém o dado criptografado.
             // Se lida fora do app, direciona para o site institucional. Se lida no app, decifra o morador.
             val payload = if (encryptedPayload != null) {
@@ -71,7 +74,7 @@ class OwnerRegistrationViewModel @Inject constructor(
             } else {
                 "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
             }
-            
+
             val owner = Owner(
                 id = id,
                 nome = cleanName,
