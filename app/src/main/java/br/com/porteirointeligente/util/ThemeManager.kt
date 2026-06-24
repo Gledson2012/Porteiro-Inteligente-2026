@@ -21,6 +21,7 @@ class ThemeManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val THEME_KEY = stringPreferencesKey("theme_preference")
+    private val DYNAMIC_COLOR_KEY = stringPreferencesKey("dynamic_color_preference")
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data
         .map { preferences ->
@@ -28,9 +29,21 @@ class ThemeManager @Inject constructor(
             AppTheme.valueOf(themeName)
         }
 
+    val dynamicColorFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[DYNAMIC_COLOR_KEY] ?: "false"
+        }
+        .map { it.toBoolean() }
+
     suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
+        }
+    }
+
+    suspend fun setDynamicColor(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DYNAMIC_COLOR_KEY] = enabled.toString()
         }
     }
 }

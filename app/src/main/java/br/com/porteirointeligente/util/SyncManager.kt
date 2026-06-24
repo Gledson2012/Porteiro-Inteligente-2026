@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -55,8 +56,17 @@ interface ApiService {
     @GET("api/owners")
     suspend fun getOwners(): List<OwnerDto>
 
+    @GET("api/owners/{id}")
+    suspend fun getOwnerById(@Path("id") id: Long): OwnerDto
+
     @POST("api/owners")
     suspend fun createOwner(@Body owner: OwnerDto): OwnerDto
+
+    @PUT("api/owners/{id}")
+    suspend fun updateOwner(@Path("id") id: Long, @Body owner: OwnerDto): OwnerDto
+
+    @DELETE("api/owners/{id}")
+    suspend fun deleteOwner(@Path("id") id: Long): retrofit2.Response<Unit>
 
     @GET("api/visits")
     suspend fun getVisits(): List<VisitDto>
@@ -81,10 +91,14 @@ class SyncManager @Inject constructor(
     private val visitRepository: VisitRepository
 ) {
 
-    private val api: ApiService?
+    private var api: ApiService? = null
 
     init {
-        api = try {
+        api = buildApi()
+    }
+
+    private fun buildApi(): ApiService? {
+        return try {
             val serverUrl = getServerUrl()
             if (serverUrl.isNotBlank()) {
                 Retrofit.Builder()
@@ -116,6 +130,12 @@ class SyncManager @Inject constructor(
             .edit()
             .putString("server_url", if (url.endsWith("/")) url else "$url/")
             .apply()
+        // Recria a API com a nova URL
+        recreateApi()
+    }
+
+    private fun recreateApi() {
+        api = buildApi()
     }
 
     /**
@@ -191,22 +211,43 @@ class SyncManager @Inject constructor(
             val localOwners = ownerRepository.observeAllOwners().first()
             localOwners.forEach { owner ->
                 try {
-                    api.createOwner(
-                        OwnerDto(
-                            nome = owner.nome,
-                            nomeCondominio = owner.nomeCondominio,
-                            endereco = owner.endereco,
-                            cep = owner.cep,
-                            apartamento = owner.apartamento,
-                            telefone = owner.telefone,
-                            photoUri = owner.photoUri,
-                            qrCodePayload = owner.qrCodePayload,
-                            dataCadastro = owner.dataCadastro,
-                            isOffline = owner.isOffline,
-                            offlineMessage = owner.offlineMessage,
-                            offlineUntil = owner.offlineUntil
+                    // Se o morador já tem ID, tenta atualizar; caso contrário, cria
+                    if (owner.id > 0L) {
+                        api.updateOwner(
+                            owner.id,
+                            OwnerDto(
+                                nome = owner.nome,
+                                nomeCondominio = owner.nomeCondominio,
+                                endereco = owner.endereco,
+                                cep = owner.cep,
+                                apartamento = owner.apartamento,
+                                telefone = owner.telefone,
+                                photoUri = owner.photoUri,
+                                qrCodePayload = owner.qrCodePayload,
+                                dataCadastro = owner.dataCadastro,
+                                isOffline = owner.isOffline,
+                                offlineMessage = owner.offlineMessage,
+                                offlineUntil = owner.offlineUntil
+                            )
                         )
-                    )
+                    } else {
+                        api.createOwner(
+                            OwnerDto(
+                                nome = owner.nome,
+                                nomeCondominio = owner.nomeCondominio,
+                                endereco = owner.endereco,
+                                cep = owner.cep,
+                                apartamento = owner.apartamento,
+                                telefone = owner.telefone,
+                                photoUri = owner.photoUri,
+                                qrCodePayload = owner.qrCodePayload,
+                                dataCadastro = owner.dataCadastro,
+                                isOffline = owner.isOffline,
+                                offlineMessage = owner.offlineMessage,
+                                offlineUntil = owner.offlineUntil
+                            )
+                        )
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

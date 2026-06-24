@@ -3,10 +3,59 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    
+    <!-- Shield/Building base shape -->
     <path
-        android:fillColor="#3DDC84"
-        android:pathData="M0,0h108v108h-108z" />
+        android:fillColor="#F59E0B"
+        android:pathData="M54,18L24,36v24c0,13.3 6.7,24.8 17.5,32L54,102l12.5,-10C77.3,84.8 84,73.3 84,60V36L54,18z" />
+    
+    <!-- Building door -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M54,58c-6.6,0 -12,5.4 -12,12v14h24V70c0,-6.6 -5.4,-12 -12,-12z" />
+    
+    <!-- Building windows row 1 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30L30,54L30,78L78,78L78,54z" />
+        android:pathData="M38,42h8v8h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,40h8v8h-8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,42h8v6h-8z" />
+    
+    <!-- QR code dots decoration -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,60h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,68h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,76h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,60h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,68h3v3h-3z" />
+    
+    <!-- QR code dots right side -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,60h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,68h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,76h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,68h3v3h-3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,76h3v3h-3z" />
 </vector>

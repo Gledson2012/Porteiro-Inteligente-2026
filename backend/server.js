@@ -24,6 +24,21 @@ app.get('/api/owners', (req, res) => {
   }
 });
 
+// GET /api/owners/:id - Busca um morador por ID
+app.get('/api/owners/:id', (req, res) => {
+  try {
+    const db = getDatabase();
+    const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(req.params.id);
+    if (!owner) {
+      return res.status(404).json({ error: 'Morador não encontrado' });
+    }
+    res.json(owner);
+  } catch (err) {
+    console.error('Erro ao buscar morador:', err);
+    res.status(500).json({ error: 'Erro ao buscar morador' });
+  }
+});
+
 // POST /api/owners - Cria um novo morador
 app.post('/api/owners', (req, res) => {
   try {
@@ -49,6 +64,53 @@ app.post('/api/owners', (req, res) => {
   } catch (err) {
     console.error('Erro ao criar morador:', err);
     res.status(500).json({ error: 'Erro ao criar morador' });
+  }
+});
+
+// PUT /api/owners/:id - Atualiza um morador
+app.put('/api/owners/:id', (req, res) => {
+  try {
+    const db = getDatabase();
+    const { id } = req.params;
+    const { nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil } = req.body;
+
+    const stmt = db.prepare(`
+      UPDATE owners SET nome=?, nomeCondominio=?, endereco=?, cep=?, apartamento=?, telefone=?,
+        photoUri=?, qrCodePayload=?, dataCadastro=?, isOffline=?, offlineMessage=?, offlineUntil=?
+      WHERE id=?
+    `);
+
+    const result = stmt.run(
+      nome, nomeCondominio || '', endereco, cep || '', apartamento, telefone,
+      photoUri || null, qrCodePayload, dataCadastro || Date.now(),
+      isOffline ? 1 : 0, offlineMessage || '', offlineUntil || null, id
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Morador não encontrado' });
+    }
+
+    res.json({ id: parseInt(id), ...req.body });
+  } catch (err) {
+    console.error('Erro ao atualizar morador:', err);
+    res.status(500).json({ error: 'Erro ao atualizar morador' });
+  }
+});
+
+// DELETE /api/owners/:id - Exclui um morador
+app.delete('/api/owners/:id', (req, res) => {
+  try {
+    const db = getDatabase();
+    const result = db.prepare('DELETE FROM owners WHERE id = ?').run(req.params.id);
+    
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Morador não encontrado' });
+    }
+
+    res.json({ message: 'Morador excluído com sucesso', id: parseInt(req.params.id) });
+  } catch (err) {
+    console.error('Erro ao excluir morador:', err);
+    res.status(500).json({ error: 'Erro ao excluir morador' });
   }
 });
 
@@ -130,10 +192,13 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🏠 Porteiro Inteligente API rodando em http://localhost:${PORT}`);
   console.log(`   Endpoints:`);
-  console.log(`   - GET  /api/owners`);
-  console.log(`   - POST /api/owners`);
-  console.log(`   - GET  /api/visits`);
-  console.log(`   - POST /api/visits`);
-  console.log(`   - PUT  /api/visits/:id`);
-  console.log(`   - GET  /api/health`);
+  console.log(`   - GET    /api/owners`);
+  console.log(`   - GET    /api/owners/:id`);
+  console.log(`   - POST   /api/owners`);
+  console.log(`   - PUT    /api/owners/:id`);
+  console.log(`   - DELETE /api/owners/:id`);
+  console.log(`   - GET    /api/visits`);
+  console.log(`   - POST   /api/visits`);
+  console.log(`   - PUT    /api/visits/:id`);
+  console.log(`   - GET    /api/health`);
 });

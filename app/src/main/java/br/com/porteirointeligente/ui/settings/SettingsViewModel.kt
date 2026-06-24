@@ -31,6 +31,13 @@ class SettingsViewModel @Inject constructor(
             initialValue = AppTheme.SYSTEM
         )
 
+    val dynamicColorState: StateFlow<Boolean> = themeManager.dynamicColorFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
+
     private val _owner = MutableStateFlow<Owner?>(null)
     val owner: StateFlow<Owner?> = _owner
 
@@ -74,6 +81,12 @@ class SettingsViewModel @Inject constructor(
     fun setTheme(theme: AppTheme) {
         viewModelScope.launch {
             themeManager.setTheme(theme)
+        }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        viewModelScope.launch {
+            themeManager.setDynamicColor(enabled)
         }
     }
 

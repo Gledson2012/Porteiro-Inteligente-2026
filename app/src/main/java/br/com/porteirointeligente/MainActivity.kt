@@ -23,13 +23,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeState by appViewModel.themeState.collectAsState()
+            val useDynamicColor by appViewModel.dynamicColorState.collectAsState()
             val darkTheme = when (themeState) {
                 AppTheme.LIGHT -> false
                 AppTheme.DARK -> true
                 AppTheme.SYSTEM -> isSystemInDarkTheme()
             }
 
-            PorteiroInteligenteTheme(darkTheme = darkTheme) {
+            PorteiroInteligenteTheme(
+                darkTheme = darkTheme,
+                dynamicColor = useDynamicColor
+            ) {
                 MainScreen()
             }
         }

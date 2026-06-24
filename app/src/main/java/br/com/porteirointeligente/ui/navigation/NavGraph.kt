@@ -1,7 +1,8 @@
 package br.com.porteirointeligente.ui.navigation
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -24,6 +26,7 @@ import br.com.porteirointeligente.ui.owner.OwnerManagementScreen
 import br.com.porteirointeligente.ui.owner.ProfileScreen
 import br.com.porteirointeligente.ui.scanner.ScannerScreen
 import br.com.porteirointeligente.ui.settings.SettingsScreen
+import br.com.porteirointeligente.ui.onboarding.OnboardingScreen
 import br.com.porteirointeligente.ui.splash.SplashScreen
 import br.com.porteirointeligente.ui.visit.VisitHistoryScreen
 import br.com.porteirointeligente.ui.visit.VisitRegistrationScreen
@@ -42,11 +45,16 @@ sealed class Screen(
     object Scanner : Screen("scanner", "Scanner", Icons.Filled.QrCodeScanner, Icons.Outlined.QrCodeScanner)
     object VisitRegistration : Screen("visit_registration", "Registrar Visita", Icons.Filled.Add, Icons.Outlined.Add)
     object OwnerManagement : Screen("owner_management", "Gerenciar", Icons.Filled.People, Icons.Outlined.People)
+    object Onboarding : Screen("onboarding", "Onboarding", Icons.Filled.Star, Icons.Outlined.Star)
 }
 
 @Composable
 fun MainScreen() {
     val navController = rememberNavController()
+    val onboardingViewModel: br.com.porteirointeligente.ui.onboarding.OnboardingViewModel =
+        androidx.hilt.navigation.compose.hiltViewModel()
+    val shouldShowOnboarding by onboardingViewModel.shouldShowOnboarding.collectAsState()
+
     val items = listOf(
         Screen.Home,
         Screen.History,
@@ -106,14 +114,37 @@ fun MainScreen() {
             startDestination = Screen.Splash.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Splash.route) {
+            composable(
+                route = Screen.Splash.route,
+                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                exitTransition = { fadeOut(animationSpec = tween(300)) }
+            ) {
                 SplashScreen(onSplashFinished = {
-                    navController.navigate(Screen.Home.route) {
+                    val destination = if (shouldShowOnboarding) Screen.Onboarding.route else Screen.Home.route
+                    navController.navigate(destination) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 })
             }
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Onboarding.route,
+                enterTransition = { fadeIn(animationSpec = tween(500)) },
+                exitTransition = { fadeOut(animationSpec = tween(300)) }
+            ) {
+                OnboardingScreen(
+                    onOnboardingFinished = {
+                        onboardingViewModel.completeOnboarding()
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable(
+                route = Screen.Home.route,
+                enterTransition = { fadeIn(animationSpec = tween(500)) },
+                exitTransition = { fadeOut(animationSpec = tween(300)) }
+            ) {
                 HomeScreen(
                     onNavigateToScanner = { navController.navigate(Screen.Scanner.route) },
                     onNavigateToVisitRegistration = { navController.navigate(Screen.VisitRegistration.route) },

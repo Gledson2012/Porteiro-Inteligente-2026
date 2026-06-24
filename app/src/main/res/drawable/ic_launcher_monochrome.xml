@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simplified monochrome icon for Android 13+ Themed Icons -->
+    <!-- Shield/building silhouette -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,18L24,36v24c0,13.3 6.7,24.8 17.5,32L54,102l12.5,-10C77.3,84.8 84,73.3 84,60V36L54,18z" />
+    <!-- Building door -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,58v14h16V58c0,-4.4 -3.6,-8 -8,-8s-8,3.6 -8,8z" />
+    <!-- Windows -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,42h8v8h-8zM54,40h8v8h-8zM70,42h8v6h-8z" />
+    <!-- QR corner blocks -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,60h4v4h-4zM28,68h4v4h-4zM28,76h4v4h-4zM36,60h4v4h-4zM78,60h4v4h-4zM78,68h4v4h-4zM78,76h4v4h-4zM70,68h4v4h-4z" />
+</vector>

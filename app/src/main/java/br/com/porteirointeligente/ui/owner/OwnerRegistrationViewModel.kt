@@ -50,6 +50,16 @@ class OwnerRegistrationViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            // Se estiver atualizando um morador existente, remove a foto antiga
+            if (id > 0L) {
+                val existingOwner = ownerRepository.getOwnerById(id)
+                existingOwner?.photoUri?.let { oldPhoto ->
+                    if (photoUri != null && photoUri != oldPhoto) {
+                        PhotoSaver.deletePhoto(context, oldPhoto)
+                    }
+                }
+            }
+
             val persistedPhotoUri = if (photoUri != null && photoUri.startsWith("content://")) {
                 PhotoSaver.savePhotoToInternalStorage(context, Uri.parse(photoUri))
             } else {

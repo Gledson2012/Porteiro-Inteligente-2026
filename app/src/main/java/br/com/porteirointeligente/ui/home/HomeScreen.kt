@@ -48,6 +48,9 @@ fun HomeScreen(
     val todosMoradores by viewModel.todosMoradores.collectAsState()
     val qrCode by viewModel.qrCodeMorador.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val statsTotalHoje by viewModel.statsTotalHoje.collectAsState()
+    val statsEntradasHoje by viewModel.statsEntradasHoje.collectAsState()
+    val statsVisitantesUnicos by viewModel.statsVisitantesUnicos.collectAsState()
 
     Scaffold(
         /*⚠️ WARNING: the HomeScreen currently uses `viewModel.moradorCadastrado` to access the selected resident.
@@ -98,7 +101,11 @@ fun HomeScreen(
                 }
 
                 item {
-                    StatsCard(visitas.size)
+                    StatsCard(
+                        totalHoje = statsTotalHoje,
+                        entradasAtivas = statsEntradasHoje,
+                        visitantesUnicos = statsVisitantesUnicos
+                    )
                 }
 
                 item {
@@ -295,56 +302,127 @@ fun ResidentSkin(morador: Owner?, qrCode: Bitmap?) {
 }
 
 @Composable
-fun StatsCard(count: Int) {
-    val gradientBrush = androidx.compose.ui.graphics.Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.secondary,
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+fun StatsCard(
+    totalHoje: Int,
+    entradasAtivas: Int,
+    visitantesUnicos: Int
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val gradientBrush = androidx.compose.ui.graphics.Brush.linearGradient(
+            colors = listOf(
+                MaterialTheme.colorScheme.secondary,
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.85f)
+            )
         )
-    )
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .background(gradientBrush)
-                .padding(24.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            Column {
-                Text(
-                    text = "Movimentação Hoje",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "$count Visitas",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSecondary
-                )
-            }
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                shape = CircleShape,
-                modifier = Modifier.size(56.dp)
+            Row(
+                modifier = Modifier
+                    .background(gradientBrush)
+                    .padding(20.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.TrendingUp,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
+                Column {
+                    Text(
+                        text = "Movimentação Hoje",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "$totalHoje Visitas",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSecondary
                     )
                 }
+                Surface(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                    shape = CircleShape,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.TrendingUp,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Mini cards de estatísticas detalhadas
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MiniStatCard(
+                modifier = Modifier.weight(1f),
+                label = "No Prédio",
+                value = entradasAtivas.toString(),
+                icon = Icons.Default.Person,
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            MiniStatCard(
+                modifier = Modifier.weight(1f),
+                label = "Visitante(s) Único(s)",
+                value = visitantesUnicos.toString(),
+                icon = Icons.Default.Person,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+fun MiniStatCard(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Column {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = contentColor
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = contentColor.copy(alpha = 0.7f)
+                )
             }
         }
     }

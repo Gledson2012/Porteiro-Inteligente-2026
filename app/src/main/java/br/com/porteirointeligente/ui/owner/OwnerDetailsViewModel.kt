@@ -1,13 +1,16 @@
 package br.com.porteirointeligente.ui.owner
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.OwnerSelectionManager
+import br.com.porteirointeligente.util.PhotoSaver
 import br.com.porteirointeligente.util.QrCodeGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -22,7 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class OwnerDetailsViewModel @Inject constructor(
     private val ownerRepository: OwnerRepository,
-    private val ownerSelectionManager: OwnerSelectionManager
+    private val ownerSelectionManager: OwnerSelectionManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<OwnerDetailsUiState>(OwnerDetailsUiState.Loading)
@@ -78,6 +82,8 @@ class OwnerDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val owner = ownerRepository.getOwnerById(ownerId)
             if (owner != null) {
+                // Remove a foto do armazenamento interno antes de deletar
+                owner.photoUri?.let { PhotoSaver.deletePhoto(context, it) }
                 ownerRepository.deleteOwner(owner)
             }
         }

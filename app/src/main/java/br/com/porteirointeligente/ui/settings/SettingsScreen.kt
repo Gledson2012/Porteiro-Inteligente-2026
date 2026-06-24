@@ -30,6 +30,7 @@ fun SettingsScreen(
 ) {
     val owner by viewModel.owner.collectAsState()
     val themeState by viewModel.themeState.collectAsState()
+    val dynamicColorState by viewModel.dynamicColorState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
 
@@ -64,7 +65,7 @@ fun SettingsScreen(
     
     var isOffline by remember { mutableStateOf(false) }
     var offlineMessage by remember { mutableStateOf("") }
-    var selectedDurationIndex by remember { mutableIntStateOf(3) } // Default: Forever
+    var selectedDurationIndex by remember { mutableIntStateOf(3) } // Default: Sempre
 
     val durations = listOf("2h", "8h", "1 semana", "Sempre")
     val durationMillis = listOf(
@@ -74,11 +75,24 @@ fun SettingsScreen(
         null
     )
 
+    // Calcula o índice da duração com base no valor armazenado
+    fun calculateDurationIndex(offlineUntil: Long?): Int {
+        if (offlineUntil == null) return 3 // Sempre
+        val remaining = offlineUntil - System.currentTimeMillis()
+        if (remaining <= 0) return 3
+        return when {
+            remaining <= TimeUnit.HOURS.toMillis(2) -> 0
+            remaining <= TimeUnit.HOURS.toMillis(8) -> 1
+            remaining <= TimeUnit.DAYS.toMillis(7) -> 2
+            else -> 3
+        }
+    }
+
     LaunchedEffect(owner) {
         owner?.let {
             isOffline = it.isOffline
             offlineMessage = it.offlineMessage
-            selectedDurationIndex = if (it.offlineUntil == null) 3 else 0 // Simplificado
+            selectedDurationIndex = calculateDurationIndex(it.offlineUntil)
         }
     }
 
@@ -110,6 +124,27 @@ fun SettingsScreen(
                             Text(label)
                         }
                     }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Tema Dinâmico (Material You)", style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            "Adapta as cores ao seu papel de parede (Android 12+)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    Switch(
+                        checked = dynamicColorState,
+                        onCheckedChange = { viewModel.setDynamicColor(it) }
+                    )
                 }
             }
 

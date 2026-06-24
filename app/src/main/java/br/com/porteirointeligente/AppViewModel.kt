@@ -21,4 +21,11 @@ class AppViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AppTheme.SYSTEM
         )
+
+    val dynamicColorState: StateFlow<Boolean> = themeManager.dynamicColorFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
 }

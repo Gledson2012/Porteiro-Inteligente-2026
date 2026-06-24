@@ -109,6 +109,55 @@ class HomeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    /** Estatísticas de visitas */
+    val statsTotalHoje: StateFlow<Int> = visitasRecentes
+        .map { visits ->
+            val hoje = java.util.Calendar.getInstance()
+            hoje.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            hoje.set(java.util.Calendar.MINUTE, 0)
+            hoje.set(java.util.Calendar.SECOND, 0)
+            hoje.set(java.util.Calendar.MILLISECOND, 0)
+            val inicioHoje = hoje.timeInMillis
+            visits.count { it.dataEntrada >= inicioHoje }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = 0
+        )
+
+    val statsEntradasHoje: StateFlow<Int> = visitasRecentes
+        .map { visits ->
+            val hoje = java.util.Calendar.getInstance()
+            hoje.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            hoje.set(java.util.Calendar.MINUTE, 0)
+            hoje.set(java.util.Calendar.SECOND, 0)
+            hoje.set(java.util.Calendar.MILLISECOND, 0)
+            val inicioHoje = hoje.timeInMillis
+            visits.count { it.dataEntrada >= inicioHoje && it.status == br.com.porteirointeligente.domain.model.VisitStatus.ENTRADA_REGISTRADA }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = 0
+        )
+
+    val statsVisitantesUnicos: StateFlow<Int> = visitasRecentes
+        .map { visits ->
+            val hoje = java.util.Calendar.getInstance()
+            hoje.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            hoje.set(java.util.Calendar.MINUTE, 0)
+            hoje.set(java.util.Calendar.SECOND, 0)
+            hoje.set(java.util.Calendar.MILLISECOND, 0)
+            val inicioHoje = hoje.timeInMillis
+            visits.filter { it.dataEntrada >= inicioHoje }.distinctBy { it.nome }.count()
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000L),
+            initialValue = 0
+        )
+
     /** Mantido para compatibilidade, mas use [moradorSelecionado] */
     val moradorCadastrado: StateFlow<Owner?> = moradorSelecionado
 

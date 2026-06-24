@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("com.google.firebase.appdistribution") version "5.3.0"
+    id("com.github.triplet.play") version "3.11.0"
+}
+
+// Carrega configurações do keystore a partir de keystore.properties (se existir)
+val keystorePropertiesFile = rootProject.file("app/keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
 android {
@@ -22,6 +33,15 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProperties.getProperty("storeFile", "release.keystore"))
+            storePassword = keystoreProperties.getProperty("storePassword", "porteiro123")
+            keyAlias = keystoreProperties.getProperty("keyAlias", "porteiro")
+            keyPassword = keystoreProperties.getProperty("keyPassword", "porteiro123")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -29,6 +49,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
+
+            // Firebase App Distribution (para release apenas)
+            firebaseAppDistribution {
+                artifactType = "APK"
+                releaseNotes = "Nova versão do Porteiro Inteligente"
+                groups = "qa-team"
+            }
+        }
+        debug {
+            isDebuggable = true
         }
     }
 
@@ -56,6 +87,16 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    // Google Play Publishing (apenas se o arquivo de credenciais existir)
+    val playKeyFile = file("play-account-key.json")
+    if (playKeyFile.exists()) {
+        play {
+            serviceAccountCredentials = playKeyFile
+            track.set("internal")  // internal, alpha, beta, production
+            releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.DRAFT)
         }
     }
 }
