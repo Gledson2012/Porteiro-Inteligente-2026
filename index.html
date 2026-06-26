@@ -441,9 +441,9 @@
     <header class="hero">
         <div class="container hero-content">
             <div class="hero-text">
-                <div class="hero-badge">Aplicativo Android</div>
+                <div class="hero-badge">100% Offline • Criptografado</div>
                 <h1>Porteiro <span>Inteligente</span></h1>
-                <p>Modernize a gestão da portaria do seu condomínio com QR Code, registro digital de visitas e modo offline — tudo offline, sem necessidade de internet.</p>
+                <p>Modernize a gestão da portaria do seu condomínio com QR Code seguro, registro digital de visitas e backup criptografado — tudo 100% offline, sem servidor, sem depender de internet.</p>
                 <div class="hero-buttons">
                     <a href="#funcionalidades" class="btn btn-primary">Ver Funcionalidades</a>
                     <a href="#como-funciona" class="btn btn-outline">Como Funciona</a>
@@ -541,25 +541,37 @@
                 <div class="feature-card">
                     <div class="feature-icon teal">&#128221;</div>
                     <h3>Registro de Visitas</h3>
-                    <p>Cadastre visitantes com nome, documento, apartamento e motivo. Tudo armazenado localmente com hist&oacute;rico completo.</p>
+                    <p>Cadastre visitantes com nome, documento, apartamento e motivo. Tudo armazenado localmente no banco SQLite (Room) com hist&oacute;rico completo.</p>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon red">&#128274;</div>
-                    <h3>Modo Offline</h3>
-                    <p>Avise quando n&atilde;o estiver em casa. Configure uma mensagem personalizada e dura&ccedil;&atilde;o. O entregador ver&aacute; ao escanear.</p>
+                    <h3>100% Offline</h3>
+                    <p>Sem servidor, sem Firebase, sem depender de internet. Autentica&ccedil;&atilde;o, dados e QR Codes tudos salvos localmente. Privacidade total.</p>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon purple">&#128190;</div>
-                    <h3>Backup em JSON</h3>
-                    <p>Exporte seu perfil e hist&oacute;rico de visitas para um arquivo JSON. Restaure quando precisar. Seus dados seguros com voc&ecirc;.</p>
+                    <h3>Backup &amp; Restore</h3>
+                    <p>Exporte seu perfil e hist&oacute;rico em JSON criptografado. Salve no Google Drive, compartilhe ou armazene onde quiser. Restaure com um toque.</p>
                 </div>
 
                 <div class="feature-card">
-                    <div class="feature-icon blue">&#127769;</div>
+                    <div class="feature-icon blue">&#128737;&#65039;</div>
+                    <h3>Criptografia FBE</h3>
+                    <p>Seus dados s&atilde;o protegidos pela criptografia File-Based Encryption do Android &mdash; a mesma usada por apps banc&aacute;rios. Inviol&aacute;vel mesmo com o dispositivo ligado.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon orange">&#128100;</div>
+                    <h3>Login Local</h3>
+                    <p>Autentica&ccedil;&atilde;o 100% local no DataStore. Crie sua conta e fa&ccedil;a login sem enviar dados para nenhum servidor. Sua senha nunca sai do seu dispositivo.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon purple">&#127769;</div>
                     <h3>Tema Din&acirc;mico</h3>
-                    <p>Suporte a tema Claro, Escuro e Sistema (Material You). A escolha &eacute; sua e a prefer&ecirc;ncia fica salva.</p>
+                    <p>Suporte a tema Claro, Escuro e Sistema (Material You / Monet). A escolha &eacute; sua e a prefer&ecirc;ncia fica salva automaticamente.</p>
                 </div>
             </div>
         </div>
@@ -606,15 +618,18 @@
                 <span class="tech-tag">Kotlin</span>
                 <span class="tech-tag">Jetpack Compose</span>
                 <span class="tech-tag">Material Design 3</span>
-                <span class="tech-tag">MVVM</span>
-                <span class="tech-tag">Hilt</span>
-                <span class="tech-tag">Room</span>
+                <span class="tech-tag">MVVM + Clean Architecture</span>
+                <span class="tech-tag">Hilt (DI)</span>
+                <span class="tech-tag">Room (SQLite)</span>
+                <span class="tech-tag">Android FBE</span>
                 <span class="tech-tag">CameraX</span>
                 <span class="tech-tag">ZXing</span>
                 <span class="tech-tag">Coil</span>
                 <span class="tech-tag">DataStore</span>
-                <span class="tech-tag">Gson</span>
+                <span class="tech-tag">Kotlin Serialization</span>
                 <span class="tech-tag">Navigation Compose</span>
+                <span class="tech-tag">SAF / Google Drive</span>
+                <span class="tech-tag">100% Offline</span>
                 <span class="tech-tag">Min SDK 23</span>
                 <span class="tech-tag">Target SDK 35</span>
             </div>
@@ -630,12 +645,12 @@
     </section>
 
     <footer>
-        <div class="container">
-            <p>
-                <strong>Porteiro Inteligente</strong> — 
-                Criado por <strong>Gledson Crist Ribeiro dos Santos</strong> — 
-                By Fam&iacute;lia Ven&acirc;ncio
-            </p>
+        <div class="container">                <p>
+                    <strong>Porteiro Inteligente</strong> — 
+                    Criado por <strong>Gledson Crist Ribeiro dos Santos</strong> — 
+                    By Fam&iacute;lia Ven&acirc;ncio —  
+                    <a href="https://github.com/GledsonCrist/Porteiro-Inteligente-2026" style="color:var(--primary);text-decoration:none;font-weight:600;" target="_blank" rel="noopener">C&oacute;digo-fonte no GitHub</a>
+                </p>
             <p style="margin-top:8px;font-size:12px;">
                 &copy; 2026 Porteiro Inteligente. Todos os direitos reservados.
             </p>
