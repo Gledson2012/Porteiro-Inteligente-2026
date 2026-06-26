@@ -8,7 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import br.com.porteirointeligente.ui.navigation.MainScreen
+import br.com.porteirointeligente.ui.navigation.RootNavGraph
 import br.com.porteirointeligente.ui.theme.PorteiroInteligenteTheme
 import br.com.porteirointeligente.util.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                 darkTheme = darkTheme,
                 dynamicColor = useDynamicColor
             ) {
-                MainScreen()
+                RootNavGraph()
             }
         }
     }

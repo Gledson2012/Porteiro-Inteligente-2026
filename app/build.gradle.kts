@@ -1,8 +1,10 @@
+import org.gradle.api.GradleException
 import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("com.google.firebase.appdistribution") version "5.3.0"
@@ -31,18 +33,32 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        testInstrumentationRunnerArguments["android.os.Bundle"] = ""
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file(keystoreProperties.getProperty("storeFile", "release.keystore"))
-            storePassword = keystoreProperties.getProperty("storePassword", "porteiro123")
-            keyAlias = keystoreProperties.getProperty("keyAlias", "porteiro")
-            keyPassword = keystoreProperties.getProperty("keyPassword", "porteiro123")
+            val storeFileProp = keystoreProperties.getProperty("storeFile")
+
+                ?: throw GradleException("keystore.properties must define 'storeFile'")
+            val storePasswordProp = keystoreProperties.getProperty("storePassword")
+                ?: throw GradleException("keystore.properties must define 'storePassword'")
+            val keyAliasProp = keystoreProperties.getProperty("keyAlias")
+                ?: throw GradleException("keystore.properties must define 'keyAlias'")
+            val keyPasswordProp = keystoreProperties.getProperty("keyPassword")
+                ?: throw GradleException("keystore.properties must define 'keyPassword'")
+            storeFile = file(storeFileProp)
+            storePassword = storePasswordProp
+            keyAlias = keyAliasProp
+            keyPassword = keyPasswordProp
         }
     }
 
     buildTypes {
+        debug {
+            isDebuggable = true
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3001/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -50,6 +66,7 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            buildConfigField("String", "API_BASE_URL", "\"https://api.porteirointeligente.com/\"")
 
             // Firebase App Distribution (para release apenas)
             firebaseAppDistribution {
@@ -57,9 +74,6 @@ android {
                 releaseNotes = "Nova versão do Porteiro Inteligente"
                 groups = "qa-team"
             }
-        }
-        debug {
-            isDebuggable = true
         }
     }
 
@@ -74,6 +88,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -132,6 +147,9 @@ dependencies {
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Kotlin Serialization (navegação type-safe e parsing)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // JSON Parsing (Backup)
     implementation("com.google.code.gson:gson:2.11.0")

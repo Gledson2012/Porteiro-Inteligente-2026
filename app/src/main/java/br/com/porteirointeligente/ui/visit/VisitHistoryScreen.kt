@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,21 +23,36 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VisitHistoryScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToRegister: () -> Unit,
     viewModel: VisitHistoryViewModel = hiltViewModel()
 ) {
-    val visits by viewModel.visits.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     var currentFilter by remember { mutableStateOf(VisitHistoryViewModel.Filter.ALL) }
     
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Histórico de Visitas") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToRegister,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Registrar Visita")
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
@@ -47,40 +64,50 @@ fun VisitHistoryScreen(
                 }
             )
             
-            if (isLoading) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(5) {
-                        ShimmerBox(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(130.dp),
-                            shape = MaterialTheme.shapes.large
+            when (val state = uiState) {
+                is VisitHistoryUIState.Loading -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(5) {
+                            ShimmerCard()
+                        }
+                    }
+                }
+                is VisitHistoryUIState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
-            } else if (visits.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Nenhuma visita encontrada.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(visits) { visit ->
-                        HistoryVisitItem(
-                            visit = visit,
-                            onRegistrarSaida = { viewModel.registrarSaida(it) }
-                        )
+                is VisitHistoryUIState.Success -> {
+                    val visits = state.visits
+                    if (visits.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "Nenhuma visita encontrada.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(visits) { visit ->
+                                HistoryVisitItem(
+                                    visit = visit,
+                                    onRegistrarSaida = { viewModel.registrarSaida(it) }
+                                )
+                            }
+                        }
                     }
                 }
             }

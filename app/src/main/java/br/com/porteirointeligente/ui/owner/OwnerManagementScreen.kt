@@ -26,7 +26,8 @@ import br.com.porteirointeligente.util.StringUtils
 @Composable
 fun OwnerManagementScreen(
     onNavigateBack: () -> Unit,
-    onEditOwner: (Owner) -> Unit,
+    onNavigateToRegister: () -> Unit,
+    onNavigateToEdit: (Long) -> Unit,
     viewModel: OwnerDetailsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -46,6 +47,15 @@ fun OwnerManagementScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToRegister,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Novo Morador")
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
@@ -100,7 +110,7 @@ fun OwnerManagementScreen(
                             OwnerManagementCard(
                                 owner = owner,
                                 isSelected = owner.id == state.owner.id,
-                                onEdit = { onEditOwner(owner) },
+                                onEdit = { onNavigateToEdit(owner.id) },
                                 onDelete = { showDeleteConfirm = owner }
                             )
                         }

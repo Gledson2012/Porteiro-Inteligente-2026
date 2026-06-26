@@ -5,25 +5,19 @@ import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
-import br.com.porteirointeligente.util.NotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel para o registro de visitas com validação aprimorada
- * e notificação local ao registrar entrada.
- */
 @HiltViewModel
 class VisitRegistrationViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
-    private val notificationHelper: NotificationHelper
 ) : ViewModel() {
 
-    private val _event = MutableSharedFlow<VisitUiEvent>()
-    val event = _event.asSharedFlow()
+    private val _uiState = MutableStateFlow<VisitRegistrationUIState>(VisitRegistrationUIState.Idle)
+    val uiState: StateFlow<VisitRegistrationUIState> = _uiState
 
     fun registrarVisita(
         nome: String,
@@ -32,15 +26,13 @@ class VisitRegistrationViewModel @Inject constructor(
         telefone: String,
         motivo: String
     ) {
-        // Validação de campos obrigatórios: Nome e Apartamento
         if (nome.isBlank() || apartamento.isBlank()) {
-            viewModelScope.launch {
-                _event.emit(VisitUiEvent.ErrorFields)
-            }
+            _uiState.value = VisitRegistrationUIState.Error("Nome e apartamento são obrigatórios.")
             return
         }
 
         viewModelScope.launch {
+            _uiState.value = VisitRegistrationUIState.Loading
             val visit = Visit(
                 nome = nome.trim(),
                 documento = documento.trim(),
@@ -50,20 +42,20 @@ class VisitRegistrationViewModel @Inject constructor(
                 dataEntrada = System.currentTimeMillis(),
                 status = VisitStatus.ENTRADA_REGISTRADA
             )
-            visitRepository.insertVisit(visit)
-
-            // Mostra notificação local sobre a nova visita
-            notificationHelper.showVisitNotification(
-                visitanteNome = nome.trim(),
-                apartamento = apartamento.trim()
-            )
-
-            _event.emit(VisitUiEvent.Success)
+            val result = visitRepository.insertVisit(visit)
+            _uiState.value = if (result.isSuccess) {
+                VisitRegistrationUIState.Success
+            } else {
+                VisitRegistrationUIState.Error(result.exceptionOrNull()?.message ?: "Erro desconhecido")
+            }
         }
     }
-
-    sealed class VisitUiEvent {
-        object Success : VisitUiEvent()
-        object ErrorFields : VisitUiEvent()
-    }
 }
+
+sealed interface VisitRegistrationUIState {
+    object Idle : VisitRegistrationUIState
+    object Loading : VisitRegistrationUIState
+    object Success : VisitRegistrationUIState
+    data class Error(val message: String) : VisitRegistrationUIState
+}
+

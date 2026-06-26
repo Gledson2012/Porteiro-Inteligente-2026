@@ -25,6 +25,8 @@ fun VisitRegistrationScreen(
     onNavigateBack: () -> Unit,
     viewModel: VisitRegistrationViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     var nome by remember { mutableStateOf("") }
     var documento by remember { mutableStateOf("") }
     var apartamento by remember { mutableStateOf("") }
@@ -34,19 +36,27 @@ fun VisitRegistrationScreen(
     var nomeError by remember { mutableStateOf<String?>(null) }
     var apartamentoError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(viewModel.event) {
-        viewModel.event.collectLatest { event ->
-            when (event) {
-                is VisitRegistrationViewModel.VisitUiEvent.Success -> {
-                    onNavigateBack()
-                }
-                is VisitRegistrationViewModel.VisitUiEvent.ErrorFields -> {
-                    if (nome.isBlank()) nomeError = "Campo obrigatório"
-                    if (apartamento.isBlank()) apartamentoError = "Campo obrigatório"
-                }
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is VisitRegistrationUIState.Success -> {
+                onNavigateBack()
             }
+            is VisitRegistrationUIState.Error -> {
+                if (nome.isBlank()) nomeError = "Campo obrigatório"
+                if (apartamento.isBlank()) apartamentoError = "Campo obrigatório"
+            }
+            else -> {}
         }
     }
+
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+    )
 
     Scaffold(
         topBar = {
@@ -78,7 +88,8 @@ fun VisitRegistrationScreen(
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = nomeError != null,
-                supportingText = { nomeError?.let { Text(it) } }
+                supportingText = { nomeError?.let { Text(it) } },
+                colors = textFieldColors
             )
 
             OutlinedTextField(
@@ -86,7 +97,8 @@ fun VisitRegistrationScreen(
                 onValueChange = { documento = it },
                 label = { Text("Documento (RG/CPF)") },
                 leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors
             )
 
             OutlinedTextField(
@@ -99,7 +111,8 @@ fun VisitRegistrationScreen(
                 leadingIcon = { Icon(Icons.Default.Home, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 isError = apartamentoError != null,
-                supportingText = { apartamentoError?.let { Text(it) } }
+                supportingText = { apartamentoError?.let { Text(it) } },
+                colors = textFieldColors
             )
 
             OutlinedTextField(
@@ -126,7 +139,8 @@ fun VisitRegistrationScreen(
                 label = { Text("Telefone") },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                colors = textFieldColors
             )
 
             OutlinedTextField(
@@ -135,19 +149,29 @@ fun VisitRegistrationScreen(
                 label = { Text("Motivo da Visita") },
                 leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 3
+                minLines = 3,
+                colors = textFieldColors
             )
 
             Button(
                 onClick = {
                     viewModel.registrarVisita(nome, documento, apartamento, telefone, motivo)
                 },
+                enabled = uiState !is VisitRegistrationUIState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                Text("REGISTRAR ENTRADA")
+                if (uiState is VisitRegistrationUIState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("REGISTRAR ENTRADA")
+                }
             }
         }
     }

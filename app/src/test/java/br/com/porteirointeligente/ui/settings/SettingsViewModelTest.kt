@@ -119,7 +119,7 @@ class SettingsViewModelTest {
         )
 
         coEvery { ownerRepository.observeAllOwners() } returns flowOf(listOf(testOwner))
-        coEvery { ownerRepository.updateOwner(any()) } just runs
+        coEvery { ownerRepository.updateOwner(any()) } returns Result.success(testOwner)
         coEvery { ownerSelectionManager.getSelectedOwnerId() } returns 1L
 
         viewModel = SettingsViewModel(ownerRepository, themeManager, backupManager, ownerSelectionManager)

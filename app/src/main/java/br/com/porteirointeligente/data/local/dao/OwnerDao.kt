@@ -21,8 +21,11 @@ interface OwnerDao {
     @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
     suspend fun getOwnerById(id: Long): OwnerEntity?
 
-    @Query("SELECT * FROM owners WHERE apartamento = :apartamento LIMIT 1")
-    suspend fun getOwnerByApartamento(apartamento: String): OwnerEntity?
+    @Query("SELECT * FROM owners ORDER BY nome ASC")
+    fun getAllOwnersList(): List<OwnerEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(owners: List<OwnerEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOwner(owner: OwnerEntity): Long

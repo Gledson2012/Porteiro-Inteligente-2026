@@ -2,9 +2,13 @@ package br.com.porteirointeligente.ui.home
 
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
+import br.com.porteirointeligente.domain.model.Owner
+import br.com.porteirointeligente.domain.model.Visit
+import br.com.porteirointeligente.domain.model.VisitStatus
 import br.com.porteirointeligente.util.OwnerSelectionManager
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.Dispatchers
@@ -33,15 +37,37 @@ class HomeViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
+    private val testOwner = Owner(
+        id = 1L,
+        nome = "João Silva",
+        endereco = "Rua Teste, 123",
+        cep = "01310123",
+        apartamento = "101",
+        telefone = "5511999999999",
+        qrCodePayload = "https://porteiro-inteligente.web.app/scan/1_hash"
+    )
+
+    private val testVisit = Visit(
+        id = 1L,
+        nome = "Carlos",
+        documento = "RG123",
+        apartamento = "101",
+        telefone = "11999999999",
+        motivo = "Entrega",
+        dataEntrada = System.currentTimeMillis(),
+        status = VisitStatus.ENTRADA_REGISTRADA
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         MockKAnnotations.init(this)
 
-        coEvery { ownerRepository.observeAllOwners() } returns flowOf(emptyList())
-        every { ownerSelectionManager.selectedOwnerId } returns flowOf(null)
-        coEvery { ownerSelectionManager.getSelectedOwnerId() } returns null
-        coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
+        coEvery { ownerRepository.observeAllOwners() } returns flowOf(listOf(testOwner))
+        every { ownerSelectionManager.selectedOwnerId } returns flowOf(1L)
+        coEvery { ownerSelectionManager.getSelectedOwnerId() } returns 1L
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(testVisit))
+        coEvery { ownerSelectionManager.selectOwner(any()) } returns Unit
     }
 
     @After
@@ -50,29 +76,22 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `isLoading should be false after initialization`() {
+    fun `viewModel initialization should load owners and visits and emit Success`() {
         viewModel = HomeViewModel(visitRepository, ownerRepository, ownerSelectionManager)
-        assert(!viewModel.isLoading.value) { "isLoading should be false after init" }
+        
+        val state = viewModel.uiState.value
+        assert(state is HomeUIState.Success)
+        val successState = state as HomeUIState.Success
+        assert(successState.allOwners.size == 1)
+        assert(successState.selectedOwner == testOwner)
+        assert(successState.recentVisits.size == 1)
     }
 
     @Test
-    fun `configurarIdentificacao should update condominio and apartamento`() {
+    fun `selecionarMorador should update selected owner and reload data`() {
         viewModel = HomeViewModel(visitRepository, ownerRepository, ownerSelectionManager)
-        viewModel.configurarIdentificacao("Condomínio Teste", "Apto 42")
+        viewModel.selecionarMorador(2L)
 
-        assert(viewModel.condominio.value == "Condomínio Teste")
-        assert(viewModel.apartamento.value == "Apto 42")
-    }
-
-    @Test
-    fun `visitasRecentes should return empty list by default`() {
-        viewModel = HomeViewModel(visitRepository, ownerRepository, ownerSelectionManager)
-        assert(viewModel.visitasRecentes.value.isEmpty())
-    }
-
-    @Test
-    fun `moradorCadastrado should be null when no owners`() {
-        viewModel = HomeViewModel(visitRepository, ownerRepository, ownerSelectionManager)
-        assert(viewModel.moradorCadastrado.value == null)
+        coVerify { ownerSelectionManager.selectOwner(2L) }
     }
 }

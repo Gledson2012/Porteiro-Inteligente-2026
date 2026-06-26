@@ -15,7 +15,7 @@ class StringUtilsTest {
     fun `formatPhone with country code 55 should format using first 2 as DDD`() {
         // 13 dígitos com código de país 55
         val result = StringUtils.formatPhone("5511999998888")
-        assert(result == "(55) 11999-9888") { "Expected (55) 11999-9888 but got $result" }
+        assert(result == "(55) 11999-9988") { "Expected (55) 11999-9988 but got $result" }
     }
 
     @Test

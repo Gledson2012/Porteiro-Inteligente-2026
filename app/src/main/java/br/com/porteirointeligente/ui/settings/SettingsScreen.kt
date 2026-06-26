@@ -2,341 +2,606 @@ package br.com.porteirointeligente.ui.settings
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.outlined.BrightnessMedium
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import br.com.porteirointeligente.R
+import br.com.porteirointeligente.ui.theme.Amber500
+import br.com.porteirointeligente.ui.theme.Slate400
 import br.com.porteirointeligente.util.AppTheme
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateToOwnerManagement: () -> Unit = {},
+    onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val owner by viewModel.owner.collectAsState()
     val themeState by viewModel.themeState.collectAsState()
     val dynamicColorState by viewModel.dynamicColorState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
-
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showThemeDialog by remember { mutableStateOf(false) }
 
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri ->
-            uri?.let { viewModel.restoreBackup(it) }
-        }
-    )
-
-    LaunchedEffect(backupState) {
-        if (backupState is SettingsViewModel.BackupState.Success) {
-            Toast.makeText(context, "Backup gerado com sucesso!", Toast.LENGTH_SHORT).show()
-            viewModel.resetBackupState()
-        } else if (backupState is SettingsViewModel.BackupState.Error) {
-            Toast.makeText(context, (backupState as SettingsViewModel.BackupState.Error).message, Toast.LENGTH_LONG).show()
-            viewModel.resetBackupState()
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.restoreBackup(uri)
         }
     }
 
     LaunchedEffect(restoreState) {
         if (restoreState is SettingsViewModel.RestoreState.Success) {
-            Toast.makeText(context, "Dados restaurados com sucesso!", Toast.LENGTH_SHORT).show()
             viewModel.resetRestoreState()
-        } else if (restoreState is SettingsViewModel.RestoreState.Error) {
-            Toast.makeText(context, (restoreState as SettingsViewModel.RestoreState.Error).message, Toast.LENGTH_LONG).show()
-            viewModel.resetRestoreState()
-        }
-    }
-    
-    var isOffline by remember { mutableStateOf(false) }
-    var offlineMessage by remember { mutableStateOf("") }
-    var selectedDurationIndex by remember { mutableIntStateOf(3) } // Default: Sempre
-
-    val durations = listOf("2h", "8h", "1 semana", "Sempre")
-    val durationMillis = listOf(
-        TimeUnit.HOURS.toMillis(2),
-        TimeUnit.HOURS.toMillis(8),
-        TimeUnit.DAYS.toMillis(7),
-        null
-    )
-
-    // Calcula o índice da duração com base no valor armazenado
-    fun calculateDurationIndex(offlineUntil: Long?): Int {
-        if (offlineUntil == null) return 3 // Sempre
-        val remaining = offlineUntil - System.currentTimeMillis()
-        if (remaining <= 0) return 3
-        return when {
-            remaining <= TimeUnit.HOURS.toMillis(2) -> 0
-            remaining <= TimeUnit.HOURS.toMillis(8) -> 1
-            remaining <= TimeUnit.DAYS.toMillis(7) -> 2
-            else -> 3
-        }
-    }
-
-    LaunchedEffect(owner) {
-        owner?.let {
-            isOffline = it.isOffline
-            offlineMessage = it.offlineMessage
-            selectedDurationIndex = calculateDurationIndex(it.offlineUntil)
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Configurações") })
+            TopAppBar(
+                title = {
+                    Text(
+                        "Ajustes",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(padding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SettingsSection(title = "Aparência", icon = Icons.Default.Brightness6) {
-                Text("Tema do Aplicativo", style = MaterialTheme.typography.bodyLarge)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    val options = listOf("Claro", "Escuro", "Sistema")
-                    val themes = listOf(AppTheme.LIGHT, AppTheme.DARK, AppTheme.SYSTEM)
-                    
-                    options.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                            onClick = { viewModel.setTheme(themes[index]) },
-                            selected = themeState == themes[index]
-                        ) {
-                            Text(label)
-                        }
-                    }
-                }
+            // Appearance section
+            item {
+                SectionHeader(
+                    icon = Icons.Default.ColorLens,
+                    title = "Aparência"
+                )
+            }
 
-                Spacer(Modifier.height(8.dp))
+            item {
+                SettingsCard {
+                    // Theme
+                    SettingsClickItem(
+                        icon = Icons.Default.Palette,
+                        iconBackground = Amber500.copy(alpha = 0.15f),
+                        iconTint = Amber500,
+                        title = "Tema",
+                        subtitle = when (themeState) {
+                            AppTheme.LIGHT -> "Claro"
+                            AppTheme.DARK -> "Escuro"
+                            AppTheme.SYSTEM -> "Sistema"
+                        },
+                        onClick = { showThemeDialog = true }
+                    )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Tema Dinâmico (Material You)", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "Adapta as cores ao seu papel de parede (Android 12+)",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Switch(
+                    Divider()
+
+                    // Dynamic Color
+                    SettingsSwitchItem(
+                        icon = Icons.Default.BrightnessMedium,
+                        iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        title = "Cores dinâmicas",
+                        subtitle = "Usar paleta de cores do sistema",
                         checked = dynamicColorState,
                         onCheckedChange = { viewModel.setDynamicColor(it) }
                     )
                 }
             }
 
-            SettingsSection(title = "Modo Offline", icon = Icons.Default.CloudOff) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Ativar Modo Offline", style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            "Visitantes verão um aviso ao ler seu QR Code",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Switch(checked = isOffline, onCheckedChange = { isOffline = it })
-                }
+            // Data section
+            item {
+                SectionHeader(
+                    icon = Icons.Default.CloudUpload,
+                    title = "Dados"
+                )
+            }
 
-                if (isOffline) {
-                    OutlinedTextField(
-                        value = offlineMessage,
-                        onValueChange = { offlineMessage = it },
-                        label = { Text("Mensagem de ausência") },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Ex: Estou em reunião, volto logo.") }
+            item {
+                SettingsCard {
+                    // Backup
+                    BackupItem(
+                        state = backupState,
+                        onBackup = { viewModel.performBackup() },
+                        onReset = { viewModel.resetBackupState() }
                     )
 
-                    Text("Duração", style = MaterialTheme.typography.bodyLarge)
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        durations.forEachIndexed { index, label ->
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = durations.size),
-                                onClick = { selectedDurationIndex = index },
-                                selected = index == selectedDurationIndex
+                    Divider()
+
+                    // Restore
+                    RestoreItem(
+                        state = restoreState,
+                        onRestore = {
+                            restoreLauncher.launch(arrayOf("application/json"))
+                        },
+                        onReset = { viewModel.resetRestoreState() }
+                    )
+                }
+            }
+
+            // About section
+            item {
+                SectionHeader(
+                    icon = Icons.Default.Info,
+                    title = "Sobre"
+                )
+            }
+
+            item {
+                SettingsCard {
+                    SettingsClickItem(
+                        icon = Icons.Default.Info,
+                        iconBackground = MaterialTheme.colorScheme.primaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        title = "Versão",
+                        subtitle = "0.1.0",
+                        onClick = { }
+                    )
+
+                    Divider()
+
+                    SettingsClickItem(
+                        icon = Icons.Default.Link,
+                        iconBackground = MaterialTheme.colorScheme.secondaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        title = "Site",
+                        subtitle = "porteirointeligente.com",
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteirointeligente.com"))
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+            }
+
+            item { br.com.porteirointeligente.ui.components.AppSignature() }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+    }
+
+    // Theme dialog
+    if (showThemeDialog) {
+        AlertDialog(
+            onDismissRequest = { showThemeDialog = false },
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Text(
+                    "Escolher Tema",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    AppTheme.entries.forEach { theme ->
+                        val isSelected = themeState == theme
+                        Card(
+                            onClick = {
+                                viewModel.setTheme(theme)
+                                showThemeDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            ),
+                            border = if (isSelected) null
+                            else androidx.compose.foundation.BorderStroke(
+                                1.dp, MaterialTheme.colorScheme.outlineVariant
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(label)
+                                Icon(
+                                    imageVector = when (theme) {
+                                        AppTheme.SYSTEM -> Icons.Outlined.BrightnessMedium
+                                        AppTheme.LIGHT -> Icons.Outlined.Palette
+                                        AppTheme.DARK -> Icons.Outlined.DarkMode
+                                    },
+                                    contentDescription = null,
+                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = when (theme) {
+                                            AppTheme.SYSTEM -> "Sistema"
+                                            AppTheme.LIGHT -> "Claro"
+                                            AppTheme.DARK -> "Escuro"
+                                        },
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                    Text(
+                                        text = when (theme) {
+                                            AppTheme.SYSTEM -> "Acompanha o tema do dispositivo"
+                                            AppTheme.LIGHT -> "Tema claro"
+                                            AppTheme.DARK -> "Tema escuro"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Slate400
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-
-            SettingsSection(title = "Dados e Segurança", icon = Icons.Default.Backup) {
-                Text(
-                    "Proteja suas informações gerando um arquivo de backup com seu perfil e histórico de visitas ou restaure seus dados a partir de um backup.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                OutlinedButton(
-                    onClick = { viewModel.performBackup() },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(Icons.Default.Backup, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("FAZER BACKUP DOS DADOS")
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { filePickerLauncher.launch("application/json") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(Icons.Default.Backup, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("RESTAURAR BACKUP (IMPORTAR JSON)")
+            },
+            confirmButton = {
+                TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Fechar")
                 }
             }
+        )
+    }
+}
 
-            Button(
-                onClick = {
-                    viewModel.updateOfflineStatus(
-                        isOffline,
-                        offlineMessage,
-                        durationMillis[selectedDurationIndex]
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("SALVAR ALTERAÇÕES")
-            }
+@Composable
+private fun SectionHeader(icon: ImageVector, title: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
 
-            SettingsSection(title = "Moradores", icon = Icons.Default.People) {
-                Text(
-                    "Visualize, edite ou exclua todos os moradores cadastrados no aplicativo.",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                OutlinedButton(
-                    onClick = onNavigateToOwnerManagement,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Icon(Icons.Default.People, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("GERENCIAR MORADORES")
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SobreSection()
+@Composable
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            content()
         }
     }
 }
 
 @Composable
-private fun SobreSection() {
-    val context = LocalContext.current
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        HorizontalDivider()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "Sobre",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+private fun SettingsClickItem(
+    icon: ImageVector,
+    iconBackground: Color,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(iconBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(22.dp)
             )
         }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Porteiro Inteligente",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Versão 0.1.0",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Criado por: Gledson Crist Ribeiro dos Santos\nBy Família Venâncio",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Spacer(Modifier.height(4.dp))
-
-                OutlinedButton(
-                        onClick = {
-                            try {
-                                val url = context.getString(R.string.landing_page_url)
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                context.startActivity(intent)
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Erro ao abrir o link.", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small
-                    ) {
-                        Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Acessar site do app", style = MaterialTheme.typography.labelMedium)
-                    }
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsSection(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Slate400
             )
         }
-        content()
-        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
+}
+
+@Composable
+private fun SettingsSwitchItem(
+    icon: ImageVector,
+    iconBackground: Color,
+    iconTint: Color,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(iconBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Slate400
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = MaterialTheme.colorScheme.primary
+            )
+        )
+    }
+}
+
+@Composable
+private fun BackupItem(
+    state: SettingsViewModel.BackupState,
+    onBackup: () -> Unit,
+    onReset: () -> Unit
+) {
+    when (state) {
+        is SettingsViewModel.BackupState.Loading -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Gerando backup...")
+            }
+        }
+        is SettingsViewModel.BackupState.Success -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Backup gerado com sucesso!")
+            }
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(2000)
+                onReset()
+            }
+        }
+        is SettingsViewModel.BackupState.Error -> {
+            SettingsClickItem(
+                icon = Icons.Default.FileDownload,
+                iconBackground = MaterialTheme.colorScheme.errorContainer,
+                iconTint = MaterialTheme.colorScheme.error,
+                title = "Backup",
+                subtitle = state.message,
+                onClick = onBackup
+            )
+        }
+        is SettingsViewModel.BackupState.Idle -> {
+            SettingsClickItem(
+                icon = Icons.Default.FileDownload,
+                iconBackground = MaterialTheme.colorScheme.primaryContainer,
+                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                title = "Fazer Backup",
+                subtitle = "Exportar dados do aplicativo",
+                onClick = onBackup
+            )
+        }
+    }
+}
+
+@Composable
+private fun RestoreItem(
+    state: SettingsViewModel.RestoreState,
+    onRestore: () -> Unit,
+    onReset: () -> Unit
+) {
+    when (state) {
+        is SettingsViewModel.RestoreState.Loading -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Restaurando backup...")
+            }
+        }
+        is SettingsViewModel.RestoreState.Success -> {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Dados restaurados!")
+            }
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(2000)
+                onReset()
+            }
+        }
+        is SettingsViewModel.RestoreState.Error -> {
+            SettingsClickItem(
+                icon = Icons.Default.FileUpload,
+                iconBackground = MaterialTheme.colorScheme.errorContainer,
+                iconTint = MaterialTheme.colorScheme.error,
+                title = "Restaurar",
+                subtitle = state.message,
+                onClick = onRestore
+            )
+        }
+        is SettingsViewModel.RestoreState.Idle -> {
+            SettingsClickItem(
+                icon = Icons.Default.FileUpload,
+                iconBackground = MaterialTheme.colorScheme.secondaryContainer,
+                iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                title = "Restaurar Backup",
+                subtitle = "Importar dados de um arquivo",
+                onClick = onRestore
+            )
+        }
+    }
+}
+
+@Composable
+private fun Divider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    )
 }

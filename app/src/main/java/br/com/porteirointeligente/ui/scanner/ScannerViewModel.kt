@@ -24,26 +24,51 @@ class ScannerViewModel @Inject constructor(
     fun onQrCodeDetected(content: String) {
         viewModelScope.launch {
             var finalUrl: String? = null
-            var targetApartment: String? = null
+            var targetOwnerId: Long? = null
 
-            if (content.startsWith("https://wa.me/")) {
-                // Formato legado em texto puro
-                finalUrl = content
-                val firstOwner = ownerRepository.observeAllOwners().first().firstOrNull()
-                targetApartment = firstOwner?.apartamento
-            } else if (content.startsWith("https://porteirointeligente.com/scan?data=")) {
-                // Novo formato criptografado para privacidade
-                val encryptedData = content.substringAfter("https://porteirointeligente.com/scan?data=")
-                val decryptedJson = cryptoUtil.decrypt(encryptedData)
-                if (decryptedJson != null) {
-                    try {
-                        val json = JsonParser.parseString(decryptedJson).asJsonObject
-                        val phone = json.get("phone").asString
-                        val ap = json.get("ap").asString
-                        targetApartment = ap
-                        finalUrl = "https://wa.me/$phone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+            when {
+                // ============================================================
+                // NOVO FORMATO LGPD (a partir de agora)
+                // URL mascarada com apenas o ID do proprietário
+                // Ex: https://porteiro-inteligente.web.app/scan/12345_-1234567890
+                // ============================================================
+                content.startsWith("https://porteiro-inteligente.web.app/scan/") -> {
+                    val idPart = content.substringAfter("https://porteiro-inteligente.web.app/scan/")
+                    val ownerId = idPart.substringBefore("_").toLongOrNull()
+                    if (ownerId != null) {
+                        targetOwnerId = ownerId
+                        val owner = ownerRepository.getOwnerById(ownerId)
+                        if (owner != null) {
+                            val formattedPhone = if (owner.telefone.startsWith("55")) owner.telefone else "55${owner.telefone}"
+                            finalUrl = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                        }
+                    }
+                }
+
+                // ============================================================
+                // FORMATO LEGADO 1: wa.me (texto puro, sem criptografia)
+                // ============================================================
+                content.startsWith("https://wa.me/") -> {
+                    finalUrl = content
+                    val firstOwner = ownerRepository.observeAllOwners().first().firstOrNull()
+                    targetOwnerId = firstOwner?.id
+                }
+
+                // ============================================================
+                // FORMATO LEGADO 2: Criptografado (AES/GCM no Android Keystore)
+                // Mantido para compatibilidade com QR Codes antigos
+                // ============================================================
+                content.startsWith("https://porteirointeligente.com/scan?data=") -> {
+                    val encryptedData = content.substringAfter("https://porteirointeligente.com/scan?data=")
+                    val decryptedJson = cryptoUtil.decrypt(encryptedData)
+                    if (decryptedJson != null) {
+                        try {
+                            val json = JsonParser.parseString(decryptedJson).asJsonObject
+                            val phone = json.get("phone").asString
+                            finalUrl = "https://wa.me/$phone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
                 }
             }
@@ -53,9 +78,9 @@ class ScannerViewModel @Inject constructor(
                 return@launch
             }
 
-            // Busca o morador pelo apartamento do QR Code para verificar status offline
-            val owner = if (targetApartment != null) {
-                ownerRepository.getOwnerByApartamento(targetApartment)
+            // Verifica status offline do proprietário
+            val owner = if (targetOwnerId != null) {
+                ownerRepository.getOwnerById(targetOwnerId)
             } else {
                 ownerRepository.observeAllOwners().first().firstOrNull()
             }

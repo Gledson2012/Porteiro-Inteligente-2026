@@ -24,8 +24,14 @@ interface VisitDao {
     @Query("SELECT * FROM visits WHERE id = :id LIMIT 1")
     suspend fun getVisitById(id: Long): VisitEntity?
 
+    @Query("SELECT * FROM visits ORDER BY dataEntrada DESC")
+    fun getAllVisitsList(): List<VisitEntity>
+
     @Query("SELECT * FROM visits WHERE status = :status ORDER BY dataEntrada DESC")
-    fun getVisitsByStatus(status: br.com.porteirointeligente.domain.model.VisitStatus): Flow<List<VisitEntity>>
+    fun getVisitsByStatusList(status: br.com.porteirointeligente.domain.model.VisitStatus): List<VisitEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(visits: List<VisitEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertVisit(visit: VisitEntity): Long

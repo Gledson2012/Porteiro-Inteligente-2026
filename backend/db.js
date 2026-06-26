@@ -17,8 +17,15 @@ function getDatabase() {
 
 function initializeTables() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS owners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER,
       nome TEXT NOT NULL,
       nomeCondominio TEXT DEFAULT '',
       endereco TEXT NOT NULL,
@@ -30,11 +37,13 @@ function initializeTables() {
       dataCadastro INTEGER NOT NULL,
       isOffline INTEGER DEFAULT 0,
       offlineMessage TEXT DEFAULT '',
-      offlineUntil INTEGER
+      offlineUntil INTEGER,
+      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS visits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ownerId INTEGER,
       nome TEXT NOT NULL,
       documento TEXT DEFAULT '',
       apartamento TEXT NOT NULL,
@@ -42,7 +51,8 @@ function initializeTables() {
       motivo TEXT DEFAULT '',
       dataEntrada INTEGER NOT NULL,
       dataSaida INTEGER,
-      status TEXT DEFAULT 'ENTRADA_REGISTRADA'
+      status TEXT DEFAULT 'ENTRADA_REGISTRADA',
+      FOREIGN KEY (ownerId) REFERENCES owners(id) ON DELETE CASCADE
     );
   `);
 }

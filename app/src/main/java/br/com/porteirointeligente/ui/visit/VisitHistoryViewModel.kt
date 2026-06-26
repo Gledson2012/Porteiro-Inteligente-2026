@@ -2,70 +2,44 @@ package br.com.porteirointeligente.ui.visit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
-import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class VisitHistoryViewModel @Inject constructor(
-    private val visitRepository: VisitRepository,
-    private val ownerRepository: OwnerRepository
+    private val visitRepository: VisitRepository
 ) : ViewModel() {
 
-    private val _filter = MutableStateFlow<Filter>(Filter.ALL)
-
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _allOwners = MutableStateFlow<List<Owner>>(emptyList())
-    val allOwners: StateFlow<List<Owner>> = _allOwners
+    private val _filter = MutableStateFlow(Filter.ALL)
+    private val _uiState = MutableStateFlow<VisitHistoryUIState>(VisitHistoryUIState.Loading)
+    val uiState: StateFlow<VisitHistoryUIState> = _uiState
 
     init {
-        viewModelScope.launch {
-            visitRepository.observeAllVisits().first()
-            ownerRepository.observeAllOwners().collect { owners ->
-                _allOwners.value = owners
-            }
-            _isLoading.value = false
-        }
+        loadVisits()
     }
 
-    /** Morador mais antigo para compatibilidade com a UI existente */
-    val owner: StateFlow<Owner?> = ownerRepository
-        .observeAllOwners()
-        .map { it.firstOrNull() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
-        )
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val visits: StateFlow<List<Visit>> = _filter
-        .flatMapLatest { filter ->
-            when (filter) {
-                Filter.ALL -> visitRepository.observeAllVisits()
-                Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
+    private fun loadVisits() {
+        viewModelScope.launch {
+            _uiState.value = VisitHistoryUIState.Loading
+            try {
+                _filter.flatMapLatest { filter ->
+                    when (filter) {
+                        Filter.ALL -> visitRepository.observeAllVisits()
+                        Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
+                    }
+                }.collect { visits ->
+                    _uiState.value = VisitHistoryUIState.Success(visits, _filter.value)
+                }
+            } catch (e: Exception) {
+                _uiState.value = VisitHistoryUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    }
 
     fun setFilter(filter: Filter) {
         _filter.value = filter
@@ -79,8 +53,16 @@ class VisitHistoryViewModel @Inject constructor(
                     status = VisitStatus.SAIDA_REGISTRADA
                 )
             )
+            // A UI irá se atualizar automaticamente por causa do Flow
         }
     }
 
     enum class Filter { ALL, ACTIVE }
 }
+
+sealed interface VisitHistoryUIState {
+    object Loading : VisitHistoryUIState
+    data class Success(val visits: List<Visit>, val filter: VisitHistoryViewModel.Filter) : VisitHistoryUIState
+    data class Error(val message: String) : VisitHistoryUIState
+}
+

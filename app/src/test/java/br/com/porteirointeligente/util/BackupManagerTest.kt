@@ -13,10 +13,14 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.runs
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 import java.io.ByteArrayInputStream
 
@@ -40,6 +44,9 @@ class BackupManagerTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
+        mockkStatic(Uri::class)
+        val mockUri = mockk<Uri>()
+        every { Uri.parse(any()) } returns mockUri
 
         every { context.contentResolver } returns contentResolver
 
@@ -67,10 +74,15 @@ class BackupManagerTest {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(testVisit))
         coEvery { ownerRepository.deleteAll() } just runs
         coEvery { visitRepository.clearAll() } just runs
-        coEvery { ownerRepository.insertOwner(any()) } returns 2L
-        coEvery { visitRepository.insertVisit(any()) } returns 2L
+        coEvery { ownerRepository.insertOwner(any()) } returns Result.success(testOwner)
+        coEvery { visitRepository.insertVisit(any()) } returns Result.success(testVisit)
 
         backupManager = BackupManager(context, ownerRepository, visitRepository)
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test

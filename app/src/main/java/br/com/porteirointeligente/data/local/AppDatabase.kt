@@ -13,10 +13,16 @@ import br.com.porteirointeligente.data.local.entity.VisitEntity
  * Centraliza o acesso às DAOs e mantém a configuração de migrações
  * e entidades persistidas.
  *
- * Para novas migrações:
+ * ⚠️  NOTA SOBRE MIGRAÇÕES
+ * O AppModule está configurado com fallbackToDestructiveMigration(),
+ * o que significa que, se não houver uma migração explícita para a
+ * nova versão, o banco será recriado do zero (perdendo dados).
+ *
+ * Para adicionar migrações explícitas:
  * 1. Altere a [version] para o próximo número
- * 2. Adicione um objeto [androidx.room.migration.Migration] em [MIGRATIONS]
+ * 2. Crie um Migration object em [MIGRATIONS]
  * 3. Execute o app para gerar o schema no diretório de exportação
+ * 4. REMOVA a dependência do fallbackToDestructiveMigration()
  *
  * @see AppDatabase.Companion.MIGRATIONS
  */
@@ -48,11 +54,15 @@ abstract class AppDatabase : RoomDatabase() {
          * }
          * ```
          *
-         * E adicione-a a esta lista.
+         * Após criar a migração:
+         * 1. Adicione-a na lista abaixo
+         * 2. Remova o .fallbackToDestructiveMigration() do AppModule
+         * 3. Teste a migração com dados reais antes de publicar
          */
         val MIGRATIONS: Array<androidx.room.migration.Migration> = arrayOf(
             // Migrações futuras serão adicionadas aqui
-            // Exemplo: MIGRATION_6_7
+            // Exemplo:
+            // MIGRATION_6_7
         )
     }
 }
