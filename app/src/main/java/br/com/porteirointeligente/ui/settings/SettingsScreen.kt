@@ -64,6 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.ui.theme.Amber
 import br.com.porteirointeligente.ui.theme.Slate400
 import br.com.porteirointeligente.util.AppTheme
@@ -81,6 +82,7 @@ fun SettingsScreen(
 
     val context = LocalContext.current
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     val restoreLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -208,8 +210,8 @@ fun SettingsScreen(
                         iconBackground = MaterialTheme.colorScheme.primaryContainer,
                         iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
                         title = "Versão",
-                        subtitle = "0.1.0",
-                        onClick = { }
+                        subtitle = BuildConfig.VERSION_NAME,
+                        onClick = { showAboutDialog = true }
                     )
 
                     Divider()
@@ -221,7 +223,7 @@ fun SettingsScreen(
                         title = "Site",
                         subtitle = "porteirointeligente.com",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteirointeligente.com"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteiro-inteligente-2026.vercel.app"))
                             context.startActivity(intent)
                         }
                     )
@@ -318,6 +320,76 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) {
+                    Text("Fechar")
+                }
+            }
+        )
+    }
+    // About dialog
+    if (showAboutDialog) {
+        AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            shape = RoundedCornerShape(24.dp),
+            title = {
+                Column {
+                    Text(
+                        "Porteiro Inteligente",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "Versão ${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Slate400
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        "Melhorias desta versão:",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    listOf(
+                        "App 100% offline — sem servidor, sem depender de internet",
+                        "Autenticação local — login e registro salvos diretamente no dispositivo",
+                        "Backup e Restore — exporte dados em JSON e salve no Google Drive",
+                        "Criptografia FBE — dados protegidos com criptografia de nível de sistema",
+                        "App mais leve — remoção de Firebase e dependências de backend",
+                        "Tema dinâmico — suporte a Material You / Monet"
+                    ).forEach { item ->
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier.padding(start = 4.dp)
+                        ) {
+                            Text(
+                                "•  ",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = item,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Desenvolvido por Gledson Crist Ribeiro dos Santos",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Slate400
+                    )
+                    Text(
+                        "By Família Venâncio",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Slate400.copy(alpha = 0.6f)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAboutDialog = false }) {
                     Text("Fechar")
                 }
             }
