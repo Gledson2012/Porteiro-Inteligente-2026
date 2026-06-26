@@ -4,7 +4,7 @@ import br.com.porteirointeligente.domain.model.Owner
 
 data class OwnerDto(
     val id: Long,
-    val userId: Long,
+    val userId: Long = 0L,
     val nome: String,
     val nomeCondominio: String,
     val endereco: String,

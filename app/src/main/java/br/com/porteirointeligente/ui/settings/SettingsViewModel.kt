@@ -3,10 +3,14 @@ package br.com.porteirointeligente.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.OwnerRepository
+import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.AppTheme
 import br.com.porteirointeligente.util.BackupManager
+import br.com.porteirointeligente.util.FirebaseSyncService
 import br.com.porteirointeligente.util.OwnerSelectionManager
+import br.com.porteirointeligente.util.SyncManager
+import br.com.porteirointeligente.util.SyncStatus
 import br.com.porteirointeligente.util.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,9 +23,12 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val ownerRepository: OwnerRepository,
+    private val visitRepository: VisitRepository,
     private val themeManager: ThemeManager,
     private val backupManager: BackupManager,
-    private val ownerSelectionManager: OwnerSelectionManager
+    private val ownerSelectionManager: OwnerSelectionManager,
+    private val syncManager: SyncManager,
+    private val firebaseSyncService: FirebaseSyncService
 ) : ViewModel() {
 
     val themeState: StateFlow<AppTheme> = themeManager.themeFlow
@@ -53,6 +60,13 @@ class SettingsViewModel @Inject constructor(
     private val _restoreState = MutableStateFlow<RestoreState>(RestoreState.Idle)
     val restoreState: StateFlow<RestoreState> = _restoreState
 
+    // Sync states
+    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val syncState: StateFlow<SyncState> = _syncState
+
+    private val _firebaseSyncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val firebaseSyncState: StateFlow<SyncState> = _firebaseSyncState
+
     init {
         loadOwners()
     }
@@ -61,7 +75,6 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             ownerRepository.observeAllOwners().collect { owners ->
                 _allOwners.value = owners
-                // Sincroniza com o OwnerSelectionManager
                 val selectedId = ownerSelectionManager.getSelectedOwnerId()
                 val current = if (selectedId != null) owners.find { it.id == selectedId }
                               else owners.firstOrNull()
@@ -71,7 +84,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** Troca o morador ativo das configurações */
     fun selecionarMorador(ownerId: Long) {
         viewModelScope.launch {
             ownerSelectionManager.selectOwner(ownerId)
@@ -112,7 +124,6 @@ class SettingsViewModel @Inject constructor(
         durationMillis: Long?
     ) {
         val currentOwner = _owner.value ?: return
-        
         val until = if (durationMillis != null) {
             System.currentTimeMillis() + durationMillis
         } else {
@@ -130,7 +141,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** Seleciona um morador para visualizar/editar configurações */
     fun selecionarOwnerParaConfig(ownerId: Long) {
         _selectedOwnerForSettings.value = ownerId
         _owner.value = _allOwners.value.find { it.id == ownerId }
@@ -142,7 +152,7 @@ class SettingsViewModel @Inject constructor(
             val success = backupManager.restoreBackup(uri)
             if (success) {
                 _restoreState.value = RestoreState.Success
-                loadOwners() // Recarrega os moradores no ViewModel
+                loadOwners()
             } else {
                 _restoreState.value = RestoreState.Error("Falha ao importar o arquivo de backup.")
             }
@@ -151,6 +161,33 @@ class SettingsViewModel @Inject constructor(
 
     fun resetRestoreState() {
         _restoreState.value = RestoreState.Idle
+    }
+
+    // ====== Sincronização REST ======
+
+    /** Sincroniza com o backend REST */
+    fun syncWithRest() {
+        viewModelScope.launch {
+            _syncState.value = SyncState.Syncing
+            val success = syncManager.syncAll()
+            _syncState.value = if (success) SyncState.Success("Sincronizado com servidor")
+                               else SyncState.Error("Falha na sincronização")
+        }
+    }
+
+    /** Sincroniza com o Firebase */
+    fun syncWithFirebase() {
+        viewModelScope.launch {
+            _firebaseSyncState.value = SyncState.Syncing
+            val success = firebaseSyncService.syncAll()
+            _firebaseSyncState.value = if (success) SyncState.Success("Sincronizado com Firebase")
+                                       else SyncState.Error("Firebase não configurado")
+        }
+    }
+
+    fun resetSyncStates() {
+        _syncState.value = SyncState.Idle
+        _firebaseSyncState.value = SyncState.Idle
     }
 
     sealed class BackupState {
@@ -165,5 +202,12 @@ class SettingsViewModel @Inject constructor(
         object Loading : RestoreState()
         object Success : RestoreState()
         data class Error(val message: String) : RestoreState()
+    }
+
+    sealed class SyncState {
+        object Idle : SyncState()
+        object Syncing : SyncState()
+        data class Success(val message: String) : SyncState()
+        data class Error(val message: String) : SyncState()
     }
 }

@@ -1,8 +1,13 @@
 package br.com.porteirointeligente.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.*
@@ -65,12 +70,28 @@ fun MainScreenNavGraph() {
                         },
                         selected = selected,
                         onClick = {
-                            navController.navigate(item.toRoute()) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            val startId = navController.graph.findStartDestination().id
+                            when (item) {
+                                bottomNavItems[0] -> navController.navigate(Home) {
+                                    popUpTo(startId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                                bottomNavItems[1] -> navController.navigate(History) {
+                                    popUpTo(startId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                                bottomNavItems[2] -> navController.navigate(QrCodeDisplay) {
+                                    popUpTo(startId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                                bottomNavItems[3] -> navController.navigate(Settings) {
+                                    popUpTo(startId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         colors = NavigationBarItemDefaults.colors(
@@ -91,7 +112,9 @@ fun MainScreenNavGraph() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<Home>(
-                enterTransition = { fadeIn(animationSpec = tween(500)) },
+                enterTransition = {
+                    fadeIn(animationSpec = tween(500)) + scaleIn(initialScale = 0.95f, animationSpec = tween(500))
+                },
                 exitTransition = { fadeOut(animationSpec = tween(300)) }
             ) {
                 HomeScreen(
@@ -103,8 +126,18 @@ fun MainScreenNavGraph() {
             }
 
             composable<History>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it / 4 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it / 4 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 VisitHistoryScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -113,8 +146,18 @@ fun MainScreenNavGraph() {
             }
 
             composable<QrCodeDisplay>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 QrCodeScreen(
                     onNavigateBack = { navController.popBackStack() }
@@ -122,8 +165,18 @@ fun MainScreenNavGraph() {
             }
 
             composable<Settings>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it / 3 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it / 3 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it / 3 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() }
@@ -131,22 +184,46 @@ fun MainScreenNavGraph() {
             }
 
             composable<Scanner>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    scaleIn(initialScale = 0.85f, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    scaleOut(targetScale = 0.85f, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 ScannerScreen(onNavigateBack = { navController.popBackStack() })
             }
 
             composable<VisitRegistration>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 VisitRegistrationScreen(onNavigateBack = { navController.popBackStack() })
             }
 
             composable<Cadastro>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) { backStackEntry ->
                 val cadastro: Cadastro = backStackEntry.toRoute()
                 CadastroScreen(
@@ -163,8 +240,18 @@ fun MainScreenNavGraph() {
             }
 
             composable<OwnerManagement>(
-                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                enterTransition = {
+                    slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                exitTransition = {
+                    slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                },
+                popEnterTransition = {
+                    slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(350)) + fadeIn(animationSpec = tween(350))
+                },
+                popExitTransition = {
+                    slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+                }
             ) {
                 OwnerManagementScreen(
                     onNavigateBack = { navController.popBackStack() },

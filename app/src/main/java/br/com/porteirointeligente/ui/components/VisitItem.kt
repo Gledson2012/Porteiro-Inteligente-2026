@@ -49,8 +49,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
-import br.com.porteirointeligente.ui.theme.Emerald500
-import br.com.porteirointeligente.ui.theme.Rose500
+import br.com.porteirointeligente.ui.theme.Emerald
+import br.com.porteirointeligente.ui.theme.Rose
 import br.com.porteirointeligente.ui.theme.Slate400
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,9 +65,9 @@ fun VisitItem(
     var expanded by remember { mutableStateOf(false) }
 
     val statusColor = when (visit.status) {
-        VisitStatus.ENTRADA_REGISTRADA -> Emerald500
+        VisitStatus.ENTRADA_REGISTRADA -> Emerald
         VisitStatus.SAIDA_REGISTRADA -> MaterialTheme.colorScheme.primary
-        VisitStatus.CANCELADA -> Rose500
+        VisitStatus.CANCELADA -> Rose
     }
 
     val statusLabel = when (visit.status) {

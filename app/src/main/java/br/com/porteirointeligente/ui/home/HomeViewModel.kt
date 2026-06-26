@@ -26,45 +26,55 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUIState> = _uiState
 
     init {
+        // Auto-seleciona o primeiro morador se nenhum estiver selecionado
+        viewModelScope.launch {
+            val selectedId = ownerSelectionManager.getSelectedOwnerId()
+            if (selectedId == null) {
+                val owners = ownerRepository.observeAllOwners().first()
+                if (owners.isNotEmpty()) {
+                    ownerSelectionManager.selectOwner(owners.first().id)
+                }
+            }
+        }
         loadData()
     }
 
-    fun loadData() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.value = HomeUIState.Loading
             try {
-                ownerRepository.observeAllOwners()
-                    .combine(visitRepository.observeAllVisits()) { owners, visits ->
-                        if (ownerSelectionManager.getSelectedOwnerId() == null && owners.isNotEmpty()) {
-                            ownerSelectionManager.selectOwner(owners.first().id)
-                        }
-
-                        val selectedId = ownerSelectionManager.selectedOwnerId.first()
-                        val selectedOwner = if (selectedId != null) {
-                            owners.find { it.id == selectedId }
-                        } else {
-                            owners.firstOrNull()
-                        }
-
-                        HomeUIState.Success(
-                            allOwners = owners,
-                            selectedOwner = selectedOwner,
-                            recentVisits = visits.take(5)
-                        )
-                    }.collect { successState ->
-                        _uiState.value = successState
+                combine(
+                    ownerRepository.observeAllOwners(),
+                    visitRepository.observeAllVisits(),
+                    ownerSelectionManager.selectedOwnerId
+                ) { owners, visits, selectedId ->
+                    val selectedOwner = if (selectedId != null) {
+                        owners.find { it.id == selectedId }
+                    } else {
+                        owners.firstOrNull()
                     }
+
+                    HomeUIState.Success(
+                        allOwners = owners,
+                        selectedOwner = selectedOwner,
+                        recentVisits = visits.take(5)
+                    )
+                }.collect { successState ->
+                    _uiState.value = successState
+                }
             } catch (e: Exception) {
                 _uiState.value = HomeUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }
 
+    /**
+     * Seleciona um morador. O combine reativo com [ownerSelectionManager.selectedOwnerId]
+     * garante que a UI será atualizada automaticamente.
+     */
     fun selecionarMorador(ownerId: Long) {
         viewModelScope.launch {
             ownerSelectionManager.selectOwner(ownerId)
-            // Recarregar os dados para refletir a nova seleção
-            loadData()
         }
     }
 }
@@ -78,4 +88,3 @@ sealed interface HomeUIState {
     ) : HomeUIState
     data class Error(val message: String) : HomeUIState
 }
-

@@ -50,6 +50,10 @@ object Login
 @Serializable
 object Register
 
+// Onboarding
+@Serializable
+object Onboarding
+
 // ============================================================
 // Configuração da Bottom Navigation Bar
 // ============================================================
@@ -67,11 +71,4 @@ val bottomNavItems = listOf(
     BottomNavItem("Ajustes", Icons.Filled.Settings, Icons.Outlined.Settings)
 )
 
-/** Mapeia um BottomNavItem para sua rota type-safe correspondente */
-fun BottomNavItem.toRoute(): Any = when (this) {
-    bottomNavItems[0] -> Home
-    bottomNavItems[1] -> History
-    bottomNavItems[2] -> QrCodeDisplay
-    bottomNavItems[3] -> Settings
-    else -> Home
-}
+

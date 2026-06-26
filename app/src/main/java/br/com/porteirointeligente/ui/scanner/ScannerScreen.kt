@@ -68,7 +68,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.util.QrCodeAnalyzer
-import br.com.porteirointeligente.ui.theme.GradientAmber
+import br.com.porteirointeligente.ui.theme.GradientGold
 import br.com.porteirointeligente.ui.theme.ScannerOverlay
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.Executors

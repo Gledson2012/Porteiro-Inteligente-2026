@@ -21,7 +21,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import br.com.porteirointeligente.ui.components.AppSignature
 import br.com.porteirointeligente.ui.theme.GradientNeon
-import br.com.porteirointeligente.util.FirebaseSyncService
 import br.com.porteirointeligente.util.ViaCepClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -39,7 +38,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.layout.ContentScale
-import br.com.porteirointeligente.ui.theme.GradientAmber
+import br.com.porteirointeligente.ui.theme.GradientGold
 import br.com.porteirointeligente.ui.theme.Slate400
 import coil.compose.AsyncImage
 
@@ -120,12 +119,12 @@ fun CadastroScreen(
     }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-        focusedLabelColor = MaterialTheme.colorScheme.primary,
-        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f),
+        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+        unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
     )
 
     Scaffold(
@@ -164,7 +163,7 @@ fun CadastroScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Brush.linearGradient(GradientAmber))
+                        .background(Brush.linearGradient(GradientGold))
                         .padding(20.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

@@ -59,10 +59,10 @@ import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.ui.components.AppSignature
 import br.com.porteirointeligente.ui.components.ShimmerCard
 import br.com.porteirointeligente.ui.components.VisitItem
-import br.com.porteirointeligente.ui.theme.GradientAmber
-import br.com.porteirointeligente.ui.theme.GradientBlue
-import br.com.porteirointeligente.ui.theme.GradientEmerald
-import br.com.porteirointeligente.ui.theme.GradientViolet
+import br.com.porteirointeligente.ui.theme.GradientGold
+import br.com.porteirointeligente.ui.theme.GradientPrimary
+import br.com.porteirointeligente.ui.theme.GradientTeal
+import br.com.porteirointeligente.ui.theme.GradientNeon
 import br.com.porteirointeligente.ui.theme.Slate400
 
 // ... imports
@@ -117,7 +117,7 @@ fun HomeScreen(
                                     .size(48.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        Brush.linearGradient(GradientAmber)
+                                        Brush.linearGradient(GradientGold)
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -212,9 +212,9 @@ fun HomeScreen(
 @Composable
 private fun StatsSection(totalVisitsToday: Int, activeVisitsCount: Int, totalOwners: Int) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        StatCard(icon = Icons.Default.CalendarMonth, value = "$totalVisitsToday", label = "Hoje", gradient = GradientAmber, modifier = Modifier.weight(1f))
-        StatCard(icon = Icons.Default.Visibility, value = "$activeVisitsCount", label = "No local", gradient = GradientEmerald, modifier = Modifier.weight(1f))
-        StatCard(icon = Icons.Default.People, value = "$totalOwners", label = "Moradores", gradient = GradientBlue, modifier = Modifier.weight(1f))
+        StatCard(icon = Icons.Default.CalendarMonth, value = "$totalVisitsToday", label = "Hoje", gradient = GradientGold, modifier = Modifier.weight(1f))
+        StatCard(icon = Icons.Default.Visibility, value = "$activeVisitsCount", label = "No local", gradient = GradientTeal, modifier = Modifier.weight(1f))
+        StatCard(icon = Icons.Default.People, value = "$totalOwners", label = "Moradores", gradient = GradientPrimary, modifier = Modifier.weight(1f))
     }
 }
 
@@ -242,9 +242,9 @@ private fun QuickActionsSection(onScan: () -> Unit, onRegisterVisit: () -> Unit,
     Column {
         Text(text = "Ações Rápidas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickActionCard(icon = Icons.Default.QrCodeScanner, label = "Escanear QR", gradient = GradientViolet, onClick = onScan, modifier = Modifier.weight(1f))
-            QuickActionCard(icon = Icons.Default.Person, label = "Nova Visita", gradient = GradientEmerald, onClick = onRegisterVisit, modifier = Modifier.weight(1f))
-            QuickActionCard(icon = Icons.Default.Groups, label = "Moradores", gradient = GradientBlue, onClick = onManageOwners, modifier = Modifier.weight(1f))
+            QuickActionCard(icon = Icons.Default.QrCodeScanner, label = "Escanear QR", gradient = GradientNeon, onClick = onScan, modifier = Modifier.weight(1f))
+            QuickActionCard(icon = Icons.Default.Person, label = "Nova Visita", gradient = GradientTeal, onClick = onRegisterVisit, modifier = Modifier.weight(1f))
+            QuickActionCard(icon = Icons.Default.Groups, label = "Moradores", gradient = GradientPrimary, onClick = onManageOwners, modifier = Modifier.weight(1f))
         }
     }
 }

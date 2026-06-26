@@ -33,7 +33,10 @@ class VisitHistoryViewModel @Inject constructor(
                         Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
                     }
                 }.collect { visits ->
-                    _uiState.value = VisitHistoryUIState.Success(visits, _filter.value)
+                    _uiState.value = VisitHistoryUIState.Success(
+                        visits = visits,
+                        filter = _filter.value
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.value = VisitHistoryUIState.Error(e.message ?: "Erro desconhecido")
@@ -53,7 +56,7 @@ class VisitHistoryViewModel @Inject constructor(
                     status = VisitStatus.SAIDA_REGISTRADA
                 )
             )
-            // A UI irá se atualizar automaticamente por causa do Flow
+            // A UI irá se atualizar automaticamente por causa do Flow reativo do Room
         }
     }
 
@@ -65,4 +68,3 @@ sealed interface VisitHistoryUIState {
     data class Success(val visits: List<Visit>, val filter: VisitHistoryViewModel.Filter) : VisitHistoryUIState
     data class Error(val message: String) : VisitHistoryUIState
 }
-

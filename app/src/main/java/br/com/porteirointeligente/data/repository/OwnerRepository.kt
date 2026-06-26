@@ -5,7 +5,9 @@ import br.com.porteirointeligente.data.local.entity.OwnerEntity
 import br.com.porteirointeligente.data.network.ApiService
 import br.com.porteirointeligente.domain.model.Owner
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,28 +18,27 @@ class OwnerRepository @Inject constructor(
 ) {
 
     fun observeAllOwners(): Flow<List<Owner>> = flow {
+        // Tenta sincronizar com a API primeiro
         try {
             val response = apiService.getOwners()
             if (response.isSuccessful && response.body() != null) {
                 val owners = response.body()!!.map { it.toDomain() }
-                // Salvar no cache local
                 ownerDao.deleteAll()
                 ownerDao.insertAll(owners.map { OwnerEntity.fromDomain(it) })
-                emit(owners)
-            } else {
-                // Em caso de falha, emita do cache
-                val cachedOwners = ownerDao.getAllOwnersList().map { it.toDomain() }
-                emit(cachedOwners)
             }
         } catch (e: Exception) {
-            // Em caso de exceção (ex: sem rede), emita do cache
-            val cachedOwners = ownerDao.getAllOwnersList().map { it.toDomain() }
-            emit(cachedOwners)
+            // Ignorado — usará o cache local
         }
+
+        // Observa o banco Room reativamente para refletir mudanças locais
+        emitAll(
+            ownerDao.getAllOwners().map { entities ->
+                entities.map { it.toDomain() }
+            }
+        )
     }
 
     suspend fun getOwnerById(id: Long): Owner? {
-        // Busca primeiro no cache, depois na rede se necessário
         return ownerDao.getOwnerById(id)?.toDomain()
     }
 
@@ -54,6 +55,11 @@ class OwnerRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /** Insere diretamente no banco local sem chamar a API (usado em restore de backup) */
+    suspend fun insertOwnerLocal(owner: Owner) {
+        ownerDao.insertOwner(OwnerEntity.fromDomain(owner))
     }
 
     suspend fun updateOwner(owner: Owner): Result<Owner> {
@@ -89,4 +95,3 @@ class OwnerRepository @Inject constructor(
         ownerDao.deleteAll()
     }
 }
-

@@ -3,6 +3,7 @@ package br.com.porteirointeligente.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,20 +20,42 @@ fun RootNavGraph(
 ) {
     val navController = rememberNavController()
     val authState by authViewModel.authState.collectAsState()
+    val onboardingViewModel: OnboardingViewModel = hiltViewModel()
+    val shouldShowOnboarding by onboardingViewModel.shouldShowOnboarding.collectAsState()
+
+    val startDestination = remember {
+        if (shouldShowOnboarding) Onboarding else Splash
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Splash
+        startDestination = startDestination
     ) {
+        composable<Onboarding> {
+            OnboardingScreen(
+                onOnboardingFinished = {
+                    onboardingViewModel.completeOnboarding()
+                    navController.navigate(Splash) {
+                        popUpTo<Onboarding> { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable<Splash> {
             SplashScreen(onSplashFinished = {
-                val destination = when (authState) {
-                    is AuthState.Authenticated -> Home
-                    is AuthState.Unauthenticated -> Login
-                    is AuthState.Loading -> Splash
-                }
-                navController.navigate(destination) {
-                    popUpTo<Splash> { inclusive = true }
+                when (authState) {
+                    is AuthState.Authenticated -> {
+                        navController.navigate(Home) {
+                            popUpTo<Splash> { inclusive = true }
+                        }
+                    }
+                    is AuthState.Unauthenticated -> {
+                        navController.navigate(Login) {
+                            popUpTo<Splash> { inclusive = true }
+                        }
+                    }
+                    is AuthState.Loading -> { /* Should not happen */ }
                 }
             })
         }

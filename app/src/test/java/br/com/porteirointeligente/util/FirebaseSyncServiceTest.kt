@@ -1,127 +1,75 @@
 package br.com.porteirointeligente.util
 
+import android.content.ContentResolver
+import android.content.Context
+import br.com.porteirointeligente.data.repository.OwnerRepository
+import br.com.porteirointeligente.data.repository.VisitRepository
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
-import org.junit.After
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Testes unitários do FirebaseSyncService.
+ *
+ * Testes de sincronização (syncAll/syncOwners/syncVisits) requerem o Firebase
+ * totalmente inicializado (google-services.json válido + Android Runtime) e devem
+ * ser executados como testes instrumentados em dispositivo/emulador.
+ *
+ * Aqui testamos apenas a lógica que independe do Firebase SDK.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FirebaseSyncServiceTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    @MockK
+    private lateinit var context: Context
+
+    @MockK
+    private lateinit var contentResolver: ContentResolver
+
+    @MockK
+    private lateinit var ownerRepository: OwnerRepository
+
+    @MockK
+    private lateinit var visitRepository: VisitRepository
+
+    private lateinit var firebaseSyncService: FirebaseSyncService
 
     @Before
     fun setUp() {
-        FirebaseSyncService.resetSyncStatus()
-    }
+        MockKAnnotations.init(this)
+        every { context.contentResolver } returns contentResolver
 
-    @After
-    fun tearDown() {
-        FirebaseSyncService.resetSyncStatus()
+        coEvery { ownerRepository.observeAllOwners() } returns flowOf(emptyList())
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
+
+        firebaseSyncService = FirebaseSyncService(context, ownerRepository, visitRepository)
     }
 
     @Test
     fun `initial status should be IDLE`() {
-        val status = FirebaseSyncService.syncStatus.value
-        assert(status is FirebaseSyncService.SyncStatus.IDLE) {
+        val status = firebaseSyncService.syncStatus.value
+        assert(status is SyncStatus.IDLE) {
             "Expected IDLE but got ${status::class.simpleName}"
         }
     }
 
     @Test
-    fun `simularEnvio should transition SYNCING then SUCCESS`() = runTest(testDispatcher) {
-        val job = launch {
-            FirebaseSyncService.simularEnvio(
-                nome = "João Silva",
-                endereco = "Rua das Flores, 123",
-                cep = "01310-000",
-                telefone = "5511999999999"
-            )
+    fun `resetSyncStatus should set status back to IDLE`() {
+        firebaseSyncService.resetSyncStatus()
+        val status = firebaseSyncService.syncStatus.value
+        assert(status is SyncStatus.IDLE) {
+            "Expected IDLE after reset"
         }
-
-        // Advance just enough for the coroutine to start and set SYNCING
-        testDispatcher.scheduler.advanceTimeBy(1)
-        val syncingStatus = FirebaseSyncService.syncStatus.value
-        assert(syncingStatus is FirebaseSyncService.SyncStatus.SYNCING) {
-            "Expected SYNCING during execution but got ${syncingStatus::class.simpleName}"
-        }
-
-        // Advance past the 1500ms delay
-        advanceUntilIdle()
-        job.join()
-
-        val finalStatus = FirebaseSyncService.syncStatus.value
-        assert(finalStatus is FirebaseSyncService.SyncStatus.SUCCESS) {
-            "Expected SUCCESS but got ${finalStatus::class.simpleName}"
-        }
-        val successStatus = finalStatus as FirebaseSyncService.SyncStatus.SUCCESS
-        assert(successStatus.timestamp.isNotBlank()) { "Timestamp should not be blank" }
-        assert(successStatus.timestamp.contains("T")) { "Timestamp should be in ISO format (yyyy-MM-dd'T'HH:mm:ss)" }
-    }
-
-    @Test
-    fun `simularEnvio should handle whitespace trimming`() = runTest(testDispatcher) {
-        val job = launch {
-            FirebaseSyncService.simularEnvio(
-                nome = "  Maria Souza  ",
-                endereco = "  Av. Paulista, 1000  ",
-                cep = "01310-100",
-                telefone = "11988887777"
-            )
-        }
-
-        advanceUntilIdle()
-        job.join()
-
-        val finalStatus = FirebaseSyncService.syncStatus.value
-        assert(finalStatus is FirebaseSyncService.SyncStatus.SUCCESS) {
-            "Expected SUCCESS but got ${finalStatus::class.simpleName}"
-        }
-    }
-
-    @Test
-    fun `simularEnvio should strip non-digits from CEP`() = runTest(testDispatcher) {
-        val job = launch {
-            FirebaseSyncService.simularEnvio(
-                nome = "Carlos",
-                endereco = "Rua Teste",
-                cep = "01310-000",  // formatted CEP with hyphen
-                telefone = "11999998888"
-            )
-        }
-
-        advanceUntilIdle()
-        job.join()
-
-        val finalStatus = FirebaseSyncService.syncStatus.value
-        assert(finalStatus is FirebaseSyncService.SyncStatus.SUCCESS)
-    }
-
-    @Test
-    fun `simularEnvio should strip non-digits from telefone`() = runTest(testDispatcher) {
-        val job = launch {
-            FirebaseSyncService.simularEnvio(
-                nome = "Ana",
-                endereco = "Rua Teste",
-                cep = "12345678",
-                telefone = "(11) 99999-8888"  // formatted phone with mask
-            )
-        }
-
-        advanceUntilIdle()
-        job.join()
-
-        val finalStatus = FirebaseSyncService.syncStatus.value
-        assert(finalStatus is FirebaseSyncService.SyncStatus.SUCCESS)
     }
 
     @Test
     fun `getJsonSchemaExample should return valid JSON structure`() {
-        val schema = FirebaseSyncService.getJsonSchemaExample()
+        val schema = firebaseSyncService.getJsonSchemaExample()
         assert(schema.isNotBlank()) { "Schema should not be blank" }
         assert(schema.contains("\"owners\"")) { "Schema should contain owners key" }
         assert(schema.contains("\"visits\"")) { "Schema should contain visits key" }

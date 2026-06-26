@@ -6,7 +6,9 @@ import br.com.porteirointeligente.data.network.ApiService
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,37 +19,48 @@ class VisitRepository @Inject constructor(
 ) {
 
     fun observeAllVisits(): Flow<List<Visit>> = flow {
+        // Tenta sincronizar com a API primeiro
         try {
             val response = apiService.getVisits()
             if (response.isSuccessful && response.body() != null) {
                 val visits = response.body()!!.map { it.toDomain() }
                 visitDao.clearAll()
                 visitDao.insertAll(visits.map { VisitEntity.fromDomain(it) })
-                emit(visits)
-            } else {
-                emit(visitDao.getAllVisitsList().map { it.toDomain() })
             }
         } catch (e: Exception) {
-            emit(visitDao.getAllVisitsList().map { it.toDomain() })
+            // Ignorado — usará o cache local
         }
+
+        // Observa o banco Room reativamente para refletir mudanças locais
+        emitAll(
+            visitDao.getAllVisits().map { entities ->
+                entities.map { it.toDomain() }
+            }
+        )
     }
 
     fun observeVisitsByStatus(status: VisitStatus): Flow<List<Visit>> = flow {
+        // Tenta sincronizar com a API primeiro
         try {
             val response = apiService.getVisits()
             if (response.isSuccessful && response.body() != null) {
-                val visits = response.body()!!
-                    .map { it.toDomain() }
-                    .filter { it.status == status }
-                emit(visits)
-            } else {
-                emit(visitDao.getVisitsByStatusList(status).map { it.toDomain() })
+                val visits = response.body()!!.map { it.toDomain() }
+                visitDao.clearAll()
+                visitDao.insertAll(visits.map { VisitEntity.fromDomain(it) })
             }
         } catch (e: Exception) {
-            emit(visitDao.getVisitsByStatusList(status).map { it.toDomain() })
+            // Ignorado — usará o cache local
         }
-    }
 
+        // Observa o banco Room reativamente para refletir mudanças locais
+        emitAll(
+            visitDao.getAllVisits().map { entities ->
+                entities
+                    .map { it.toDomain() }
+                    .filter { it.status == status }
+            }
+        )
+    }
 
     suspend fun getVisitById(id: Long): Visit? =
         visitDao.getVisitById(id)?.toDomain()
@@ -67,6 +80,11 @@ class VisitRepository @Inject constructor(
         }
     }
 
+    /** Insere diretamente no banco local sem chamar a API (usado em restore de backup) */
+    suspend fun insertVisitLocal(visit: Visit) {
+        visitDao.insertVisit(VisitEntity.fromDomain(visit))
+    }
+
     suspend fun updateVisit(visit: Visit): Result<Visit> {
         return try {
             val response = apiService.updateVisit(visit.id, visit.toDto())
@@ -84,4 +102,3 @@ class VisitRepository @Inject constructor(
 
     suspend fun clearAll() = visitDao.clearAll()
 }
-
