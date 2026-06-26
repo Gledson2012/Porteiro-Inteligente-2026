@@ -126,12 +126,7 @@ class VisitHistoryViewModelTest {
     @Test
     fun `registrarSaida should update visit with saida timestamp and status`() {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit))
-        coEvery { visitRepository.updateVisit(any()) } returns Result.success(
-            activeVisit.copy(
-                dataSaida = System.currentTimeMillis(),
-                status = VisitStatus.SAIDA_REGISTRADA
-            )
-        )
+        coEvery { visitRepository.updateVisit(any()) } just runs
 
         viewModel = VisitHistoryViewModel(visitRepository)
 

@@ -91,7 +91,7 @@ class OwnerDetailsViewModelTest {
     @Test
     fun `deleteOwner should call repository delete`() {
         coEvery { ownerRepository.getOwnerById(1L) } returns testOwner
-        coEvery { ownerRepository.deleteOwner(any()) } returns Result.success(Unit)
+        coEvery { ownerRepository.deleteOwner(any()) } just runs
 
         viewModel = OwnerDetailsViewModel(ownerRepository, ownerSelectionManager, context)
         viewModel.deleteOwner(1L)

@@ -1,67 +1,90 @@
 package br.com.porteirointeligente.data.repository
 
-import br.com.porteirointeligente.BuildConfig
-import br.com.porteirointeligente.data.network.ApiService
-import br.com.porteirointeligente.data.network.TokenManager
-import br.com.porteirointeligente.data.network.dto.LoginRequest
-import br.com.porteirointeligente.data.network.dto.RegisterRequest
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
+
+/**
+ * Repositório de autenticação local.
+ *
+ * Agora funciona 100% offline — armazena o nome de usuário logado no DataStore.
+ * O registro cria uma conta local, e o login verifica as credenciais.
+ * Não depende mais de backend REST ou Firebase.
+ */
 @Singleton
 class AuthRepository @Inject constructor(
-    private val apiService: ApiService,
-    private val tokenManager: TokenManager
+    @ApplicationContext private val context: Context
 ) {
-    fun getAuthToken() = tokenManager.getToken()
+    private val dataStore = context.dataStore
 
-    suspend fun login(loginRequest: LoginRequest): Result<Unit> {
-        return try {
-            val response = apiService.login(loginRequest)
-            if (response.isSuccessful && response.body() != null) {
-                tokenManager.saveToken(response.body()!!.token)
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Erro do servidor"))
-            }
-        } catch (e: Exception) {
-            handleNetworkError(e)
+    companion object {
+        private val USERNAME_KEY = stringPreferencesKey("local_username")
+        private val PASSWORD_KEY = stringPreferencesKey("local_password")
+    }
+
+    /** Observa se há um usuário logado */
+    fun getAuthToken(): Flow<String?> {
+        return dataStore.data.map { preferences ->
+            preferences[USERNAME_KEY]
         }
     }
 
-    suspend fun register(registerRequest: RegisterRequest): Result<Unit> {
-        return try {
-            val response = apiService.register(registerRequest)
-            if (response.isSuccessful) {
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Erro do servidor"))
+    /** Login local — verifica se as credenciais batem com o registro */
+    suspend fun login(username: String, password: String): Result<Unit> {
+        val prefs = dataStore.data.first()
+        val savedUser = prefs[USERNAME_KEY]
+        val savedPass = prefs[PASSWORD_KEY]
+
+        if (savedUser == null || savedPass == null) {
+            // Primeiro login: cria conta automaticamente
+            dataStore.edit { editPrefs ->
+                editPrefs[USERNAME_KEY] = username
+                editPrefs[PASSWORD_KEY] = password
             }
-        } catch (e: Exception) {
-            handleNetworkError(e)
+            return Result.success(Unit)
+        }
+
+        return if (username == savedUser && password == savedPass) {
+            dataStore.edit { editPrefs ->
+                editPrefs[USERNAME_KEY] = username
+            }
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("Usuário ou senha inválidos"))
         }
     }
 
+    /** Registro local — salva as credenciais no DataStore */
+    suspend fun register(username: String, password: String): Result<Unit> {
+        if (username.isBlank()) {
+            return Result.failure(Exception("Usuário não pode estar em branco"))
+        }
+        if (password.length < 4) {
+            return Result.failure(Exception("A senha deve ter no mínimo 4 caracteres"))
+        }
+
+        dataStore.edit { prefs ->
+            prefs[USERNAME_KEY] = username
+            prefs[PASSWORD_KEY] = password
+        }
+        return Result.success(Unit)
+    }
+
+    /** Logout — remove os dados de autenticação */
     suspend fun logout() {
-        tokenManager.deleteToken()
-    }
-
-    /** Traduz exceções de rede em mensagens amigáveis para o usuário */
-    private fun handleNetworkError(e: Exception): Result<Unit> = when (e) {
-        is ConnectException -> Result.failure(
-            Exception("Servidor não disponível. Verifique se o backend está rodando em ${BuildConfig.API_BASE_URL}")
-        )
-        is SocketTimeoutException -> Result.failure(
-            Exception("Tempo limite excedido. Servidor muito lento ou inacessível.")
-        )
-        is UnknownHostException -> Result.failure(
-            Exception("Servidor não encontrado. Verifique a URL de conexão.")
-        )
-        else -> Result.failure(
-            Exception(e.message ?: "Erro desconhecido ao conectar ao servidor")
-        )
+        dataStore.edit { prefs ->
+            prefs.remove(USERNAME_KEY)
+        }
     }
 }

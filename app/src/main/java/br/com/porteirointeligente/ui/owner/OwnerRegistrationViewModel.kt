@@ -44,16 +44,16 @@ class OwnerRegistrationViewModel @Inject constructor(
                 qrCodePayload = payload
             )
 
-            val result = if (id > 0L) {
-                ownerRepository.updateOwner(owner)
-            } else {
-                ownerRepository.insertOwner(owner)
-            }
-
-            _uiState.value = if (result.isSuccess) {
-                OwnerRegistrationUIState.Success(result.getOrNull()!!)
-            } else {
-                OwnerRegistrationUIState.Error(result.exceptionOrNull()?.message ?: "Erro desconhecido")
+            try {
+                val savedOwner = if (id > 0L) {
+                    ownerRepository.updateOwner(owner)
+                    owner
+                } else {
+                    ownerRepository.insertOwner(owner)
+                }
+                _uiState.value = OwnerRegistrationUIState.Success(savedOwner)
+            } catch (e: Exception) {
+                _uiState.value = OwnerRegistrationUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }

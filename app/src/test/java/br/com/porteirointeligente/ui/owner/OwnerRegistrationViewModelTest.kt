@@ -47,8 +47,8 @@ class OwnerRegistrationViewModelTest {
 
         coEvery { ownerRepository.observeAllOwners() } returns flowOf(emptyList())
         coEvery { ownerRepository.getOwnerById(any()) } returns null
-        coEvery { ownerRepository.insertOwner(any()) } returns Result.success(testOwner)
-        coEvery { ownerRepository.updateOwner(any()) } returns Result.success(testOwner)
+        coEvery { ownerRepository.insertOwner(any()) } returns testOwner
+        coEvery { ownerRepository.updateOwner(any()) } returns Unit
         
         viewModel = OwnerRegistrationViewModel(ownerRepository)
     }

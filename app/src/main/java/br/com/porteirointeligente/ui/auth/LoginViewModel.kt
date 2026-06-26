@@ -2,7 +2,6 @@ package br.com.porteirointeligente.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.porteirointeligente.data.network.dto.LoginRequest
 import br.com.porteirointeligente.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +20,7 @@ class LoginViewModel @Inject constructor(
     fun login(username: String, password: String) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            val result = authRepository.login(LoginRequest(username, password))
+            val result = authRepository.login(username, password)
             _loginState.value = if (result.isSuccess) {
                 LoginState.Success
             } else {

@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  * Suporta tanto cadastro novo (ownerId = 0L) quanto edição (ownerId > 0L).
  * - Formulário: Nome Completo, Endereço, CEP, Celular
  * - Máscaras visuais em tempo real para CEP (00000-000) e Celular ((00) 00000-0000)
- * - Botão "GERAR QR CODE" que valida, salva (simulando Firebase) e navega
+ * - Botão "GERAR QR CODE" que valida, salva no banco local (Room/SQLite) e navega
  */
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

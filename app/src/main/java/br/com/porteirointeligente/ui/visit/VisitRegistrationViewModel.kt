@@ -42,11 +42,11 @@ class VisitRegistrationViewModel @Inject constructor(
                 dataEntrada = System.currentTimeMillis(),
                 status = VisitStatus.ENTRADA_REGISTRADA
             )
-            val result = visitRepository.insertVisit(visit)
-            _uiState.value = if (result.isSuccess) {
-                VisitRegistrationUIState.Success
-            } else {
-                VisitRegistrationUIState.Error(result.exceptionOrNull()?.message ?: "Erro desconhecido")
+            try {
+                visitRepository.insertVisit(visit)
+                _uiState.value = VisitRegistrationUIState.Success
+            } catch (e: Exception) {
+                _uiState.value = VisitRegistrationUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
     }

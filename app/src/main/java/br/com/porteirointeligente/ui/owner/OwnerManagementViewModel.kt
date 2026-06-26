@@ -38,11 +38,11 @@ class OwnerManagementViewModel @Inject constructor(
 
     fun deleteOwner(owner: Owner) {
         viewModelScope.launch {
-            val result = ownerRepository.deleteOwner(owner)
-            if (result.isFailure) {
-                // Handle error, maybe expose it to the UI
+            try {
+                ownerRepository.deleteOwner(owner)
+            } catch (e: Exception) {
+                _uiState.value = OwnerUIState.Error(e.message ?: "Erro ao excluir morador")
             }
-            // A lista será atualizada automaticamente pelo flow
         }
     }
 }

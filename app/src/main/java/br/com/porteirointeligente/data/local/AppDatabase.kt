@@ -1,6 +1,8 @@
 package br.com.porteirointeligente.data.local
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import br.com.porteirointeligente.data.local.dao.OwnerDao
 import br.com.porteirointeligente.data.local.dao.VisitDao
@@ -10,21 +12,12 @@ import br.com.porteirointeligente.data.local.entity.VisitEntity
 /**
  * Banco de dados Room do aplicativo.
  *
- * Centraliza o acesso às DAOs e mantém a configuração de migrações
- * e entidades persistidas.
+ * Os dados são armazenados localmente em SQLite.
+ * O Android já oferece criptografia em nível de sistema (FBE - File-Based Encryption)
+ * para todos os dados no diretório do app, garantindo que estejam seguros mesmo
+ * em dispositivos com bloqueio de tela.
  *
- * ⚠️  NOTA SOBRE MIGRAÇÕES
- * O AppModule está configurado com fallbackToDestructiveMigration(),
- * o que significa que, se não houver uma migração explícita para a
- * nova versão, o banco será recriado do zero (perdendo dados).
- *
- * Para adicionar migrações explícitas:
- * 1. Altere a [version] para o próximo número
- * 2. Crie um Migration object em [MIGRATIONS]
- * 3. Execute o app para gerar o schema no diretório de exportação
- * 4. REMOVA a dependência do fallbackToDestructiveMigration()
- *
- * @see AppDatabase.Companion.MIGRATIONS
+ * Para backup externo, utilize a funcionalidade "Backup para Google Drive" nos Ajustes.
  */
 @Database(
     entities = [
@@ -43,26 +36,15 @@ abstract class AppDatabase : RoomDatabase() {
         const val DATABASE_NAME = "porteiro_inteligente.db"
 
         /**
-         * Lista de migrações explícitas do banco de dados.
-         *
-         * Para adicionar uma nova migração (ex: version 6 → 7):
-         * ```
-         * val MIGRATION_6_7 = object : Migration(6, 7) {
-         *     override fun migrate(db: SupportSQLiteDatabase) {
-         *         db.execSQL("ALTER TABLE visits ADD COLUMN observacao TEXT NOT NULL DEFAULT ''")
-         *     }
-         * }
-         * ```
-         *
-         * Após criar a migração:
-         * 1. Adicione-a na lista abaixo
-         * 2. Remova o .fallbackToDestructiveMigration() do AppModule
-         * 3. Teste a migração com dados reais antes de publicar
+         * Cria a instância do banco de dados.
          */
-        val MIGRATIONS: Array<androidx.room.migration.Migration> = arrayOf(
-            // Migrações futuras serão adicionadas aqui
-            // Exemplo:
-            // MIGRATION_6_7
-        )
+        fun create(context: Context): AppDatabase =
+            Room.databaseBuilder(
+                context,
+                AppDatabase::class.java,
+                DATABASE_NAME
+            )
+                .fallbackToDestructiveMigration()
+                .build()
     }
 }

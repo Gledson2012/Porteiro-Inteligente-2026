@@ -1,9 +1,9 @@
 package br.com.porteirointeligente.domain.model
 
-import br.com.porteirointeligente.data.network.dto.OwnerDto
-
 /**
  * Representa o morador/proprietário cadastrado no aplicativo.
+ *
+ * Dados persistidos localmente via Room (SQLite).
  */
 data class Owner(
     val id: Long = 0L,
@@ -25,24 +25,5 @@ data class Owner(
         if (!isOffline) return false
         val until = offlineUntil ?: return true
         return System.currentTimeMillis() < until
-    }
-
-    fun toDto(): OwnerDto {
-        return OwnerDto(
-            id = id,
-            userId = 0, // Será preenchido pelo servidor
-            nome = nome,
-            nomeCondominio = nomeCondominio,
-            endereco = endereco,
-            cep = cep,
-            apartamento = apartamento,
-            telefone = telefone,
-            photoUri = photoUri,
-            qrCodePayload = qrCodePayload,
-            dataCadastro = dataCadastro,
-            isOffline = isOffline,
-            offlineMessage = offlineMessage,
-            offlineUntil = offlineUntil
-        )
     }
 }

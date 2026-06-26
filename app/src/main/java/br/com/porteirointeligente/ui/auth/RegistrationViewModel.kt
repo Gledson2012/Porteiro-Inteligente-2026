@@ -2,7 +2,6 @@ package br.com.porteirointeligente.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.porteirointeligente.data.network.dto.RegisterRequest
 import br.com.porteirointeligente.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +20,7 @@ class RegistrationViewModel @Inject constructor(
     fun register(username: String, password: String) {
         viewModelScope.launch {
             _registrationState.value = RegistrationState.Loading
-            val result = authRepository.register(RegisterRequest(username, password))
+            val result = authRepository.register(username, password)
             _registrationState.value = if (result.isSuccess) {
                 RegistrationState.Success
             } else {

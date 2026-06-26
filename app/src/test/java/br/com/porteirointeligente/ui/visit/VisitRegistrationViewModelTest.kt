@@ -46,7 +46,7 @@ class VisitRegistrationViewModelTest {
         MockKAnnotations.init(this)
 
         coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
-        coEvery { visitRepository.insertVisit(any()) } returns Result.success(testVisit)
+        coEvery { visitRepository.insertVisit(any()) } returns testVisit
         
         viewModel = VisitRegistrationViewModel(visitRepository)
     }

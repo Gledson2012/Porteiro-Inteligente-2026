@@ -7,10 +7,7 @@ import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.AppTheme
 import br.com.porteirointeligente.util.BackupManager
-import br.com.porteirointeligente.util.FirebaseSyncService
 import br.com.porteirointeligente.util.OwnerSelectionManager
-import br.com.porteirointeligente.util.SyncManager
-import br.com.porteirointeligente.util.SyncStatus
 import br.com.porteirointeligente.util.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,9 +23,7 @@ class SettingsViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
     private val themeManager: ThemeManager,
     private val backupManager: BackupManager,
-    private val ownerSelectionManager: OwnerSelectionManager,
-    private val syncManager: SyncManager,
-    private val firebaseSyncService: FirebaseSyncService
+    private val ownerSelectionManager: OwnerSelectionManager
 ) : ViewModel() {
 
     val themeState: StateFlow<AppTheme> = themeManager.themeFlow
@@ -59,13 +54,6 @@ class SettingsViewModel @Inject constructor(
 
     private val _restoreState = MutableStateFlow<RestoreState>(RestoreState.Idle)
     val restoreState: StateFlow<RestoreState> = _restoreState
-
-    // Sync states
-    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
-    val syncState: StateFlow<SyncState> = _syncState
-
-    private val _firebaseSyncState = MutableStateFlow<SyncState>(SyncState.Idle)
-    val firebaseSyncState: StateFlow<SyncState> = _firebaseSyncState
 
     init {
         loadOwners()
@@ -163,33 +151,6 @@ class SettingsViewModel @Inject constructor(
         _restoreState.value = RestoreState.Idle
     }
 
-    // ====== Sincronização REST ======
-
-    /** Sincroniza com o backend REST */
-    fun syncWithRest() {
-        viewModelScope.launch {
-            _syncState.value = SyncState.Syncing
-            val success = syncManager.syncAll()
-            _syncState.value = if (success) SyncState.Success("Sincronizado com servidor")
-                               else SyncState.Error("Falha na sincronização")
-        }
-    }
-
-    /** Sincroniza com o Firebase */
-    fun syncWithFirebase() {
-        viewModelScope.launch {
-            _firebaseSyncState.value = SyncState.Syncing
-            val success = firebaseSyncService.syncAll()
-            _firebaseSyncState.value = if (success) SyncState.Success("Sincronizado com Firebase")
-                                       else SyncState.Error("Firebase não configurado")
-        }
-    }
-
-    fun resetSyncStates() {
-        _syncState.value = SyncState.Idle
-        _firebaseSyncState.value = SyncState.Idle
-    }
-
     sealed class BackupState {
         object Idle : BackupState()
         object Loading : BackupState()
@@ -204,10 +165,4 @@ class SettingsViewModel @Inject constructor(
         data class Error(val message: String) : RestoreState()
     }
 
-    sealed class SyncState {
-        object Idle : SyncState()
-        object Syncing : SyncState()
-        data class Success(val message: String) : SyncState()
-        data class Error(val message: String) : SyncState()
-    }
 }

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.FileDownload
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Palette
@@ -56,7 +54,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,7 +67,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.ui.theme.Amber
 import br.com.porteirointeligente.ui.theme.Slate400
 import br.com.porteirointeligente.util.AppTheme
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,10 +78,8 @@ fun SettingsScreen(
     val dynamicColorState by viewModel.dynamicColorState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
-    val syncState by viewModel.syncState.collectAsState()
-    val firebaseSyncState by viewModel.firebaseSyncState.collectAsState()
+
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     var showThemeDialog by remember { mutableStateOf(false) }
 
     val restoreLauncher = rememberLauncherForActivityResult(
@@ -195,40 +189,6 @@ fun SettingsScreen(
                             restoreLauncher.launch(arrayOf("application/json"))
                         },
                         onReset = { viewModel.resetRestoreState() }
-                    )
-                }
-            }
-
-            // Sync section
-            item {
-                SectionHeader(
-                    icon = Icons.Default.CloudSync,
-                    title = "Sincronização"
-                )
-            }
-
-            item {
-                SettingsCard {
-                    SyncItem(
-                        state = syncState,
-                        title = "Servidor REST",
-                        icon = Icons.Default.CloudUpload,
-                        iconBackground = MaterialTheme.colorScheme.primaryContainer,
-                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        onSync = { viewModel.syncWithRest() },
-                        onReset = { viewModel.resetSyncStates() }
-                    )
-
-                    Divider()
-
-                    SyncItem(
-                        state = firebaseSyncState,
-                        title = "Firebase",
-                        icon = Icons.Default.CloudSync,
-                        iconBackground = MaterialTheme.colorScheme.secondaryContainer,
-                        iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        onSync = { viewModel.syncWithFirebase() },
-                        onReset = { viewModel.resetSyncStates() }
                     )
                 }
             }
@@ -627,75 +587,6 @@ private fun RestoreItem(
                 title = "Restaurar Backup",
                 subtitle = "Importar dados de um arquivo",
                 onClick = onRestore
-            )
-        }
-    }
-}
-
-@Composable
-private fun SyncItem(
-    state: SettingsViewModel.SyncState,
-    title: String,
-    icon: ImageVector,
-    iconBackground: Color,
-    iconTint: Color,
-    onSync: () -> Unit,
-    onReset: () -> Unit
-) {
-    when (state) {
-        is SettingsViewModel.SyncState.Syncing -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("Sincronizando $title...")
-            }
-        }
-        is SettingsViewModel.SyncState.Success -> {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(state.message)
-            }
-            LaunchedEffect(Unit) {
-                kotlinx.coroutines.delay(2000)
-                onReset()
-            }
-        }
-        is SettingsViewModel.SyncState.Error -> {
-            SettingsClickItem(
-                icon = icon,
-                iconBackground = MaterialTheme.colorScheme.errorContainer,
-                iconTint = MaterialTheme.colorScheme.error,
-                title = "Sincronizar $title",
-                subtitle = state.message,
-                onClick = onSync
-            )
-        }
-        is SettingsViewModel.SyncState.Idle -> {
-            SettingsClickItem(
-                icon = icon,
-                iconBackground = iconBackground,
-                iconTint = iconTint,
-                title = "Sincronizar $title",
-                subtitle = "Enviar dados para $title",
-                onClick = onSync
             )
         }
     }

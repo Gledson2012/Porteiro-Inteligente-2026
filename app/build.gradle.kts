@@ -7,8 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
-    id("com.google.firebase.appdistribution") version "5.3.0"
-    id("com.google.gms.google-services")
+    // Firebase removido — usando apenas SQLite (Room) local
     id("com.github.triplet.play") version "3.11.0"
 }
 
@@ -58,7 +57,6 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3001/\"")
         }
         release {
             isMinifyEnabled = false
@@ -67,14 +65,6 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "API_BASE_URL", "\"https://api.porteirointeligente.com/\"")
-
-            // Firebase App Distribution (para release apenas)
-            firebaseAppDistribution {
-                artifactType = "APK"
-                releaseNotes = "Nova versão do Porteiro Inteligente"
-                groups = "qa-team"
-            }
         }
     }
 
@@ -152,7 +142,7 @@ dependencies {
     // Kotlin Serialization (navegação type-safe e parsing)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // JSON Parsing (Backup)
+    // JSON Parsing (Backup) — embutido no Android, mantido para compatibilidade
     implementation("com.google.code.gson:gson:2.11.0")
 
     // Core / Material (Legacy support)
@@ -164,15 +154,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
 
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-    implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-config-ktx") // Remote Config
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
@@ -196,17 +179,13 @@ dependencies {
     // Print
     implementation("androidx.print:print:1.0.0")
 
-    // Networking (Retrofit + OkHttp para sync REST)
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
 
     // Test
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("com.google.firebase:firebase-database-ktx")
+
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")

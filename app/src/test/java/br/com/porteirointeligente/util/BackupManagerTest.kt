@@ -74,8 +74,8 @@ class BackupManagerTest {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(testVisit))
         coEvery { ownerRepository.deleteAll() } just runs
         coEvery { visitRepository.clearAll() } just runs
-        coEvery { ownerRepository.insertOwnerLocal(any()) } just runs
-        coEvery { visitRepository.insertVisitLocal(any()) } just runs
+        coEvery { ownerRepository.insertOwner(any()) } returns testOwner
+        coEvery { visitRepository.insertVisit(any()) } returns testVisit
 
         backupManager = BackupManager(context, ownerRepository, visitRepository)
     }

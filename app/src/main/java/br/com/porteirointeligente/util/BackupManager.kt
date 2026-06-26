@@ -97,14 +97,14 @@ class BackupManager @Inject constructor(
             } else {
                 backup.owner?.let { listOf(it) } ?: emptyList()
             }
-            // Usa métodos locais para não depender de rede durante restore
+            // Insere dados restaurados diretamente no banco local
             ownersToRestore.forEach { owner ->
-                ownerRepository.insertOwnerLocal(owner)
+                ownerRepository.insertOwner(owner)
             }
 
             // Insere o histórico de visitas recuperado
             backup.visits.forEach { visit ->
-                visitRepository.insertVisitLocal(visit)
+                visitRepository.insertVisit(visit)
             }
 
             true
