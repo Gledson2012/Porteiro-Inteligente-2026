@@ -335,9 +335,9 @@ fun SettingsScreen(
                         iconBackground = MaterialTheme.colorScheme.secondaryContainer,
                         iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                         title = "Site",
-                        subtitle = "porteirointeligente.com",
+                        subtitle = "porteiro-inteligente-2026.vercel.app",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteirointeligente.com"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteiro-inteligente-2026.vercel.app/"))
                             context.startActivity(intent)
                         }
                     )
