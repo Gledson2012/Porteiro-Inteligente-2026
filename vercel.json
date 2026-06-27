@@ -1,17 +1,12 @@
 {
-  "functions": {
-    "backend/server.js": {
-      "runtime": "@vercel/node"
-    }
-  },
   "rewrites": [
     {
       "source": "/scan/:path*",
-      "destination": "/backend/server.js"
+      "destination": "/api/index"
     },
     {
       "source": "/api/:path*",
-      "destination": "/backend/server.js"
+      "destination": "/api/index"
     }
   ]
 }

@@ -1,11 +1,28 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (e) {
+  console.warn('better-sqlite3 não está disponível. O backend rodará em modo sem banco de dados local.');
+}
 
+const path = require('path');
 const DB_PATH = path.join(__dirname, 'porteiro_inteligente.db');
 
-let db;
+let db = null;
 
 function getDatabase() {
+  if (!Database) {
+    // Retorna um banco de dados mockado para evitar erros de compilação ou execução em ambientes sem SQLite (como Vercel)
+    return {
+      prepare: () => ({
+        get: () => null,
+        all: () => [],
+        run: () => ({ lastInsertRowid: 0 })
+      }),
+      exec: () => {}
+    };
+  }
+
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
@@ -16,6 +33,7 @@ function getDatabase() {
 }
 
 function initializeTables() {
+  if (!db) return;
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

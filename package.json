@@ -1,0 +1,12 @@
+{
+  "name": "porteiro-inteligente-root",
+  "version": "1.0.0",
+  "description": "Porteiro Inteligente Root Project for Vercel Deployment",
+  "main": "api/index.js",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.3"
+  }
+}
