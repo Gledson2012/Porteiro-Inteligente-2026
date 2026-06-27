@@ -56,7 +56,7 @@ if (!SECRET_KEY) {
 -   ✅ Botão "Compartilhar" usa `FileProvider` com URI temporária — sem expor arquivos
 -   ✅ Indicador visual "Protegido pela LGPD" na tela do QR Code
 -   ✅ **Backup JSON criptografado**: Implementado via `CryptoUtil.encrypt()` usando AES/GCM/NoPadding com chaves geradas no Keystore local do dispositivo.
--   ✅ **Redirecionamento Direto de Scan**: A rota pública `/scan` do backend redireciona diretamente (302) para o WhatsApp se o morador estiver disponível, evitando expor os dados (nome e telefone) visualmente em um HTML público.
+-   ✅ **Página Premium Intermediária**: A rota pública `/scan` do backend apresenta uma interface visual segura para o entregador iniciar a conversa no WhatsApp clicando no botão de ação, ocultando o telefone em texto plano na página.
 
 ### Riscos ⚠️
 O QR Code offline usa criptografia AES com chave estática para permitir a decodificação sem banco de dados na Vercel. Embora os dados não estejam legíveis em texto puro, um atacante em posse da chave estática hardcoded do repositório pode extrair o nome e telefone de um QR Code impresso.

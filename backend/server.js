@@ -158,13 +158,7 @@ app.get('/scan/:id_hash', (req, res) => {
     const messageText = `Olá ${name.split(' ')[0]}, sou o entregador e estou na portaria.`;
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
     
-    // Se o morador estiver disponível, redireciona diretamente para o WhatsApp
-    // para maior agilidade do entregador e melhor conformidade com a LGPD (evitando expor dados pessoais na web)
-    if (!isOffline) {
-      return res.redirect(302, waUrl);
-    }
-    
-    // Renderiza a página HTML premium intermediária (apenas em modo offline para mostrar mensagem de ausência)
+    // Renderiza a página HTML premium intermediária (para apresentar as opções online/offline)
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
