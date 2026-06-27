@@ -7,6 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     // Firebase removido — usando apenas SQLite (Room) local
     id("com.github.triplet.play") version "3.11.0"
 }
@@ -82,9 +83,7 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
+
 
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")

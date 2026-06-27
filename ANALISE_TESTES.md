@@ -12,10 +12,10 @@
 | `StringUtilsTest.kt` | Unitário | Formatação de telefone e CEP | ✅ 7 testes |
 | `CryptoUtilTest.kt` | Unitário | Comportamento sem Keystore (null safety) | ✅ 3 testes |
 | `BackupManagerTest.kt` | Unitário | Restore com JSON válido/inválido | ✅ 3 testes |
-| `FirebaseSyncServiceTest.kt` | Unitário | Status de sincronização, formatação | ✅ 5 testes |
+| `VisitHistoryViewModelTest.kt` | Unitário | Filtros, registro de saída | ✅ 6 testes |
 | `SplashScreenTest.kt` | Instrumentado | UI da Splash (nome, subtítulo, tagline) | ✅ 3 testes |
 
-**Total: ~43 testes** (39 unitários + 3 instrumentados)
+**Total: 44 testes** (41 unitários + 3 instrumentados)
 
 ---
 
@@ -37,7 +37,6 @@
 | ViewModel | Funcionalidades | Prioridade |
 |-----------|----------------|------------|
 | `ScannerViewModel` | Processamento de QR Code, navegação | ⭐⭐⭐ |
-| `VisitHistoryViewModel` | Filtros, registro de saída | ⭐⭐ |
 | `AuthViewModel` | Estado de autenticação root | ⭐⭐ |
 | `LoginViewModel` | Login com credenciais | ⭐⭐ |
 | `RegistrationViewModel` | Registro de usuário | ⭐⭐ |
@@ -76,7 +75,7 @@
 
 ### Fase 2 — Curto Prazo (ViewModels críticas) ⭐⭐
 6. `ScannerViewModelTest` — Testar detecção de QR Code (válido, inválido, offline)
-7. `VisitHistoryViewModelTest` — Testar filtros e registro de saída
+7. `VisitHistoryViewModelTest` — Testar filtros e registro de saída [Concluído] ✅
 8. `LoginViewModelTest` — Testar fluxo de login
 9. `RegistrationViewModelTest` — Testar fluxo de registro
 10. `QrCodeGeneratorTest` — Testar geração de bitmap

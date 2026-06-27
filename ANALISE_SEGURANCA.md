@@ -52,17 +52,18 @@ if (!SECRET_KEY) {
 ##   3. Proteção LGPD
 
 ### Pontos Fortes ✅
--   ✅ QR Code não contém dados pessoais visíveis — apenas URL mascarada com ID
+-   ✅ QR Code não contém dados pessoais visíveis — apenas URL com payload criptografado
 -   ✅ Botão "Compartilhar" usa `FileProvider` com URI temporária — sem expor arquivos
 -   ✅ Indicador visual "Protegido pela LGPD" na tela do QR Code
--   ✅ `CryptoUtil.encrypt()` usado para ofuscar payload
+-   ✅ **Backup JSON criptografado**: Implementado via `CryptoUtil.encrypt()` usando AES/GCM/NoPadding com chaves geradas no Keystore local do dispositivo.
+-   ✅ **Redirecionamento Direto de Scan**: A rota pública `/scan` do backend redireciona diretamente (302) para o WhatsApp se o morador estiver disponível, evitando expor os dados (nome e telefone) visualmente em um HTML público.
 
 ### Riscos ⚠️
-**Backup JSON exporta todos os dados sem criptografia** — dados pessoais (nome, telefone, endereço, documento) são exportados em texto puro no arquivo de backup.
+O QR Code offline usa criptografia AES com chave estática para permitir a decodificação sem banco de dados na Vercel. Embora os dados não estejam legíveis em texto puro, um atacante em posse da chave estática hardcoded do repositório pode extrair o nome e telefone de um QR Code impresso.
 
 | Risco | Gravidade | Recomendação |
 |-------|-----------|--------------|
-| Backup JSON sem criptografia | **Alta** | Criptografar o arquivo de backup com a chave do Keystore antes de exportar |
+| QR Code com chave simétrica estática | **Média** | Ofuscar chaves em builds de release (ProGuard/DexGuard) e orientar moradores sobre a guarda do QR Code físico |
 | Sem exclusão de dados do usuário | **Média** | Implementar funcionalidade "Excluir meus dados" (GDPR Art. 17) |
 
 ---
@@ -94,18 +95,18 @@ if (process.env.NODE_ENV === 'production') {
 
 ### ✅ Implementado
 - [x] Criptografia AES-256 com chave no Keystore
-- [x] Autenticação JWT com bcrypt
-- [x] Verificação de ownership (usuário só acessa seus dados)
-- [x] LGPD: QR Code sem dados pessoais visíveis
-- [x] FileProvider com URIs grant temporárias
+- [x] Autenticação JWT com bcrypt (Backend)
+- [x] Verificação de ownership (usuário só acessa seus dados no Backend)
+- [x] LGPD: QR Code sem dados pessoais visíveis no payload bruto
+- [x] FileProvider com URIs grant temporárias (Compartilhamento seguro)
 - [x] CORS configurado no backend
 - [x] Foreign Keys com ON DELETE CASCADE no SQLite
+- [x] Backup JSON criptografado com chave Keystore local
 
-### ❌ Pendente
-- [ ] Rate limiting no login
-- [ ] Refresh token JWT
-- [ ] SECRET_KEY sem fallback
-- [ ] Backup JSON criptografado
-- [ ] Logging OkHttp adaptativo (BODY só em debug)
-- [ ] HTTPS forçado em produção
-- [ ] Opção "Excluir meus dados" (LGPD/GDPR)
+### ❌ Pendente / Ações Futuras
+- [ ] Ofuscação de chaves estáticas offline em builds de release (ProGuard/R8)
+- [ ] Opção "Excluir meus dados" (LGPD/GDPR) no menu de Ajustes
+- [ ] HTTPS forçado em produção no backend (Vercel)
+- [ ] Rate limiting no login (Caso implemente sincronização online futuramente)
+- [ ] Refresh token JWT (Caso implemente sincronização online futuramente)
+- [ ] Logging OkHttp adaptativo (Caso adicione chamadas de rede futuramente)
