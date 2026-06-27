@@ -44,6 +44,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -114,21 +116,10 @@ fun HomeScreen(
                             }
                         },
                         navigationIcon = {
-                            Box(
-                                modifier = Modifier
-                                    .padding(start = 12.dp)
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.linearGradient(GradientGold)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.WavingHand,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
+                            Box(modifier = Modifier.padding(start = 12.dp)) {
+                                OwnerAvatar(
+                                    photoUri = state.selectedOwner?.photoUri,
+                                    name = state.selectedOwner?.nome ?: ""
                                 )
                             }
                         },
@@ -393,5 +384,44 @@ private fun getGreeting(): String {
         in 6..11 -> "Bom dia"
         in 12..17 -> "Boa tarde"
         else -> "Boa noite"
+    }
+}
+
+@Composable
+private fun OwnerAvatar(
+    photoUri: String?,
+    name: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(CircleShape)
+            .background(Brush.linearGradient(GradientGold)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!photoUri.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUri,
+                contentDescription = "Avatar do morador",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            val initials = if (name.isNotBlank()) {
+                name.trim().split(" ")
+                    .mapNotNull { it.firstOrNull()?.uppercase() }
+                    .take(2)
+                    .joinToString("")
+            } else {
+                "P"
+            }
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
     }
 }
