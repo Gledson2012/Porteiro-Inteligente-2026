@@ -7,19 +7,22 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,41 +57,41 @@ fun SplashScreen(
 
     // Logo entrance animation
     val logoScale by animateFloatAsState(
-        targetValue = if (startAnimation) 1f else 0.3f,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+        targetValue = if (startAnimation) 1f else 0.4f,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
         label = "logoScale"
     )
 
     val logoAlpha by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = 600),
+        animationSpec = tween(durationMillis = 800),
         label = "logoAlpha"
     )
 
     // Title entrance animation
     val titleAlpha by animateFloatAsState(
         targetValue = if (showTitle) 1f else 0f,
-        animationSpec = tween(durationMillis = 600),
+        animationSpec = tween(durationMillis = 800),
         label = "titleAlpha"
     )
 
     val titleScale by animateFloatAsState(
         targetValue = if (showTitle) 1f else 0.9f,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
         label = "titleScale"
     )
 
     // Subtitle animation
     val subtitleAlpha by animateFloatAsState(
         targetValue = if (showSecondary) 1f else 0f,
-        animationSpec = tween(durationMillis = 700, delayMillis = 100),
+        animationSpec = tween(durationMillis = 900, delayMillis = 100),
         label = "subtitleAlpha"
     )
 
     // Credits animation
     val creditsAlpha by animateFloatAsState(
         targetValue = if (showCredits) 1f else 0f,
-        animationSpec = tween(durationMillis = 800),
+        animationSpec = tween(durationMillis = 1000),
         label = "creditsAlpha"
     )
 
@@ -96,21 +99,29 @@ fun SplashScreen(
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.06f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseScale"
     )
 
-    val gradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
+    // Soft moving light glow animation
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
         ),
-        start = Offset(0f, 0f),
-        end = Offset(1000f, 1000f)
+        label = "glowAlpha"
+    )
+
+    val progressAnim by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 2200, easing = FastOutSlowInEasing),
+        label = "progressAnim"
     )
 
     LaunchedEffect(Unit) {
@@ -125,66 +136,90 @@ fun SplashScreen(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(gradient),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        // Dynamic Ambient Glow Background
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            // Deep base background
+            drawRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF0A0B10), Color(0xFF121422)),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, size.height)
+                )
+            )
+            // Soft top-right gold glow
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFFFFD700).copy(alpha = glowAlpha), Color.Transparent),
+                    center = Offset(size.width * 0.8f, size.height * 0.2f),
+                    radius = size.width * 0.7f
+                )
+            )
+            // Soft bottom-left indigo/purple glow
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF4F46E5).copy(alpha = glowAlpha * 0.7f), Color.Transparent),
+                    center = Offset(size.width * 0.2f, size.height * 0.8f),
+                    radius = size.width * 0.7f
+                )
+            )
+        }
+
         Column(
-            modifier = Modifier.padding(48.dp),
+            modifier = Modifier.padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Animated Logo with continuous pulse
+            // Animated Logo with glassmorphism + gold border
             Box(
                 modifier = Modifier
                     .alpha(logoAlpha)
-                    .scale(logoScale),
+                    .scale(logoScale * pulseScale),
                 contentAlignment = Alignment.Center
             ) {
-                // Outer glow ring
-                Surface(
-                    modifier = Modifier.size(130.dp),
-                    shape = RoundedCornerShape(32.dp),
-                    color = Color.White.copy(alpha = 0.1f)
+                // Outer translucent ring
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .clip(RoundedCornerShape(36.dp))
+                        .background(Color.White.copy(alpha = 0.05f))
+                        .border(
+                            width = 1.5.dp,
+                            brush = Brush.linearGradient(
+                                listOf(
+                                    Color.White.copy(alpha = 0.25f),
+                                    Color.Transparent,
+                                    Color(0xFFFFD700).copy(alpha = 0.35f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(36.dp)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        // Pulse ring
-                        Surface(
-                            modifier = Modifier
-                                .size(110.dp)
-                                .scale(pulseScale),
-                            shape = RoundedCornerShape(28.dp),
-                            color = Color.White.copy(alpha = 0.15f)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                // Inner icon container
-                                Surface(
-                                    modifier = Modifier.size(96.dp),
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = Color.White.copy(alpha = 0.2f),
-                                    shadowElevation = 8.dp
-                                ) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Image(
-                                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                            contentDescription = "Porteiro Inteligente",
-                                            modifier = Modifier
-                                                .size(72.dp)
-                                                .clip(RoundedCornerShape(16.dp))
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                    // Inner background container
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(RoundedCornerShape(26.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            contentDescription = "Porteiro Inteligente",
+                            modifier = Modifier.size(80.dp)
+                        )
                     }
                 }
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(48.dp))
 
             // Title with staggered scale + alpha animation
             Text(
@@ -192,8 +227,8 @@ fun SplashScreen(
                 modifier = Modifier
                     .alpha(titleAlpha)
                     .scale(titleScale),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 letterSpacing = (-0.5).sp
@@ -214,15 +249,38 @@ fun SplashScreen(
 
             // Tagline
             Text(
-                text = "QR Code • Visitas • Offline",
+                text = "QR CODE • VISITAS • OFFLINE",
                 modifier = Modifier.alpha(subtitleAlpha * 0.7f),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
-                letterSpacing = 2.sp
+                letterSpacing = 2.5.sp
             )
 
-            Spacer(Modifier.height(80.dp))
+            Spacer(Modifier.height(56.dp))
+
+            // Sleek loading progress bar
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 48.dp)
+                    .height(3.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White.copy(alpha = 0.1f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progressAnim)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(Color(0xFFFFBF00), Color(0xFFFFD700))
+                            )
+                        )
+                )
+            }
+
+            Spacer(Modifier.height(56.dp))
 
             // Credits section
             Column(
@@ -232,16 +290,16 @@ fun SplashScreen(
             ) {
                 Text(
                     text = "Criado por: Gledson Crist Ribeiro dos Santos",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.65f),
                     textAlign = TextAlign.Center
                 )
 
                 Text(
                     text = "By Família Venâncio",
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Light,
-                    color = Color.White.copy(alpha = 0.5f),
+                    color = Color.White.copy(alpha = 0.45f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -249,9 +307,9 @@ fun SplashScreen(
 
         // Version at bottom
         Text(
-            text = "v 0.1.0",
+            text = "v 1.2.0",
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.4f),
+            color = Color.White.copy(alpha = 0.35f),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
