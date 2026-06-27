@@ -125,7 +125,7 @@ class SettingsViewModel @Inject constructor(
                 isOffline = isOffline,
                 offlineMessage = message
             ) ?: ""
-            val newPayload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+            val newPayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
 
             ownerRepository.updateOwner(
                 currentOwner.copy(

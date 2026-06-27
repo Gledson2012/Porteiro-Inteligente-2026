@@ -41,7 +41,7 @@ class OwnerRegistrationViewModel @Inject constructor(
                 isOffline = isOffline,
                 offlineMessage = offlineMsg
             ) ?: ""
-            val payload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+            val payload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
 
             val owner = Owner(
                 id = id,

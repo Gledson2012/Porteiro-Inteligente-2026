@@ -89,7 +89,7 @@ class HomeViewModel @Inject constructor(
                 isOffline = false,
                 offlineMessage = ""
             ) ?: ""
-            val newPayload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+            val newPayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
 
             ownerRepository.updateOwner(
                 owner.copy(

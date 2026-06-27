@@ -86,6 +86,5 @@
 
     <string name="credits_created_by">Criado por: Gledson Crist\nBy Família Venâncio</string>
 
-    <!-- URL da landing page do aplicativo -->
-    <string name="landing_page_url">https://project-v6x0x.vercel.app</string>
+    <string name="landing_page_url">https://porteiro-inteligente-2026.vercel.app</string>
 </resources>

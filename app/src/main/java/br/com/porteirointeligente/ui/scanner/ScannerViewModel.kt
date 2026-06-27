@@ -33,11 +33,18 @@ class ScannerViewModel @Inject constructor(
                 // Suporta tanto o domínio legado web.app quanto o novo vercel.app
                 // ============================================================
                 content.startsWith("https://porteiro-inteligente.web.app/scan/") ||
-                content.startsWith("https://project-v6x0x.vercel.app/scan/") -> {
-                    val idPart = if (content.startsWith("https://porteiro-inteligente.web.app/scan/")) {
-                        content.substringAfter("https://porteiro-inteligente.web.app/scan/")
-                    } else {
-                        content.substringAfter("https://project-v6x0x.vercel.app/scan/")
+                content.startsWith("https://project-v6x0x.vercel.app/scan/") ||
+                content.startsWith("https://porteiro-inteligente-2026.vercel.app/scan/") -> {
+                    val idPart = when {
+                        content.startsWith("https://porteiro-inteligente.web.app/scan/") -> {
+                            content.substringAfter("https://porteiro-inteligente.web.app/scan/")
+                        }
+                        content.startsWith("https://project-v6x0x.vercel.app/scan/") -> {
+                            content.substringAfter("https://project-v6x0x.vercel.app/scan/")
+                        }
+                        else -> {
+                            content.substringAfter("https://porteiro-inteligente-2026.vercel.app/scan/")
+                        }
                     }
                     
                     val decryptedJson = br.com.porteirointeligente.util.OfflineCryptoHelper.decryptOwnerData(idPart)
