@@ -89,8 +89,7 @@ class ScannerViewModel @Inject constructor(
                 // ============================================================
                 content.startsWith("https://wa.me/") -> {
                     finalUrl = content
-                    val firstOwner = ownerRepository.observeAllOwners().first().firstOrNull()
-                    targetOwnerId = firstOwner?.id
+                    targetOwnerId = null // Links externos diretos do WhatsApp não são associados a moradores locais
                 }
 
                 // ============================================================

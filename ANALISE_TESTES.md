@@ -1,6 +1,6 @@
 #   Análise de Cobertura de Testes — Porteiro Inteligente
 
-##   Testes Existentes (10 arquivos)
+##   Testes Existentes (11 arquivos)
 
 | Arquivo | Tipo | O que testa | Status |
 |---------|------|-------------|--------|
@@ -13,9 +13,10 @@
 | `CryptoUtilTest.kt` | Unitário | Comportamento sem Keystore (null safety) | ✅ 3 testes |
 | `BackupManagerTest.kt` | Unitário | Restore com JSON válido/inválido | ✅ 3 testes |
 | `VisitHistoryViewModelTest.kt` | Unitário | Filtros, registro de saída | ✅ 6 testes |
+| `ScannerViewModelTest.kt` | Unitário | Processamento de QR Code (LGPD, wa.me, etc) | ✅ 4 testes |
 | `SplashScreenTest.kt` | Instrumentado | UI da Splash (nome, subtítulo, tagline) | ✅ 3 testes |
 
-**Total: 44 testes** (41 unitários + 3 instrumentados)
+**Total: 48 testes** (45 unitários + 3 instrumentados)
 
 ---
 
@@ -36,7 +37,6 @@
 
 | ViewModel | Funcionalidades | Prioridade |
 |-----------|----------------|------------|
-| `ScannerViewModel` | Processamento de QR Code, navegação | ⭐⭐⭐ |
 | `AuthViewModel` | Estado de autenticação root | ⭐⭐ |
 | `LoginViewModel` | Login com credenciais | ⭐⭐ |
 | `RegistrationViewModel` | Registro de usuário | ⭐⭐ |
@@ -74,7 +74,7 @@
 5. `VisitRepositoryTest` — Testar sync local+rede, fallback offline
 
 ### Fase 2 — Curto Prazo (ViewModels críticas) ⭐⭐
-6. `ScannerViewModelTest` — Testar detecção de QR Code (válido, inválido, offline)
+6. `ScannerViewModelTest` — Testar detecção de QR Code (válido, inválido, offline) [Concluído] ✅
 7. `VisitHistoryViewModelTest` — Testar filtros e registro de saída [Concluído] ✅
 8. `LoginViewModelTest` — Testar fluxo de login
 9. `RegistrationViewModelTest` — Testar fluxo de registro

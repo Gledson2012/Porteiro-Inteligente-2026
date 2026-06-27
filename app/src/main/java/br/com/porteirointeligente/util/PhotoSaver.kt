@@ -13,15 +13,15 @@ object PhotoSaver {
 
     fun savePhotoToInternalStorage(context: Context, photoUri: Uri): String? {
         return try {
-            val inputStream = context.contentResolver.openInputStream(photoUri) ?: return null
-            val dir = File(context.filesDir, PHOTO_DIR)
-            if (!dir.exists()) dir.mkdirs()
-            val file = File(dir, "${UUID.randomUUID()}.jpg")
-            FileOutputStream(file).use { output ->
-                inputStream.copyTo(output)
+            context.contentResolver.openInputStream(photoUri)?.use { inputStream ->
+                val dir = File(context.filesDir, PHOTO_DIR)
+                if (!dir.exists()) dir.mkdirs()
+                val file = File(dir, "${UUID.randomUUID()}.jpg")
+                FileOutputStream(file).use { output ->
+                    inputStream.copyTo(output)
+                }
+                file.toURI().toString()
             }
-            inputStream.close()
-            file.toURI().toString()
         } catch (e: Exception) {
             e.printStackTrace()
             null
