@@ -3,6 +3,34 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getDatabase } = require('./db');
+const crypto = require('crypto');
+
+const ENCRYPTION_KEY = 'PorteiroInteligente2026KeySecure'; // 32 characters
+const ENCRYPTION_IV = '1234567890123456'; // 16 characters
+
+function decryptPayload(text) {
+  try {
+    let base64 = text.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), Buffer.from(ENCRYPTION_IV));
+    let decrypted = decipher.update(base64, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    const json = JSON.parse(decrypted);
+    return {
+      phone: json.p,
+      name: json.n,
+      isOffline: json.o === 1,
+      offlineMessage: json.m
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -87,6 +115,27 @@ app.post('/api/login', (req, res) => {
 app.get('/scan/:id_hash', (req, res) => {
   try {
     const { id_hash } = req.params;
+    
+    // Tenta descriptografar o payload offline primeiro
+    const decrypted = decryptPayload(id_hash);
+    if (decrypted) {
+      const { phone, name, isOffline, offlineMessage } = decrypted;
+      
+      if (isOffline) {
+        return res.status(200).send(`<h1>Morador Indisponível</h1><p>${offlineMessage || 'O morador está temporariamente indisponível.'}</p>`);
+      }
+      
+      let cleanPhone = phone.replace(/\D/g, '');
+      if (!cleanPhone.startsWith('55')) {
+        cleanPhone = '55' + cleanPhone;
+      }
+      
+      const message = encodeURIComponent(`Olá ${name.split(' ')[0]}, sou o entregador e estou na portaria.`);
+      const waUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+      return res.redirect(waUrl);
+    }
+    
+    // Fallback: busca clássica no banco sqlite (legado)
     const idPart = id_hash.split('_')[0];
     const ownerId = parseInt(idPart, 10);
     
@@ -301,3 +350,5 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🏠 Porteiro Inteligente API rodando em http://localhost:${PORT}`);
 });
+
+module.exports = app;

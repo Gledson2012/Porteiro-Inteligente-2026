@@ -24,7 +24,8 @@ import javax.inject.Singleton
 class BackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val ownerRepository: OwnerRepository,
-    private val visitRepository: VisitRepository
+    private val visitRepository: VisitRepository,
+    private val cryptoUtil: CryptoUtil
 ) {
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
@@ -48,11 +49,12 @@ class BackupManager @Inject constructor(
         )
 
         val jsonString = gson.toJson(backup)
+        val encryptedJson = cryptoUtil.encrypt(jsonString) ?: jsonString
         val fileName = "Backup_Porteiro_${SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())}.json"
         
         try {
             val file = File(context.cacheDir, fileName)
-            FileOutputStream(file).use { it.write(jsonString.toByteArray()) }
+            FileOutputStream(file).use { it.write(encryptedJson.toByteArray()) }
 
             val uri = FileProvider.getUriForFile(
                 context,
@@ -85,7 +87,8 @@ class BackupManager @Inject constructor(
             val reader = BufferedReader(InputStreamReader(inputStream))
             val jsonString = reader.use { it.readText() }
 
-            val backup = gson.fromJson(jsonString, BackupData::class.java) ?: return false
+            val decryptedJson = cryptoUtil.decrypt(jsonString) ?: jsonString
+            val backup = gson.fromJson(decryptedJson, BackupData::class.java) ?: return false
 
             // Limpa o banco de dados antes da restauração
             ownerRepository.deleteAll()

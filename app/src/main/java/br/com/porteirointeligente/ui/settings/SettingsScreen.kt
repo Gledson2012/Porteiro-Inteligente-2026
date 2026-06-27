@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
@@ -30,6 +32,10 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.BrightnessMedium
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Palette
@@ -37,6 +43,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,10 +86,16 @@ fun SettingsScreen(
     val dynamicColorState by viewModel.dynamicColorState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
+    val ownerState by viewModel.owner.collectAsState()
+    val allOwnersState by viewModel.allOwners.collectAsState()
 
     val context = LocalContext.current
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showOwnerDialog by remember { mutableStateOf(false) }
+    var showMessageDialog by remember { mutableStateOf(false) }
+    var showDurationDialog by remember { mutableStateOf(false) }
+    var tempMessage by remember { mutableStateOf("") }
 
     val restoreLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -110,7 +123,7 @@ fun SettingsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -162,6 +175,107 @@ fun SettingsScreen(
                         checked = dynamicColorState,
                         onCheckedChange = { viewModel.setDynamicColor(it) }
                     )
+                }
+            }
+
+            // Resident & Offline Mode Section
+            item {
+                SectionHeader(
+                    icon = Icons.Default.Person,
+                    title = "Morador & Modo Offline"
+                )
+            }
+
+            item {
+                SettingsCard {
+                    if (allOwnersState.isEmpty()) {
+                        SettingsClickItem(
+                            icon = Icons.Default.Person,
+                            iconBackground = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+                            iconTint = MaterialTheme.colorScheme.error,
+                            title = "Nenhum Morador",
+                            subtitle = "Cadastre um morador na aba Perfil",
+                            onClick = {}
+                        )
+                    } else {
+                        // Resident selection
+                        SettingsClickItem(
+                            icon = Icons.Default.Person,
+                            iconBackground = MaterialTheme.colorScheme.secondaryContainer,
+                            iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            title = "Morador Selecionado",
+                            subtitle = ownerState?.nome ?: "Nenhum selecionado",
+                            onClick = {
+                                if (allOwnersState.size > 1) {
+                                    showOwnerDialog = true
+                                }
+                            }
+                        )
+
+                        Divider()
+
+                        // Offline Mode Switch
+                        SettingsSwitchItem(
+                            icon = Icons.Default.NotificationsOff,
+                            iconBackground = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+                            iconTint = MaterialTheme.colorScheme.error,
+                            title = "Modo Ausente (Offline)",
+                            subtitle = "Exibir mensagem de ausência ao ler QR Code",
+                            checked = ownerState?.isOffline ?: false,
+                            onCheckedChange = { isChecked ->
+                                ownerState?.let { current ->
+                                    viewModel.updateOfflineStatus(
+                                        isOffline = isChecked,
+                                        message = current.offlineMessage.ifBlank { "O morador está temporariamente indisponível." },
+                                        durationMillis = if (isChecked) 3600000L else null // 1 hora
+                                    )
+                                }
+                            }
+                        )
+
+                        if (ownerState?.isOffline == true) {
+                            Divider()
+
+                            // Offline Message
+                            SettingsClickItem(
+                                icon = Icons.AutoMirrored.Filled.Message,
+                                iconBackground = MaterialTheme.colorScheme.primaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                title = "Mensagem de Ausência",
+                                subtitle = ownerState?.offlineMessage?.ifBlank { "Nenhuma mensagem configurada" } ?: "Toque para configurar",
+                                onClick = {
+                                    tempMessage = ownerState?.offlineMessage ?: ""
+                                    showMessageDialog = true
+                                }
+                            )
+
+                            Divider()
+
+                            // Offline Duration
+                            val durationText = if (ownerState?.offlineUntil == null) {
+                                "Até desativar"
+                            } else {
+                                val minutesLeft = ((ownerState!!.offlineUntil!! - System.currentTimeMillis()) / (60 * 1000)).toInt()
+                                if (minutesLeft <= 0) {
+                                    "Expirado (Toque para atualizar)"
+                                } else if (minutesLeft < 60) {
+                                    "Faltam $minutesLeft min"
+                                } else {
+                                    val hours = minutesLeft / 60
+                                    val mins = minutesLeft % 60
+                                    "Faltam ${hours}h ${mins}m"
+                                }
+                            }
+                            SettingsClickItem(
+                                icon = Icons.Default.Schedule,
+                                iconBackground = MaterialTheme.colorScheme.tertiaryContainer,
+                                iconTint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                title = "Duração da Ausência",
+                                subtitle = durationText,
+                                onClick = { showDurationDialog = true }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -223,8 +337,26 @@ fun SettingsScreen(
                         title = "Site",
                         subtitle = "porteirointeligente.com",
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteiro-inteligente-2026.vercel.app"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteirointeligente.com"))
                             context.startActivity(intent)
+                        }
+                    )
+
+                    Divider()
+
+                    SettingsClickItem(
+                        icon = Icons.Default.Share,
+                        iconBackground = Amber.copy(alpha = 0.15f),
+                        iconTint = Amber,
+                        title = "Compartilhar App",
+                        subtitle = "Enviar link de download para amigos",
+                        onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Porteiro Inteligente")
+                                putExtra(Intent.EXTRA_TEXT, "Baixe o Porteiro Inteligente — app para gestão de portaria em condomínios: https://porteirointeligente.com")
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Compartilhar App"))
                         }
                     )
                 }
@@ -395,6 +527,191 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (showOwnerDialog) {
+        AlertDialog(
+            onDismissRequest = { showOwnerDialog = false },
+            title = {
+                Text(
+                    "Selecionar Morador",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    allOwnersState.forEach { o ->
+                        val isSelected = ownerState?.id == o.id
+                        Card(
+                            onClick = {
+                                viewModel.selecionarOwnerParaConfig(o.id)
+                                showOwnerDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = o.nome,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                    Text(
+                                        text = "${o.nomeCondominio} - Ap. ${o.apartamento}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Slate400
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showOwnerDialog = false }) {
+                    Text("Fechar")
+                }
+            }
+        )
+    }
+
+    if (showMessageDialog) {
+        AlertDialog(
+            onDismissRequest = { showMessageDialog = false },
+            title = {
+                Text(
+                    "Mensagem de Ausência",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = tempMessage,
+                    onValueChange = { tempMessage = it },
+                    label = { Text("Mensagem") },
+                    placeholder = { Text("Ex: Estou fora de casa...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = false,
+                    maxLines = 3
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    ownerState?.let { current ->
+                        viewModel.updateOfflineStatus(
+                            isOffline = current.isOffline,
+                            message = tempMessage,
+                            durationMillis = current.offlineUntil?.let { it - System.currentTimeMillis() }
+                        )
+                    }
+                    showMessageDialog = false
+                }) {
+                    Text("Salvar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showMessageDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    if (showDurationDialog) {
+        val durations = listOf(
+            "Indeterminado" to null,
+            "15 minutos" to 15 * 60 * 1000L,
+            "30 minutos" to 30 * 60 * 1000L,
+            "1 hora" to 60 * 60 * 1000L,
+            "2 horas" to 2 * 60 * 60 * 1000L,
+            "4 horas" to 4 * 60 * 60 * 1000L,
+            "8 horas" to 8 * 60 * 60 * 1000L,
+            "24 horas" to 24 * 60 * 60 * 1000L
+        )
+        AlertDialog(
+            onDismissRequest = { showDurationDialog = false },
+            title = {
+                Text(
+                    "Duração do Modo Ausente",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    durations.forEach { (label, duration) ->
+                        val isSelected = if (duration == null) {
+                            ownerState?.offlineUntil == null
+                        } else {
+                            ownerState?.offlineUntil != null && Math.abs((ownerState!!.offlineUntil!! - System.currentTimeMillis()) - duration) < 60000L
+                        }
+                        Card(
+                            onClick = {
+                                ownerState?.let { current ->
+                                    viewModel.updateOfflineStatus(
+                                        isOffline = current.isOffline,
+                                        message = current.offlineMessage,
+                                        durationMillis = duration
+                                    )
+                                }
+                                showDurationDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                )
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDurationDialog = false }) {
+                    Text("Fechar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -447,6 +764,7 @@ private fun SettingsClickItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

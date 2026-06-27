@@ -34,7 +34,6 @@ import br.com.porteirointeligente.ui.theme.Slate700
 @Composable
 fun ShimmerEffect(
     modifier: Modifier = Modifier,
-    width: Dp = 200.dp,
     height: Dp = 16.dp,
     shape: RoundedCornerShape = RoundedCornerShape(8.dp)
 ) {
@@ -74,9 +73,9 @@ fun ShimmerCard(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth().height(120.dp).clip(shape).background(bgColor).padding(16.dp)
     ) {
         Column {
-            ShimmerEffect(width = 120.dp, height = 14.dp, modifier = Modifier.fillMaxWidth(0.6f))
-            ShimmerEffect(width = 80.dp, height = 12.dp, modifier = Modifier.fillMaxWidth(0.4f).padding(top = 12.dp))
-            ShimmerEffect(width = 160.dp, height = 12.dp, modifier = Modifier.fillMaxWidth(0.8f).padding(top = 8.dp))
+            ShimmerEffect(height = 14.dp, modifier = Modifier.fillMaxWidth(0.6f))
+            ShimmerEffect(height = 12.dp, modifier = Modifier.fillMaxWidth(0.4f).padding(top = 12.dp))
+            ShimmerEffect(height = 12.dp, modifier = Modifier.fillMaxWidth(0.8f).padding(top = 8.dp))
         }
     }
 }

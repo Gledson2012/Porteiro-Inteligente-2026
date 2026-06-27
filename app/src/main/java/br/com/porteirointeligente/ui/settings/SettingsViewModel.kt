@@ -119,11 +119,20 @@ class SettingsViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                phone = currentOwner.telefone,
+                name = currentOwner.nome,
+                isOffline = isOffline,
+                offlineMessage = message
+            ) ?: ""
+            val newPayload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+
             ownerRepository.updateOwner(
                 currentOwner.copy(
                     isOffline = isOffline,
                     offlineMessage = message,
-                    offlineUntil = until
+                    offlineUntil = until,
+                    qrCodePayload = newPayload
                 )
             )
         }

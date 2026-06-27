@@ -39,6 +39,9 @@ class BackupManagerTest {
     @MockK
     private lateinit var visitRepository: VisitRepository
 
+    @MockK
+    private lateinit var cryptoUtil: CryptoUtil
+
     private lateinit var backupManager: BackupManager
 
     @Before
@@ -49,6 +52,8 @@ class BackupManagerTest {
         every { Uri.parse(any()) } returns mockUri
 
         every { context.contentResolver } returns contentResolver
+        every { cryptoUtil.encrypt(any()) } answers { firstArg() }
+        every { cryptoUtil.decrypt(any()) } answers { firstArg() }
 
         val testOwner = Owner(
             id = 1L,
@@ -77,7 +82,7 @@ class BackupManagerTest {
         coEvery { ownerRepository.insertOwner(any()) } returns testOwner
         coEvery { visitRepository.insertVisit(any()) } returns testVisit
 
-        backupManager = BackupManager(context, ownerRepository, visitRepository)
+        backupManager = BackupManager(context, ownerRepository, visitRepository, cryptoUtil)
     }
 
     @After
@@ -147,5 +152,25 @@ class BackupManagerTest {
 
         val result = backupManager.restoreBackup(Uri.parse("content://teste"))
         assert(!result) { "Expected false but got $result" }
+    }
+
+    @Test
+    fun `restoreBackup with encrypted JSON should decrypt and return true`() = runTest {
+        val encryptedJson = "ENCRYPTED_DATA"
+        val plainJson = """
+            {
+                "version": 2,
+                "exportDate": "2026-01-20 14:30:00",
+                "owner": null,
+                "owners": [],
+                "visits": []
+            }
+        """.trimIndent()
+
+        every { cryptoUtil.decrypt(encryptedJson) } returns plainJson
+        coEvery { contentResolver.openInputStream(any()) } returns ByteArrayInputStream(encryptedJson.toByteArray())
+
+        val result = backupManager.restoreBackup(Uri.parse("content://teste"))
+        assert(result) { "Expected true but got $result" }
     }
 }

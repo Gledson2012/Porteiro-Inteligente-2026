@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -40,6 +42,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -154,6 +157,14 @@ fun HomeScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    if (state.selectedOwner?.isCurrentlyOffline() == true) {
+                        item {
+                            OfflineAlertBanner(
+                                onSetOnline = { viewModel.setOnline() }
+                            )
+                        }
+                    }
+
                     item {
                         StatsSection(
                             totalVisitsToday = state.recentVisits.size,
@@ -238,13 +249,97 @@ private fun StatCard(icon: ImageVector, value: String, label: String, gradient: 
 }
 
 @Composable
-private fun QuickActionsSection(onScan: () -> Unit, onRegisterVisit: () -> Unit, onViewHistory: () -> Unit, onManageOwners: () -> Unit) {
+private fun QuickActionsSection(
+    onScan: () -> Unit,
+    onRegisterVisit: () -> Unit,
+    onViewHistory: () -> Unit,
+    onManageOwners: () -> Unit
+) {
     Column {
         Text(text = "Ações Rápidas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickActionCard(icon = Icons.Default.QrCodeScanner, label = "Escanear QR", gradient = GradientNeon, onClick = onScan, modifier = Modifier.weight(1f))
-            QuickActionCard(icon = Icons.Default.Person, label = "Nova Visita", gradient = GradientTeal, onClick = onRegisterVisit, modifier = Modifier.weight(1f))
-            QuickActionCard(icon = Icons.Default.Groups, label = "Moradores", gradient = GradientPrimary, onClick = onManageOwners, modifier = Modifier.weight(1f))
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                QuickActionCard(icon = Icons.Default.QrCodeScanner, label = "Escanear QR", gradient = GradientNeon, onClick = onScan, modifier = Modifier.weight(1f))
+                QuickActionCard(icon = Icons.Default.Person, label = "Nova Visita", gradient = GradientTeal, onClick = onRegisterVisit, modifier = Modifier.weight(1f))
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                QuickActionCard(icon = Icons.Default.Groups, label = "Moradores", gradient = GradientPrimary, onClick = onManageOwners, modifier = Modifier.weight(1f))
+                QuickActionCard(icon = Icons.Default.History, label = "Histórico", gradient = GradientGold, onClick = onViewHistory, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun OfflineAlertBanner(onSetOnline: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.25f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.errorContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NotificationsOff,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = "Você está ausente (Offline)",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                    Text(
+                        text = "Leituras do QR Code exibirão sua mensagem offline.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onSetOnline,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text(
+                    text = "ONLINE",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

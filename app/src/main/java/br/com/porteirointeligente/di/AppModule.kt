@@ -12,9 +12,9 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Módulo de injeção de dependência — versão 100% offline com dados criptografados.
+ * Módulo de injeção de dependência — versão 100% offline.
  *
- * Apenas fornece o banco Room (SQLite com SQLCipher) e seus DAOs.
+ * Apenas fornece o banco Room (SQLite local) e seus DAOs.
  * Sem dependências de rede (Retrofit, OkHttp, Firebase).
  */
 @Module

@@ -28,19 +28,51 @@ class ScannerViewModel @Inject constructor(
 
             when {
                 // ============================================================
-                // NOVO FORMATO LGPD (a partir de agora)
+                // NOVO FORMATO LGPD
                 // URL mascarada com apenas o ID do proprietário
-                // Ex: https://porteiro-inteligente.web.app/scan/12345_-1234567890
+                // Suporta tanto o domínio legado web.app quanto o novo vercel.app
                 // ============================================================
-                content.startsWith("https://porteiro-inteligente.web.app/scan/") -> {
-                    val idPart = content.substringAfter("https://porteiro-inteligente.web.app/scan/")
-                    val ownerId = idPart.substringBefore("_").toLongOrNull()
-                    if (ownerId != null) {
-                        targetOwnerId = ownerId
-                        val owner = ownerRepository.getOwnerById(ownerId)
-                        if (owner != null) {
-                            val formattedPhone = if (owner.telefone.startsWith("55")) owner.telefone else "55${owner.telefone}"
-                            finalUrl = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                content.startsWith("https://porteiro-inteligente.web.app/scan/") ||
+                content.startsWith("https://project-v6x0x.vercel.app/scan/") -> {
+                    val idPart = if (content.startsWith("https://porteiro-inteligente.web.app/scan/")) {
+                        content.substringAfter("https://porteiro-inteligente.web.app/scan/")
+                    } else {
+                        content.substringAfter("https://project-v6x0x.vercel.app/scan/")
+                    }
+                    
+                    val decryptedJson = br.com.porteirointeligente.util.OfflineCryptoHelper.decryptOwnerData(idPart)
+                    if (decryptedJson != null) {
+                        // Novo formato encriptado: obtemos tudo diretamente do payload de forma offline
+                        val name = decryptedJson.optString("n", "")
+                        val rawPhone = decryptedJson.optString("p", "")
+                        val isOffline = decryptedJson.optInt("o", 0) == 1
+                        val offlineMessage = decryptedJson.optString("m", "")
+                        
+                        val digitsOnly = rawPhone.replace(Regex("\\D"), "")
+                        val formattedPhone = if (digitsOnly.startsWith("55")) digitsOnly else "55$digitsOnly"
+                        
+                        val firstName = name.split(" ").firstOrNull() ?: ""
+                        val greeting = if (firstName.isNotBlank()) "Olá $firstName, sou o entregador e estou na portaria." else "Olá, sou o entregador e estou na portaria."
+                        val encodedText = java.net.URLEncoder.encode(greeting, "UTF-8")
+                        val url = "https://wa.me/$formattedPhone?text=$encodedText"
+                        
+                        if (isOffline) {
+                            _uiEvent.emit(ScannerUiEvent.ShowOfflineMessage(offlineMessage, url))
+                        } else {
+                            _uiEvent.emit(ScannerUiEvent.OpenWhatsApp(url))
+                        }
+                        return@launch
+                    } else {
+                        // Formato legado: busca no banco local pelo ID
+                        val ownerId = idPart.substringBefore("_").toLongOrNull()
+                        if (ownerId != null) {
+                            targetOwnerId = ownerId
+                            val owner = ownerRepository.getOwnerById(ownerId)
+                            if (owner != null) {
+                                val digitsOnly = owner.telefone.replace(Regex("\\D"), "")
+                                val formattedPhone = if (digitsOnly.startsWith("55")) digitsOnly else "55$digitsOnly"
+                                finalUrl = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                            }
                         }
                     }
                 }
@@ -64,7 +96,9 @@ class ScannerViewModel @Inject constructor(
                     if (decryptedJson != null) {
                         try {
                             val json = JsonParser.parseString(decryptedJson).asJsonObject
-                            val phone = json.get("phone").asString
+                            val rawPhone = json.get("phone").asString
+                            val digitsOnly = rawPhone.replace(Regex("\\D"), "")
+                            val phone = if (digitsOnly.startsWith("55")) digitsOnly else "55$digitsOnly"
                             finalUrl = "https://wa.me/$phone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
                         } catch (e: Exception) {
                             e.printStackTrace()

@@ -30,8 +30,19 @@ class OwnerRegistrationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = OwnerRegistrationUIState.Loading
             
-            val payload = generateQrPayload(id, nomeCondominio)
-            
+            val existing = if (id > 0L) ownerRepository.getOwnerById(id) else null
+            val isOffline = existing?.isOffline ?: false
+            val offlineMsg = existing?.offlineMessage ?: ""
+            val offlineUntil = existing?.offlineUntil
+
+            val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                phone = telefone.trim(),
+                name = nome.trim(),
+                isOffline = isOffline,
+                offlineMessage = offlineMsg
+            ) ?: ""
+            val payload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+
             val owner = Owner(
                 id = id,
                 nome = nome.trim(),
@@ -41,7 +52,10 @@ class OwnerRegistrationViewModel @Inject constructor(
                 apartamento = apartamento.trim(),
                 telefone = telefone.trim(),
                 photoUri = photoUri,
-                qrCodePayload = payload
+                qrCodePayload = payload,
+                isOffline = isOffline,
+                offlineMessage = offlineMsg,
+                offlineUntil = offlineUntil
             )
 
             try {
@@ -56,11 +70,6 @@ class OwnerRegistrationViewModel @Inject constructor(
                 _uiState.value = OwnerRegistrationUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
-    }
-    
-    private fun generateQrPayload(ownerId: Long, condominio: String): String {
-        val hash = condominio.hashCode().toUInt()
-        return "https://porteiro-inteligente.web.app/scan/${ownerId}_$hash"
     }
 }
 

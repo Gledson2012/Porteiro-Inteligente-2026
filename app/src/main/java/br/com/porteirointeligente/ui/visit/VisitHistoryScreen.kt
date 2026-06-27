@@ -6,10 +6,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,6 +43,7 @@ fun VisitHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var currentFilter by remember { mutableStateOf(VisitHistoryViewModel.Filter.ALL) }
+    var searchQuery by remember { mutableStateOf("") }
     
     Scaffold(
         topBar = {
@@ -51,7 +56,39 @@ fun VisitHistoryScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                },
+                actions = {
+                    val hasVisits = (uiState as? VisitHistoryUIState.Success)?.visits?.isNotEmpty() ?: false
+                    if (hasVisits) {
+                        var showClearAllConfirm by remember { mutableStateOf(false) }
+                        IconButton(onClick = { showClearAllConfirm = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = "Limpar Histórico")
+                        }
+                        if (showClearAllConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showClearAllConfirm = false },
+                                title = { Text("Limpar Histórico") },
+                                text = { Text("Deseja apagar TODO o histórico de visitas? Esta ação é irreversível.") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.clearAllVisits()
+                                            showClearAllConfirm = false
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                    ) {
+                                        Text("Limpar Tudo")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showClearAllConfirm = false }) {
+                                        Text("Cancelar")
+                                    }
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -103,6 +140,35 @@ fun VisitHistoryScreen(
                 else -> {}
             }
             
+            // Search Bar
+            val hasVisits = (uiState as? VisitHistoryUIState.Success)?.visits?.isNotEmpty() ?: false
+            if (hasVisits) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Buscar por nome, apto, motivo...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Limpar busca")
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                    )
+                )
+            }
+
             // Filter chips
             FilterChips(
                 selectedFilter = currentFilter,
@@ -144,6 +210,14 @@ fun VisitHistoryScreen(
                 }
                 is VisitHistoryUIState.Success -> {
                     val visits = state.visits
+                    val filteredVisits = visits.filter {
+                        it.nome.contains(searchQuery, ignoreCase = true) ||
+                        it.apartamento.contains(searchQuery, ignoreCase = true) ||
+                        it.motivo.contains(searchQuery, ignoreCase = true) ||
+                        it.documento.contains(searchQuery, ignoreCase = true) ||
+                        it.telefone.contains(searchQuery, ignoreCase = true)
+                    }
+
                     if (visits.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -167,16 +241,40 @@ fun VisitHistoryScreen(
                                 )
                             }
                         }
+                    } else if (filteredVisits.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                )
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    text = "Nenhum resultado encontrado",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "Tente buscar por outro termo",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Slate400
+                                )
+                            }
+                        }
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(visits) { visit ->
+                            items(filteredVisits) { visit ->
                                 HistoryVisitItem(
                                     visit = visit,
-                                    onRegistrarSaida = { viewModel.registrarSaida(it) }
+                                    onRegistrarSaida = { viewModel.registrarSaida(it) },
+                                    onDeleteVisit = { viewModel.deleteVisit(it) }
                                 )
                             }
                         }
@@ -282,7 +380,11 @@ fun StatusBadge(status: VisitStatus) {
 }
 
 @Composable
-fun HistoryVisitItem(visit: Visit, onRegistrarSaida: (Visit) -> Unit) {
+fun HistoryVisitItem(
+    visit: Visit,
+    onRegistrarSaida: (Visit) -> Unit,
+    onDeleteVisit: (Visit) -> Unit
+) {
     val sdf = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
     
     val statusColor = when (visit.status) {
@@ -336,7 +438,49 @@ fun HistoryVisitItem(visit: Visit, onRegistrarSaida: (Visit) -> Unit) {
                         )
                     }
                     
-                    StatusBadge(visit.status)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        StatusBadge(visit.status)
+                        
+                        var showDeleteConfirm by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = { showDeleteConfirm = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Excluir Visita",
+                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        
+                        if (showDeleteConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteConfirm = false },
+                                title = { Text("Excluir Visita") },
+                                text = { Text("Tem certeza que deseja excluir esta visita do histórico?") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            onDeleteVisit(visit)
+                                            showDeleteConfirm = false
+                                        },
+                                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                    ) {
+                                        Text("Excluir")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDeleteConfirm = false }) {
+                                        Text("Cancelar")
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
                 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
@@ -373,7 +517,7 @@ fun HistoryVisitItem(visit: Visit, onRegistrarSaida: (Visit) -> Unit) {
                             )
                         ) {
                             Icon(
-                                Icons.Default.ExitToApp,
+                                Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )

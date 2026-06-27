@@ -77,6 +77,30 @@ class HomeViewModel @Inject constructor(
             ownerSelectionManager.selectOwner(ownerId)
         }
     }
+
+    fun setOnline() {
+        viewModelScope.launch {
+            val selectedId = ownerSelectionManager.getSelectedOwnerId() ?: return@launch
+            val owner = ownerRepository.getOwnerById(selectedId) ?: return@launch
+            
+            val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                phone = owner.telefone,
+                name = owner.nome,
+                isOffline = false,
+                offlineMessage = ""
+            ) ?: ""
+            val newPayload = "https://project-v6x0x.vercel.app/scan/$encryptedData"
+
+            ownerRepository.updateOwner(
+                owner.copy(
+                    isOffline = false,
+                    offlineUntil = null,
+                    offlineMessage = "",
+                    qrCodePayload = newPayload
+                )
+            )
+        }
+    }
 }
 
 sealed interface HomeUIState {

@@ -6,10 +6,12 @@ import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class VisitHistoryViewModel @Inject constructor(
     private val visitRepository: VisitRepository
@@ -57,6 +59,18 @@ class VisitHistoryViewModel @Inject constructor(
                 )
             )
             // A UI irá se atualizar automaticamente por causa do Flow reativo do Room
+        }
+    }
+
+    fun deleteVisit(visit: Visit) {
+        viewModelScope.launch {
+            visitRepository.deleteVisit(visit)
+        }
+    }
+
+    fun clearAllVisits() {
+        viewModelScope.launch {
+            visitRepository.clearAll()
         }
     }
 
