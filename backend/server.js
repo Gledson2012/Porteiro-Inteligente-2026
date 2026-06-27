@@ -115,54 +115,337 @@ app.post('/api/login', (req, res) => {
 app.get('/scan/:id_hash', (req, res) => {
   try {
     const { id_hash } = req.params;
+    let name = '';
+    let phone = '';
+    let isOffline = false;
+    let offlineMessage = '';
     
-    // Tenta descriptografar o payload offline primeiro
+    // 1. Tenta descriptografar o payload offline primeiro (Novo Formato)
     const decrypted = decryptPayload(id_hash);
     if (decrypted) {
-      const { phone, name, isOffline, offlineMessage } = decrypted;
+      name = decrypted.name;
+      phone = decrypted.phone;
+      isOffline = decrypted.isOffline;
+      offlineMessage = decrypted.offlineMessage;
+    } else {
+      // 2. Fallback: busca clássica no banco sqlite (Formato Legado)
+      const idPart = id_hash.split('_')[0];
+      const ownerId = parseInt(idPart, 10);
       
-      if (isOffline) {
-        return res.status(200).send(`<h1>Morador Indisponível</h1><p>${offlineMessage || 'O morador está temporariamente indisponível.'}</p>`);
+      if (isNaN(ownerId)) {
+        return res.status(400).send('QR Code Inválido');
       }
       
-      let cleanPhone = phone.replace(/\D/g, '');
-      if (!cleanPhone.startsWith('55')) {
-        cleanPhone = '55' + cleanPhone;
+      const db = getDatabase();
+      const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(ownerId);
+      
+      if (!owner) {
+        return res.status(404).send('Morador Não Encontrado');
       }
       
-      const message = encodeURIComponent(`Olá ${name.split(' ')[0]}, sou o entregador e estou na portaria.`);
-      const waUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-      return res.redirect(waUrl);
+      name = owner.nome;
+      phone = owner.telefone;
+      isOffline = owner.isOffline === 1;
+      offlineMessage = owner.offlineMessage;
     }
     
-    // Fallback: busca clássica no banco sqlite (legado)
-    const idPart = id_hash.split('_')[0];
-    const ownerId = parseInt(idPart, 10);
-    
-    if (isNaN(ownerId)) {
-      return res.status(400).send('QR Code Inválido');
+    // Formata o número do WhatsApp
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone.startsWith('55')) {
+      cleanPhone = '55' + cleanPhone;
     }
     
-    const db = getDatabase();
-    const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(ownerId);
+    const messageText = `Olá ${name.split(' ')[0]}, sou o entregador e estou na portaria.`;
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
     
-    if (!owner) {
-      return res.status(404).send('Morador Não Encontrado');
-    }
+    // Renderiza a página HTML premium intermediária
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porteiro Inteligente - Contato</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0A0B10;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --primary: #4F46E5;
+            --success: #10B981;
+            --danger: #EF4444;
+            --text: #F8FAFC;
+            --text-secondary: #94A3B8;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .glow-1 {
+            position: absolute;
+            top: -10%;
+            right: -10%;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .glow-2 {
+            position: absolute;
+            bottom: -10%;
+            left: -10%;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FFBF00, #FFD700);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 191, 0, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: #0F172A;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFFFFF, #94A3B8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 28px;
+            padding: 36px 24px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.online {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.offline {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-badge.online .status-dot {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-badge.offline .status-dot {
+            background-color: var(--danger);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+            letter-spacing: -0.5px;
+        }
+
+        .info-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: 18px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #FFFFFF;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-whatsapp:active {
+            transform: translateY(0);
+        }
+
+        .offline-box {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .offline-box-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .offline-box-content {
+            font-size: 16px;
+            color: var(--text);
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.25);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+    <div class="container">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                </svg>
+            </div>
+            <span class="logo-text">Porteiro Inteligente</span>
+        </div>
+
+        <div class="card">
+            ${isOffline ? `
+                <div class="status-badge offline">
+                    <div class="status-dot"></div>
+                    <span>MORADOR INDISPONÍVEL</span>
+                </div>
+                <h1>${name}</h1>
+                <p class="info-subtitle">O morador configurou o status para indisponível temporariamente.</p>
+                
+                <div class="offline-box">
+                    <div class="offline-box-title">Instruções do Morador:</div>
+                    <div class="offline-box-content">"${offlineMessage || 'Não posso atender no momento. Por favor, deixe a encomenda na portaria ou com o zelador.'}"</div>
+                </div>
+            ` : `
+                <div class="status-badge online">
+                    <div class="status-dot"></div>
+                    <span>MORADOR DISPONÍVEL</span>
+                </div>
+                <h1>${name}</h1>
+                <p class="info-subtitle">Para avisar o morador sobre sua chegada ou entrega, toque no botão abaixo para abrir o WhatsApp.</p>
+                
+                <a href="${waUrl}" class="btn btn-whatsapp">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 8px;">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.62.963 3.41 1.47 5.259 1.471h.005c5.479 0 9.934-4.455 9.938-9.94.002-2.656-1.03-5.153-2.906-7.03C17.068 1.779 14.578.749 11.921.75 6.444.75 1.99 5.201 1.987 10.686c-.001 1.918.504 3.791 1.464 5.422l-1.012 3.7 3.794-.995zm11.516-7.8c-.313-.156-1.85-.913-2.138-1.017-.288-.105-.497-.156-.706.156-.208.312-.806 1.017-.988 1.225-.182.208-.364.234-.677.078-.312-.156-1.32-.486-2.514-1.55-.928-.827-1.554-1.85-1.737-2.162-.182-.313-.02-.482.137-.637.14-.14.312-.364.469-.546.156-.182.208-.312.312-.52.105-.208.052-.39-.026-.546-.078-.156-.706-1.7-.967-2.327-.254-.61-.513-.526-.706-.536-.183-.01-.39-.011-.597-.011-.208 0-.547.078-.833.39-.286.312-1.094 1.067-1.094 2.602 0 1.536 1.12 3.018 1.276 3.226.156.208 2.2 3.36 5.33 4.715.744.322 1.326.515 1.78.659.748.237 1.429.204 1.968.123.6-.09 1.85-.755 2.11-1.485.26-.73.26-1.353.182-1.485-.078-.13-.286-.208-.6-.364z"/>
+                    </svg>
+                    <span>Iniciar conversa no WhatsApp</span>
+                </a>
+            `}
+        </div>
+
+        <div class="footer">
+            Porteiro Inteligente &copy; 2026<br>
+            By Família Venâncio
+        </div>
+    </div>
+</body>
+</html>`;
     
-    if (owner.isOffline) {
-      return res.status(200).send(`<h1>Morador Indisponível</h1><p>${owner.offlineMessage || 'O morador está temporariamente indisponível.'}</p>`);
-    }
-    
-    let phone = owner.telefone.replace(/\D/g, '');
-    if (!phone.startsWith('55')) {
-      phone = '55' + phone;
-    }
-    
-    const message = encodeURIComponent(`Olá ${owner.nome.split(' ')[0]}, sou o entregador e estou na portaria.`);
-    const waUrl = `https://wa.me/${phone}?text=${message}`;
-    
-    res.redirect(waUrl);
+    res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+    res.send(html);
 
   } catch (err) {
     console.error('Erro ao processar scan:', err);
