@@ -165,16 +165,20 @@ app.get('/scan/:id_hash', (req, res) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Porteiro Inteligente - Contato</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0A0B10;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --primary: #4F46E5;
+            --bg-color: #08090D;
+            --card-bg: rgba(255, 255, 255, 0.025);
+            --primary: #6366F1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
             --success: #10B981;
+            --success-glow: rgba(16, 185, 129, 0.15);
             --danger: #EF4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
             --text: #F8FAFC;
             --text-secondary: #94A3B8;
+            --gold: #FFD700;
         }
         
         * {
@@ -191,33 +195,48 @@ app.get('/scan/:id_hash', (req, res) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 20px;
             overflow-x: hidden;
             position: relative;
         }
 
+        /* Animated Soft Glow Lights */
         .glow-1 {
             position: absolute;
-            top: -10%;
+            top: -20%;
             right: -10%;
-            width: 60%;
-            height: 60%;
+            width: 70%;
+            height: 70%;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%);
             z-index: 1;
             pointer-events: none;
+            animation: float1 10s infinite alternate ease-in-out;
         }
 
         .glow-2 {
             position: absolute;
-            bottom: -10%;
+            bottom: -20%;
             left: -10%;
-            width: 60%;
-            height: 60%;
+            width: 70%;
+            height: 70%;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
             z-index: 1;
             pointer-events: none;
+            animation: float2 12s infinite alternate ease-in-out;
+        }
+
+        @keyframes float1 {
+            0% { transform: translate(0px, 0px) scale(1); }
+            50% { transform: translate(40px, -60px) scale(1.15); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        @keyframes float2 {
+            0% { transform: translate(0px, 0px) scale(1.15); }
+            50% { transform: translate(-50px, 40px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1.15); }
         }
 
         .container {
@@ -229,73 +248,104 @@ app.get('/scan/:id_hash', (req, res) => {
             align-items: center;
         }
 
+        /* App Logo Header */
         .logo-container {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
+            animation: fadeInUp 0.8s ease-out;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background: linear-gradient(135deg, #FFBF00, #FFD700);
-            border-radius: 12px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(255, 191, 0, 0.3);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.25);
         }
 
         .logo-icon svg {
-            width: 22px;
-            height: 22px;
-            fill: #0F172A;
+            width: 24px;
+            height: 24px;
+            fill: #0A0B10;
         }
 
         .logo-text {
-            font-size: 20px;
-            font-weight: 800;
+            font-size: 22px;
+            font-weight: 900;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #FFFFFF, #94A3B8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        /* Glassmorphic Card */
         .card {
             width: 100%;
             background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-radius: 28px;
-            padding: 36px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 38px 28px;
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            animation: cardEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Delivery Welcome Tag */
+        .welcome-badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 24px;
+            display: inline-block;
+        }
+
+        /* Status Badge */
         .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 6px 16px;
             border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             margin-bottom: 24px;
             letter-spacing: 0.5px;
         }
 
         .status-badge.online {
-            background-color: rgba(16, 185, 129, 0.1);
+            background-color: rgba(16, 185, 129, 0.08);
             color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.15);
         }
 
         .status-badge.offline {
-            background-color: rgba(239, 68, 68, 0.1);
+            background-color: rgba(239, 68, 68, 0.08);
             color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.15);
         }
 
         .status-dot {
@@ -306,41 +356,51 @@ app.get('/scan/:id_hash', (req, res) => {
 
         .status-badge.online .status-dot {
             background-color: var(--success);
-            box-shadow: 0 0 8px var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulseDot 2s infinite;
         }
 
         .status-badge.offline .status-dot {
             background-color: var(--danger);
         }
 
+        @keyframes pulseDot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
         h1 {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 800;
             margin-bottom: 8px;
             color: #FFFFFF;
             letter-spacing: -0.5px;
+            line-height: 1.2;
         }
 
         .info-subtitle {
             font-size: 15px;
             color: var(--text-secondary);
-            margin-bottom: 28px;
-            line-height: 1.5;
+            margin-bottom: 32px;
+            line-height: 1.55;
+            font-weight: 400;
         }
 
+        /* Premium Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
             width: 100%;
-            padding: 16px 24px;
-            border-radius: 18px;
+            padding: 18px 24px;
+            border-radius: 20px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             text-decoration: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             outline: none;
         }
@@ -348,48 +408,93 @@ app.get('/scan/:id_hash', (req, res) => {
         .btn-whatsapp {
             background: linear-gradient(135deg, #10B981, #059669);
             color: #FFFFFF;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+            animation: pulseBtn 3s infinite;
         }
 
         .btn-whatsapp:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.45);
         }
 
         .btn-whatsapp:active {
-            transform: translateY(0);
+            transform: translateY(-1px);
         }
 
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* Offline Instructions Box */
         .offline-box {
-            background-color: rgba(255, 255, 255, 0.03);
-            border: 1px dashed rgba(255, 255, 255, 0.1);
-            border-radius: 18px;
-            padding: 20px;
-            margin-bottom: 24px;
+            background-color: rgba(255, 255, 255, 0.015);
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 12px;
             text-align: left;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .offline-box-title {
-            font-size: 13px;
-            font-weight: 600;
+        .offline-box-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
             color: var(--text-secondary);
-            margin-bottom: 6px;
+            margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+        }
+
+        .offline-box-header svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-secondary);
         }
 
         .offline-box-content {
             font-size: 16px;
-            color: var(--text);
-            line-height: 1.5;
+            color: #FFFFFF;
+            line-height: 1.6;
             font-weight: 500;
+            font-style: italic;
         }
 
+        /* Staggered Entrance Animations */
+        .animate-item {
+            animation: fadeInUp 0.6s both;
+        }
+
+        .item-1 { animation-delay: 0.15s; }
+        .item-2 { animation-delay: 0.25s; }
+        .item-3 { animation-delay: 0.35s; }
+        .item-4 { animation-delay: 0.45s; }
+        .item-5 { animation-delay: 0.55s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Footer */
         .footer {
-            margin-top: 32px;
+            margin-top: 36px;
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.2);
             text-align: center;
+            letter-spacing: 0.5px;
+            line-height: 1.6;
+            animation: fadeInUp 0.8s both 0.65s;
         }
     </style>
 </head>
@@ -407,27 +512,34 @@ app.get('/scan/:id_hash', (req, res) => {
         </div>
 
         <div class="card">
+            <div class="welcome-badge animate-item item-1">ENTREGAS & PORTARIA</div>
+            
             ${isOffline ? `
-                <div class="status-badge offline">
+                <div class="status-badge offline animate-item item-2">
                     <div class="status-dot"></div>
                     <span>MORADOR INDISPONÍVEL</span>
                 </div>
-                <h1>${name}</h1>
-                <p class="info-subtitle">O morador configurou o status para indisponível temporariamente.</p>
+                <h1 class="animate-item item-3">${name}</h1>
+                <p class="info-subtitle animate-item item-4">O morador configurou o status para indisponível no momento.</p>
                 
-                <div class="offline-box">
-                    <div class="offline-box-title">Instruções do Morador:</div>
+                <div class="offline-box animate-item item-5">
+                    <div class="offline-box-header">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                        </svg>
+                        <span>Instruções Importantes</span>
+                    </div>
                     <div class="offline-box-content">"${offlineMessage || 'Não posso atender no momento. Por favor, deixe a encomenda na portaria ou com o zelador.'}"</div>
                 </div>
             ` : `
-                <div class="status-badge online">
+                <div class="status-badge online animate-item item-2">
                     <div class="status-dot"></div>
                     <span>MORADOR DISPONÍVEL</span>
                 </div>
-                <h1>${name}</h1>
-                <p class="info-subtitle">Para avisar o morador sobre sua chegada ou entrega, toque no botão abaixo para abrir o WhatsApp.</p>
+                <h1 class="animate-item item-3">${name}</h1>
+                <p class="info-subtitle animate-item item-4">Para notificar sua chegada e realizar a entrega com segurança, clique no botão abaixo e fale direto com o morador no WhatsApp.</p>
                 
-                <a href="${waUrl}" class="btn btn-whatsapp">
+                <a href="${waUrl}" class="btn btn-whatsapp animate-item item-5">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 8px;">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.62.963 3.41 1.47 5.259 1.471h.005c5.479 0 9.934-4.455 9.938-9.94.002-2.656-1.03-5.153-2.906-7.03C17.068 1.779 14.578.749 11.921.75 6.444.75 1.99 5.201 1.987 10.686c-.001 1.918.504 3.791 1.464 5.422l-1.012 3.7 3.794-.995zm11.516-7.8c-.313-.156-1.85-.913-2.138-1.017-.288-.105-.497-.156-.706.156-.208.312-.806 1.017-.988 1.225-.182.208-.364.234-.677.078-.312-.156-1.32-.486-2.514-1.55-.928-.827-1.554-1.85-1.737-2.162-.182-.313-.02-.482.137-.637.14-.14.312-.364.469-.546.156-.182.208-.312.312-.52.105-.208.052-.39-.026-.546-.078-.156-.706-1.7-.967-2.327-.254-.61-.513-.526-.706-.536-.183-.01-.39-.011-.597-.011-.208 0-.547.078-.833.39-.286.312-1.094 1.067-1.094 2.602 0 1.536 1.12 3.018 1.276 3.226.156.208 2.2 3.36 5.33 4.715.744.322 1.326.515 1.78.659.748.237 1.429.204 1.968.123.6-.09 1.85-.755 2.11-1.485.26-.73.26-1.353.182-1.485-.078-.13-.286-.208-.6-.364z"/>
                     </svg>
