@@ -4,658 +4,1124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Porteiro Inteligente — Gestão de Portaria Simplificada</title>
-    <meta name="description" content="Aplicativo Android para gestão de portaria em condomínios. QR Code, registro de visitas, modo offline e mais.">
+    <meta name="description" content="Aplicativo Android para gestão de portaria em condomínios. QR Code seguro, registro digital de visitas e modo offline — tudo 100% offline.">
+    
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
-            --primary: #F59E0B;
-            --primary-dark: #D97706;
-            --secondary: #1E293B;
+            --bg-dark: #080A10;
+            --primary: #FFB000;
+            --primary-glow: rgba(255, 176, 0, 0.15);
+            --primary-dark: #D48C00;
+            --secondary: #6366F1;
+            --secondary-glow: rgba(99, 102, 241, 0.2);
             --accent: #2DD4BF;
-            --bg: #F8FAFC;
-            --surface: #FFFFFF;
-            --text: #0F172A;
-            --text-muted: #64748B;
-            --radius: 16px;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             line-height: 1.6;
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
         .container {
-            max-width: 1120px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
-        }
-
-        /* Header / Hero */
-        .hero {
-            background: linear-gradient(135deg, var(--secondary) 0%, #0F172A 100%);
-            color: white;
-            padding: 80px 0 100px;
             position: relative;
-            overflow: hidden;
+            z-index: 10;
         }
 
-        .hero::after {
-            content: '';
+        /* Abstract Glow Orbs */
+        .orb {
             position: absolute;
-            top: -50%;
-            right: -20%;
+            border-radius: 50%;
+            filter: blur(140px);
+            pointer-events: none;
+            opacity: 0.4;
+            z-index: 1;
+        }
+
+        .orb-1 {
+            top: -100px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+        }
+
+        .orb-2 {
+            top: 600px;
+            left: -200px;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-            opacity: 0.15;
-            pointer-events: none;
+            background: radial-gradient(circle, var(--secondary-glow) 0%, transparent 70%);
         }
 
-        .hero-content {
+        .orb-3 {
+            bottom: 200px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(45, 212, 191, 0.08) 0%, transparent 70%);
+        }
+
+        /* Hero / Header Section */
+        .hero {
             position: relative;
-            z-index: 1;
+            padding: 80px 0 120px;
             display: flex;
             align-items: center;
-            gap: 60px;
+            min-height: 90vh;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         }
 
-        .hero-text { flex: 1; }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 60px;
+            align-items: center;
+        }
 
         .hero-badge {
-            display: inline-block;
-            background: rgba(245, 158, 11, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 176, 0, 0.08);
+            border: 1px solid rgba(255, 176, 0, 0.2);
             color: var(--primary);
-            padding: 6px 16px;
+            padding: 8px 16px;
             border-radius: 100px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            animation: pulse-badge 3s infinite alternate;
+        }
+
+        @keyframes pulse-badge {
+            0% { border-color: rgba(255, 176, 0, 0.2); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+            100% { border-color: rgba(255, 176, 0, 0.5); box-shadow: 0 4px 20px rgba(255, 176, 0, 0.1); }
         }
 
         .hero h1 {
-            font-size: 52px;
-            font-weight: 800;
+            font-size: 64px;
+            font-weight: 900;
             line-height: 1.1;
-            letter-spacing: -1px;
-            margin-bottom: 20px;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #FFFFFF 30%, #94A3B8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .hero h1 span { color: var(--primary); }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary) 0%, #FFA000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
         .hero p {
-            font-size: 18px;
-            color: rgba(255,255,255,0.75);
-            max-width: 520px;
-            margin-bottom: 32px;
+            font-size: 19px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 580px;
+            line-height: 1.6;
         }
 
-        .hero-buttons {
+        .btn-group {
             display: flex;
-            gap: 12px;
+            gap: 16px;
             flex-wrap: wrap;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 14px 28px;
-            border-radius: 12px;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: var(--radius-md);
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             text-decoration: none;
-            transition: all 0.2s;
             cursor: pointer;
+            transition: var(--transition);
             border: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-primary {
-            background: var(--primary);
-            color: var(--secondary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #000000;
+            box-shadow: 0 10px 30px var(--primary-glow);
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 176, 0, 0.3);
         }
 
-        .btn-outline {
-            background: transparent;
-            color: white;
-            border: 1.5px solid rgba(255,255,255,0.25);
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
         }
 
-        .btn-outline:hover {
-            border-color: rgba(255,255,255,0.5);
-            background: rgba(255,255,255,0.05);
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
         }
 
+        /* Interactive Phone Mockup */
         .hero-visual {
-            flex: 0 0 320px;
             display: flex;
             justify-content: center;
+            position: relative;
         }
 
-        .phone-mock {
-            width: 280px;
-            height: 560px;
-            background: var(--secondary);
-            border-radius: 40px;
-            padding: 12px;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+        .phone-frame {
+            width: 310px;
+            height: 630px;
+            background: #0D111A;
+            border: 12px solid #1E293B;
+            border-radius: 46px;
+            padding: 10px;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 
+                        0 0 0 1px rgba(255, 255, 255, 0.05),
+                        inset 0 0 10px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 10;
         }
 
         .phone-screen {
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
-            border-radius: 28px;
+            background: #0A0D14;
+            border-radius: 36px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        /* Camera notch */
+        .phone-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 24px;
+            background: #1E293B;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 999;
         }
 
         .phone-status {
-            padding: 12px 16px 4px;
+            height: 38px;
+            padding: 12px 20px 0;
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            z-index: 100;
         }
 
-        .phone-content {
+        /* Phone Screen Content Screens */
+        .screen-container {
             flex: 1;
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 16px;
+            overflow-y: auto;
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .screen-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .screen-content.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .phone-card {
-            background: rgba(255,255,255,0.08);
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
             padding: 14px;
-            border: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .phone-card-sm {
             display: flex;
-            gap: 10px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 10px;
-            padding: 10px;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
 
-        .phone-dot {
-            width: 6px;
-            border-radius: 3px;
-            background: var(--primary);
+        .phone-user-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
         }
 
-        .phone-line {
-            height: 10px;
-            border-radius: 5px;
-            background: rgba(255,255,255,0.1);
-            margin-bottom: 6px;
+        .phone-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .phone-line-sm { width: 60%; height: 8px; }
-        .phone-line-xs { width: 40%; height: 8px; }
-        .phone-line-lg { width: 85%; height: 12px; }
-
-        .phone-nav {
+        .phone-nav-bar {
+            height: 64px;
+            background: rgba(13, 17, 26, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
             display: flex;
             justify-content: space-around;
-            padding: 8px 0 12px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            align-items: center;
+            padding-bottom: 4px;
+            z-index: 10;
         }
 
-        .phone-nav-item {
+        .phone-nav-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 3px;
             font-size: 9px;
-            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.4);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
         }
 
-        .phone-nav-item.active { color: var(--primary); }
-
-        .phone-nav-icon {
-            width: 18px;
-            height: 18px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.08);
+        .phone-nav-btn.active {
+            color: var(--primary);
         }
 
-        .phone-nav-icon.active { background: var(--primary); }
+        .phone-nav-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transition: var(--transition);
+        }
 
-        /* Sections */
-        section { padding: 80px 0; }
+        /* Mock Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mock List Items */
+        .mock-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.015);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 12px;
+        }
+
+        .mock-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .mock-status-dot.active { background-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
+        .mock-status-dot.completed { background-color: var(--primary); }
+
+        /* Mock Toggle Switches */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            padding: 4px 0;
+        }
+
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-switch.active::after {
+            left: 18px;
+        }
+
+        /* Fake Input Field */
+        .fake-input {
+            width: 100%;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 12px;
+            outline: none;
+        }
+
+        /* Section Layouts */
+        section {
+            padding: 100px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
 
         .section-label {
-            display: inline-block;
             color: var(--primary);
-            font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
+            display: block;
             margin-bottom: 12px;
         }
 
         .section-title {
-            font-size: 36px;
+            font-size: 40px;
             font-weight: 800;
-            letter-spacing: -0.5px;
+            letter-spacing: -1px;
+            color: white;
             margin-bottom: 16px;
-            color: var(--secondary);
         }
 
         .section-subtitle {
-            font-size: 18px;
+            font-size: 17px;
             color: var(--text-muted);
             max-width: 600px;
+            margin: 0 auto;
         }
 
-        /* Features Grid */
-        .features {
+        /* Features Section */
+        .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 24px;
-            margin-top: 48px;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 30px;
         }
 
         .feature-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 32px;
-            border: 1px solid #E2E8F0;
-            transition: all 0.2s;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 40px 32px;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top left, rgba(255, 176, 0, 0.03) 0%, transparent 60%);
+            pointer-events: none;
         }
 
         .feature-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.1);
-            transform: translateY(-2px);
+            transform: translateY(-5px);
+            border-color: rgba(255, 176, 0, 0.2);
+            box-shadow: 0 20px 40px -10px rgba(255, 176, 0, 0.04);
         }
 
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
+        .feature-icon-container {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 28px;
+            font-size: 26px;
+            color: var(--primary);
+            transition: var(--transition);
         }
 
-        .feature-icon.orange { background: #FEF3C7; color: #D97706; }
-        .feature-icon.slate { background: #E2E8F0; color: #1E293B; }
-        .feature-icon.teal { background: #CCFBF1; color: #0D9488; }
-        .feature-icon.red { background: #FEE2E2; color: #DC2626; }
-        .feature-icon.purple { background: #EDE9FE; color: #7C3AED; }
-        .feature-icon.blue { background: #DBEAFE; color: #2563EB; }
+        .feature-card:hover .feature-icon-container {
+            background: rgba(255, 176, 0, 0.1);
+            border-color: rgba(255, 176, 0, 0.3);
+            transform: scale(1.05);
+        }
 
         .feature-card h3 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            color: white;
         }
 
         .feature-card p {
             color: var(--text-muted);
             font-size: 15px;
+            line-height: 1.6;
         }
 
-        /* Steps */
-        .steps {
+        /* How it works (Steps) */
+        .steps-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 32px;
-            margin-top: 48px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 40px;
+            position: relative;
         }
 
-        .step {
+        .step-card {
             text-align: center;
-            padding: 0 8px;
+            position: relative;
         }
 
         .step-number {
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            background: var(--primary);
-            color: var(--secondary);
-            font-size: 22px;
-            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #000000;
+            font-size: 24px;
+            font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 24px var(--primary-glow);
+            position: relative;
+            z-index: 2;
         }
 
-        .step h4 {
-            font-size: 18px;
+        .step-card h4 {
+            font-size: 19px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            color: white;
         }
 
-        .step p {
+        .step-card p {
             color: var(--text-muted);
-            font-size: 15px;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        /* Tech Stack */
-        .tech-grid {
+        /* Tech Stack Section */
+        .tech-tags {
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 12px;
-            margin-top: 32px;
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .tech-tag {
-            padding: 10px 20px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
             border-radius: 100px;
-            background: var(--surface);
-            border: 1px solid #E2E8F0;
             font-size: 14px;
             font-weight: 600;
-            color: var(--secondary);
+            color: var(--text-main);
+            transition: var(--transition);
         }
 
         .tech-tag:hover {
             border-color: var(--primary);
             color: var(--primary);
+            background: rgba(255, 176, 0, 0.05);
+            transform: scale(1.03);
         }
 
-        /* CTA */
-        .cta {
-            background: linear-gradient(135deg, var(--secondary) 0%, #0F172A 100%);
-            color: white;
+        /* Call To Action (CTA) Section */
+        .cta-section {
+            background: linear-gradient(180deg, rgba(255, 176, 0, 0.02) 0%, transparent 100%);
             text-align: center;
-            padding: 80px 0;
+            padding: 120px 0;
+            position: relative;
         }
 
-        .cta h2 {
-            font-size: 40px;
+        .cta-box {
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.05) 0%, transparent 70%), var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 80px 40px;
+            max-width: 960px;
+            margin: 0 auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .cta-box h2 {
+            font-size: 48px;
             font-weight: 800;
+            color: white;
             margin-bottom: 16px;
         }
 
-        .cta p {
+        .cta-box p {
+            color: var(--text-muted);
             font-size: 18px;
-            color: rgba(255,255,255,0.65);
-            max-width: 500px;
-            margin: 0 auto 32px;
+            margin-bottom: 40px;
+            max-width: 580px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .btn-large {
-            padding: 18px 40px;
-            font-size: 18px;
-        }
-
-        /* Footer */
+        /* Footer Section */
         footer {
-            padding: 32px 0;
+            padding: 40px 0;
             text-align: center;
             color: var(--text-muted);
             font-size: 14px;
-            border-top: 1px solid #E2E8F0;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            background: #06080C;
         }
 
-        footer strong { color: var(--secondary); }
+        footer strong {
+            color: white;
+        }
 
-        @media (max-width: 860px) {
-            .hero { padding: 60px 0 80px; }
-            .hero h1 { font-size: 36px; }
-            .hero-content { flex-direction: column; text-align: center; }
-            .hero p { margin: 0 auto 32px; }
-            .hero-buttons { justify-content: center; }
-            .hero-visual { flex: 0 0 auto; margin-top: 32px; }
-            .phone-mock { width: 240px; height: 480px; }
-            .section-title { font-size: 28px; }
-            .features { grid-template-columns: 1fr; }
-            .steps { grid-template-columns: 1fr 1fr; }
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        footer a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Media Queries */
+        @media (max-width: 960px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 40px;
+            }
+
+            .hero h1 {
+                font-size: 46px;
+            }
+
+            .hero p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .btn-group {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                margin-top: 20px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
         }
 
         @media (max-width: 480px) {
-            .hero h1 { font-size: 28px; }
-            .hero { padding: 40px 0 60px; }
-            .steps { grid-template-columns: 1fr; }
-            .phone-mock { width: 200px; height: 400px; }
-            section { padding: 48px 0; }
-            .btn-large { width: 100%; }
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .cta-box {
+                padding: 40px 20px;
+            }
+
+            .cta-box h2 {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
 <body>
 
+    <!-- Glow Orbs in Background -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Hero / Header Section -->
     <header class="hero">
-        <div class="container hero-content">
+        <div class="container hero-grid">
             <div class="hero-text">
-                <div class="hero-badge">100% Offline • Criptografado</div>
+                <div class="hero-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>
+                    100% Offline • Criptografado
+                </div>
                 <h1>Porteiro <span>Inteligente</span></h1>
-                <p>Modernize a gestão da portaria do seu condomínio com QR Code seguro, registro digital de visitas e backup criptografado — tudo 100% offline, sem servidor, sem depender de internet.</p>
-                <div class="hero-buttons">
-                    <a href="#funcionalidades" class="btn btn-primary">Ver Funcionalidades</a>
-                    <a href="#como-funciona" class="btn btn-outline">Como Funciona</a>
+                <p>Modernize a portaria do seu condomínio com QR Codes criptografados, registros de entrada integrados e backups automáticos. Tudo 100% offline e executado localmente no celular.</p>
+                <div class="btn-group">
+                    <a href="#funcionalidades" class="btn btn-primary">Conhecer Recursos</a>
+                    <a href="#como-funciona" class="btn btn-secondary">Ver Como Funciona</a>
                     <a href="PorteiroInteligente.apk" class="btn btn-primary" download>Baixar APK</a>
                 </div>
             </div>
+            
             <div class="hero-visual">
-                <div class="phone-mock">
+                <!-- Interactive Mobile Device Mockup -->
+                <div class="phone-frame">
                     <div class="phone-screen">
+                        
+                        <!-- Status Bar -->
                         <div class="phone-status">
                             <span>09:41</span>
-                            <span>&#128247;</span>
+                            <span style="font-size: 14px;">📶 🔋</span>
                         </div>
-                        <div class="phone-content">
-                            <div>
-                                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:2px;">Ol&aacute;,</div>
-                                <div style="font-size:16px;font-weight:700;color:var(--primary);">Residencial Parque</div>
-                                <div style="font-size:11px;color:rgba(255,255,255,0.5);">Apto 42</div>
-                            </div>
-                            <div class="phone-card" style="display:flex;align-items:center;gap:10px;">
-                                <div style="width:60px;height:60px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:rgba(255,255,255,0.3);">&#9632;&#9632;</div>
+
+                        <!-- Phone Interactive Screens -->
+                        <div class="screen-container">
+                            
+                            <!-- 1. HOME SCREEN (Active initially) -->
+                            <div id="screen-home" class="screen-content active">
                                 <div>
-                                    <div style="font-size:11px;font-weight:600;">Seu QR Code de Acesso</div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Apresente na portaria</div>
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 2px;">Residencial Parque</div>
+                                    <div style="font-size: 18px; font-weight: 800; color: white;">Portaria Geral</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Administrador</div>
+                                </div>
+
+                                <div class="phone-card" style="align-items: center; text-align: center; gap: 8px;">
+                                    <div style="font-size: 12px; font-weight: 700; color: white;">Seu QR Code de Acesso</div>
+                                    <!-- QR Code Mock Vector -->
+                                    <div style="width: 110px; height: 110px; background: white; padding: 6px; border-radius: 12px; margin: 4px 0;">
+                                        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; fill: #000;">
+                                            <!-- Simple Mock QR Matrix -->
+                                            <rect x="0" y="0" width="30" height="30" />
+                                            <rect x="5" y="5" width="20" height="20" fill="#fff" />
+                                            <rect x="10" y="10" width="10" height="10" />
+                                            
+                                            <rect x="70" y="0" width="30" height="30" />
+                                            <rect x="75" y="5" width="20" height="20" fill="#fff" />
+                                            <rect x="80" y="10" width="10" height="10" />
+
+                                            <rect x="0" y="70" width="30" height="30" />
+                                            <rect x="5" y="75" width="20" height="20" fill="#fff" />
+                                            <rect x="10" y="80" width="10" height="10" />
+                                            
+                                            <rect x="40" y="40" width="20" height="20" />
+                                            <rect x="45" y="45" width="10" height="10" fill="#fff" />
+
+                                            <rect x="45" y="10" width="10" height="20" />
+                                            <rect x="70" y="45" width="20" height="15" />
+                                            <rect x="15" y="45" width="15" height="10" />
+                                        </svg>
+                                    </div>
+                                    <div style="font-size: 9px; color: var(--text-muted);">Apresente no leitor para contato rápido</div>
+                                </div>
+
+                                <div class="stats-row">
+                                    <div class="stat-box">
+                                        <div class="stat-val">3</div>
+                                        <div class="stat-label">Hoje</div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-val">24</div>
+                                        <div class="stat-label">Este Mês</div>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="font-size: 11px; font-weight: 700; color: var(--text-main);">Registro Rápido</div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button onclick="changeScreen('history')" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--primary); font-size: 11px; font-weight: 700; color: black; cursor: pointer;">Histórico</button>
+                                        <button onclick="changeScreen('settings')" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: transparent; font-size: 11px; color: white; cursor: pointer;">Ajustes</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="phone-card" style="display:flex;align-items:center;justify-content:space-between;">
+
+                            <!-- 2. HISTORY SCREEN -->
+                            <div id="screen-history" class="screen-content">
                                 <div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Movimenta&ccedil;&atilde;o Hoje</div>
-                                    <div style="font-size:22px;font-weight:800;color:white;">3 Visitas</div>
+                                    <div style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 2px;">Histórico</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Controle de entrada e saída</div>
                                 </div>
-                                <div style="width:40px;height:40px;border-radius:50%;background:rgba(245,158,11,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;">&#8593;</div>
+
+                                <div style="display: flex; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 3px;">
+                                    <span style="flex: 1; text-align: center; font-size: 10px; padding: 4px; background: var(--primary); color: black; font-weight: 700; border-radius: 6px;">Todas</span>
+                                    <span style="flex: 1; text-align: center; font-size: 10px; padding: 4px; color: var(--text-muted);">No Prédio</span>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 250px;">
+                                    <div class="mock-item">
+                                        <div class="mock-status-dot active"></div>
+                                        <div style="flex:1;">
+                                            <div style="font-weight: 700; color: white;">Carlos Lima</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Entrega • Ap 42</div>
+                                        </div>
+                                        <div style="text-align: right; font-size: 9px; color: var(--text-muted);">14:30</div>
+                                    </div>
+                                    <div class="mock-item">
+                                        <div class="mock-status-dot completed"></div>
+                                        <div style="flex:1;">
+                                            <div style="font-weight: 700; color: white;">Maria Souza</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Visita • Ap 15</div>
+                                        </div>
+                                        <div style="text-align: right; font-size: 9px; color: var(--text-muted);">11:10</div>
+                                    </div>
+                                    <div class="mock-item">
+                                        <div class="mock-status-dot completed"></div>
+                                        <div style="flex:1;">
+                                            <div style="font-weight: 700; color: white;">José Silva</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Zelador • Portaria</div>
+                                        </div>
+                                        <div style="text-align: right; font-size: 9px; color: var(--text-muted);">08:45</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div style="display:flex;gap:8px;">
-                                <div style="flex:1;text-align:center;padding:10px;border-radius:10px;background:var(--primary);font-size:12px;font-weight:700;color:var(--secondary);">Sou Entregador</div>
-                                <div style="flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);font-size:12px;color:white;">Ver meu QR</div>
+
+                            <!-- 3. PROFILE SCREEN -->
+                            <div id="screen-profile" class="screen-content">
+                                <div>
+                                    <div style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 2px;">Seu Perfil</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Dados do morador cadastrado</div>
+                                </div>
+
+                                <div class="phone-card">
+                                    <div class="phone-user-header">
+                                        <div class="phone-avatar">GC</div>
+                                        <div>
+                                            <div style="font-weight:700; font-size: 13px; color: white;">Gledson Crist</div>
+                                            <div style="font-size:10px; color: var(--text-muted);">Apto 42 • Bloco B</div>
+                                        </div>
+                                    </div>
+                                    <div style="height:1px; background: rgba(255,255,255,0.06); margin: 6px 0;"></div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">Rua das Palmeiras, 1500</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">WhatsApp: (13) 99206-0675</div>
+                                </div>
+
+                                <button onclick="changeScreen('home')" style="width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--primary); font-size: 12px; font-weight: 700; color: black; cursor: pointer;">Compartilhar QR Code</button>
                             </div>
-                            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);">Visitas Recentes</div>
-                            <div class="phone-card-sm">
-                                <div class="phone-dot"></div>
-                                <div style="width:32px;height:32px;border-radius:50%;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--primary);">C</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:11px;font-weight:600;">Carlos</div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Entrega &bull; Ap 42</div>
+
+                            <!-- 4. SETTINGS SCREEN -->
+                            <div id="screen-settings" class="screen-content">
+                                <div>
+                                    <div style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 2px;">Ajustes</div>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Modo de operação</div>
                                 </div>
-                                <div style="text-align:right;">
-                                    <div style="font-size:10px;font-weight:600;">14:30</div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.3);">20 jan</div>
+
+                                <div class="phone-card" style="gap: 12px;">
+                                    <div class="toggle-row">
+                                        <span>Modo Offline</span>
+                                        <div id="offline-toggle" onclick="toggleOfflineMock()" class="toggle-switch"></div>
+                                    </div>
+                                    <div id="offline-desc" style="font-size: 9px; color: var(--text-muted); margin-top: -6px;">Status atual: Disponível (Online)</div>
+
+                                    <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
+                                        <span style="font-size: 11px; font-weight:600;">Mensagem de Ausência</span>
+                                        <input type="text" class="fake-input" value="Não posso atender no momento." readonly />
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 8px;">
+                                    <button style="flex:1; padding: 10px; font-size:10px; border-radius:8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: white;">Backup</button>
+                                    <button style="flex:1; padding: 10px; font-size:10px; border-radius:8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: white;">Importar</button>
                                 </div>
                             </div>
-                            <div class="phone-card-sm">
-                                <div class="phone-dot" style="background:var(--accent);"></div>
-                                <div style="width:32px;height:32px;border-radius:50%;background:rgba(45,212,191,0.15);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent);">M</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:11px;font-weight:600;">Maria</div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.4);">Visita &bull; Ap 15</div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="font-size:10px;font-weight:600;">11:10</div>
-                                    <div style="font-size:9px;color:rgba(255,255,255,0.3);">20 jan</div>
-                                </div>
-                            </div>
+
                         </div>
-                        <div class="phone-nav">
-                            <div class="phone-nav-item active"><div class="phone-nav-icon active"></div>In&iacute;cio</div>
-                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Hist&oacute;rico</div>
-                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Perfil/QR</div>
-                            <div class="phone-nav-item"><div class="phone-nav-icon"></div>Ajustes</div>
+
+                        <!-- Bottom Nav Bar -->
+                        <div class="phone-nav-bar">
+                            <button id="nav-home" onclick="changeScreen('home')" class="phone-nav-btn active">
+                                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                                Início
+                            </button>
+                            <button id="nav-history" onclick="changeScreen('history')" class="phone-nav-btn">
+                                <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 18.21 10.5 19 13 19c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.53.85-1.07-3.63-2.16V8z"/></svg>
+                                Histórico
+                            </button>
+                            <button id="nav-profile" onclick="changeScreen('profile')" class="phone-nav-btn">
+                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                                Perfil
+                            </button>
+                            <button id="nav-settings" onclick="changeScreen('settings')" class="phone-nav-btn">
+                                <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                                Ajustes
+                            </button>
                         </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </header>
 
+    <!-- Features Section -->
     <section id="funcionalidades">
         <div class="container">
-            <div class="section-label">Funcionalidades</div>
-            <h2 class="section-title">Tudo que voc&ecirc; precisa em um s&oacute; app</h2>
-            <p class="section-subtitle">O Porteiro Inteligente substitui o livro de visitas f&iacute;sico por um sistema digital r&aacute;pido, seguro e offline.</p>
-
-            <div class="features">
+            <div class="section-header">
+                <span class="section-label">Funcionalidades</span>
+                <h2 class="section-title">Controle Completo na Palma da Mão</h2>
+                <p class="section-subtitle">O Porteiro Inteligente traz eficiência e praticidade digitando uma nova rotina para a segurança do condomínio.</p>
+            </div>
+            
+            <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon orange">&#9632;&#9632;</div>
-                    <h3>QR Code de Acesso</h3>
-                    <p>Gere um QR Code &uacute;nico e criptografado com seus dados. O entregador escaneia e j&aacute; abre o WhatsApp automaticamente.</p>
+                    <div class="feature-icon-container">🔑</div>
+                    <h3>QR Code Criptografado</h3>
+                    <p>Gere QR Codes seguros baseados em AES-256 localmente. Sem expor seu contato em texto simples nas impressões.</p>
                 </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon slate">&#128247;</div>
-                    <h3>Scanner de C&acirc;mera</h3>
-                    <p>Leitura de QR Code em tempo real com CameraX e lanterna integrada. Detecta, descriptografa e redireciona em segundos.</p>
+                    <div class="feature-icon-container">📷</div>
+                    <h3>Scanner Integrado</h3>
+                    <p>Câmera rápida no app que lê, detecta e executa ações de QR Code em milissegundos com auxílio de lanterna.</p>
                 </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon teal">&#128221;</div>
+                    <div class="feature-icon-container">📝</div>
                     <h3>Registro de Visitas</h3>
-                    <p>Cadastre visitantes com nome, documento, apartamento e motivo. Tudo armazenado localmente no banco SQLite (Room) com hist&oacute;rico completo.</p>
+                    <p>Substitua o livro de portaria de papel. Salve nome, documento e destino das visitas no banco SQLite local (Room).</p>
                 </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon red">&#128274;</div>
+                    <div class="feature-icon-container">🔋</div>
                     <h3>100% Offline</h3>
-                    <p>Sem servidor, sem Firebase, sem depender de internet. Autentica&ccedil;&atilde;o, dados e QR Codes tudos salvos localmente. Privacidade total.</p>
+                    <p>Os dados residenciais permanecem isolados na sandbox do seu dispositivo. Sem dependência de servidores na nuvem ou internet.</p>
                 </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon purple">&#128190;</div>
-                    <h3>Backup &amp; Restore</h3>
-                    <p>Exporte seu perfil e hist&oacute;rico em JSON criptografado. Salve no Google Drive, compartilhe ou armazene onde quiser. Restaure com um toque.</p>
+                    <div class="feature-icon-container">💾</div>
+                    <h3>Backup & Restauração</h3>
+                    <p>Exporte perfis e registros em arquivos JSON criptografados. Salve e recupere suas informações a qualquer momento.</p>
                 </div>
-
                 <div class="feature-card">
-                    <div class="feature-icon blue">&#128737;&#65039;</div>
-                    <h3>Criptografia FBE</h3>
-                    <p>Seus dados s&atilde;o protegidos pela criptografia File-Based Encryption do Android &mdash; a mesma usada por apps banc&aacute;rios. Inviol&aacute;vel mesmo com o dispositivo ligado.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon orange">&#128100;</div>
-                    <h3>Login Local</h3>
-                    <p>Autentica&ccedil;&atilde;o 100% local no DataStore. Crie sua conta e fa&ccedil;a login sem enviar dados para nenhum servidor. Sua senha nunca sai do seu dispositivo.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon purple">&#127769;</div>
-                    <h3>Tema Din&acirc;mico</h3>
-                    <p>Suporte a tema Claro, Escuro e Sistema (Material You / Monet). A escolha &eacute; sua e a prefer&ecirc;ncia fica salva automaticamente.</p>
+                    <div class="feature-icon-container">🎨</div>
+                    <h3>Tema Material You</h3>
+                    <p>Se adapta dinamicamente às cores do seu papel de parede (Android 12+), com modo escuro completo e visual premium.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="como-funciona" style="background:#F1F5F9;">
+    <!-- How It Works Section -->
+    <section id="como-funciona" style="background: rgba(255, 255, 255, 0.01);">
         <div class="container">
-            <div class="section-label">Como funciona</div>
-            <h2 class="section-title">Simples, r&aacute;pido e seguro</h2>
-            <p class="section-subtitle">Dois fluxos principais que resolvem o dia a dia da portaria.</p>
+            <div class="section-header">
+                <span class="section-label">Passo a Passo</span>
+                <h2 class="section-title">Como o App Funciona?</h2>
+                <p class="section-subtitle">Fluxo simplificado criado para garantir agilidade a porteiros, entregadores e moradores.</p>
+            </div>
 
-            <div class="steps">
-                <div class="step">
+            <div class="steps-grid">
+                <div class="step-card">
                     <div class="step-number">1</div>
-                    <h4>Morador cadastra</h4>
-                    <p>Preenche nome, apartamento e WhatsApp. O app gera automaticamente um QR Code criptografado.</p>
+                    <h4>Cadastre seu Perfil</h4>
+                    <p>Preencha os dados e o app gera um QR Code seguro integrado ao seu WhatsApp.</p>
                 </div>
-                <div class="step">
+                <div class="step-card">
                     <div class="step-number">2</div>
-                    <h4>Entregador escaneia</h4>
-                    <p>Ao chegar na portaria, o entregador abre o app e escaneia o QR Code com a c&acirc;mera.</p>
+                    <h4>Apresente o QR Code</h4>
+                    <p>Fixe o QR Code na entrada da portaria ou envie a imagem para entregadores.</p>
                 </div>
-                <div class="step">
+                <div class="step-card">
                     <div class="step-number">3</div>
-                    <h4>WhatsApp aberto</h4>
-                    <p>O app abre o WhatsApp do morador automaticamente com a mensagem: "Ol&aacute;, sou o entregador e estou na portaria."</p>
+                    <h4>Escanear e Falar</h4>
+                    <p>O entregador escaneia com o celular e fala com você no WhatsApp, sem intermediários.</p>
                 </div>
-                <div class="step">
+                <div class="step-card">
                     <div class="step-number">4</div>
-                    <h4>Visita registrada</h4>
-                    <p>O porteiro registra a entrada do visitante. Tudo fica salvo no hist&oacute;rico para consulta futura.</p>
+                    <h4>Controle Local</h4>
+                    <p>A portaria registra a entrada e saída da visita mantendo o histórico de controle local.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Tech Stack Section -->
     <section>
         <div class="container">
-            <div class="section-label">Stack</div>
-            <h2 class="section-title">Tecnologias utilizadas</h2>
-            <p class="section-subtitle">Constru&iacute;do com as melhores ferramentas do ecossistema Android moderno.</p>
+            <div class="section-header">
+                <span class="section-label">Tecnologias</span>
+                <h2 class="section-title">Construído com Stack Moderna</h2>
+                <p class="section-subtitle">Arquitetura nativa projetada para alta performance e confiabilidade.</p>
+            </div>
 
-            <div class="tech-grid">
-                <span class="tech-tag">Kotlin</span>
+            <div class="tech-tags">
+                <span class="tech-tag">Kotlin 2.0</span>
                 <span class="tech-tag">Jetpack Compose</span>
                 <span class="tech-tag">Material Design 3</span>
-                <span class="tech-tag">MVVM + Clean Architecture</span>
-                <span class="tech-tag">Hilt (DI)</span>
-                <span class="tech-tag">Room (SQLite)</span>
-                <span class="tech-tag">Android FBE</span>
-                <span class="tech-tag">CameraX</span>
-                <span class="tech-tag">ZXing</span>
-                <span class="tech-tag">Coil</span>
-                <span class="tech-tag">DataStore</span>
-                <span class="tech-tag">Kotlin Serialization</span>
-                <span class="tech-tag">Navigation Compose</span>
-                <span class="tech-tag">SAF / Google Drive</span>
-                <span class="tech-tag">100% Offline</span>
-                <span class="tech-tag">Min SDK 23</span>
-                <span class="tech-tag">Target SDK 35</span>
+                <span class="tech-tag">MVVM Architecture</span>
+                <span class="tech-tag">Dagger Hilt</span>
+                <span class="tech-tag">Room Database (SQLite)</span>
+                <span class="tech-tag">DataStore Preferences</span>
+                <span class="tech-tag">CameraX API</span>
+                <span class="tech-tag">AES-GCM Encryption</span>
+                <span class="tech-tag">Express.js Backend</span>
+                <span class="tech-tag">Vercel Serverless</span>
             </div>
         </div>
     </section>
 
-    <section class="cta" id="download">
+    <!-- CTA Section -->
+    <section class="cta-section" id="download">
         <div class="container">
-            <h2>Pronto para modernizar sua portaria?</h2>
-            <p>Baixe agora o APK e instale diretamente no seu dispositivo Android.</p>
-            <a href="PorteiroInteligente.apk" class="btn btn-primary btn-large" download>Baixar APK (22 MB)</a>
+            <div class="cta-box">
+                <h2>Pronto para otimizar sua portaria?</h2>
+                <p>Baixe a versão mais recente do aplicativo (APK) instalável diretamente no seu celular Android.</p>
+                <a href="PorteiroInteligente.apk" class="btn btn-primary" style="padding: 20px 48px; font-size: 18px;" download>Baixar APK do Aplicativo</a>
+            </div>
         </div>
     </section>
 
+    <!-- Footer -->
     <footer>
-        <div class="container">                <p>
-                    <strong>Porteiro Inteligente</strong> — 
-                    Criado por <strong>Gledson Crist Ribeiro dos Santos</strong> — 
-                    By Fam&iacute;lia Ven&acirc;ncio —  
-                    <a href="https://github.com/GledsonCrist/Porteiro-Inteligente-2026" style="color:var(--primary);text-decoration:none;font-weight:600;" target="_blank" rel="noopener">C&oacute;digo-fonte no GitHub</a>
-                </p>
-            <p style="margin-top:8px;font-size:12px;">
+        <div class="container">
+            <p>
+                <strong>Porteiro Inteligente</strong> — 
+                Desenvolvido por <strong>Gledson Crist Ribeiro dos Santos</strong> — 
+                By Família Venâncio — 
+                <a href="https://github.com/Gledson2012/Porteiro-Inteligente-2026" target="_blank" rel="noopener">Código-fonte no GitHub</a>
+            </p>
+            <p style="margin-top: 12px; font-size: 12px; opacity: 0.5;">
                 &copy; 2026 Porteiro Inteligente. Todos os direitos reservados.
             </p>
         </div>
     </footer>
 
+    <!-- Interactive Phone Mockup Logic -->
+    <script>
+        function changeScreen(screenId) {
+            // Remove active class from all screens and buttons
+            document.querySelectorAll('.screen-content').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.querySelectorAll('.phone-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Set active class on target screen and corresponding button
+            const targetScreen = document.getElementById('screen-' + screenId);
+            if (targetScreen) targetScreen.classList.add('active');
+
+            const targetBtn = document.getElementById('nav-' + screenId);
+            if (targetBtn) targetBtn.classList.add('active');
+        }
+
+        function toggleOfflineMock() {
+            const toggle = document.getElementById('offline-toggle');
+            const desc = document.getElementById('offline-desc');
+            
+            toggle.classList.toggle('active');
+            
+            if (toggle.classList.contains('active')) {
+                desc.textContent = "Status atual: Ausente (Offline)";
+                desc.style.color = "#EF4444";
+            } else {
+                desc.textContent = "Status ituam: Disponível (Online)";
+                desc.style.color = "#94A3B8";
+            }
+        }
+    </script>
 </body>
 </html>
