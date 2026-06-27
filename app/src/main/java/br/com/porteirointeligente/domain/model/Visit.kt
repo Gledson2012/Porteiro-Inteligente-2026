@@ -7,6 +7,7 @@ package br.com.porteirointeligente.domain.model
  */
 data class Visit(
     val id: Long = 0L,
+    val ownerId: Long? = null,
     val nome: String,
     val documento: String,
     val apartamento: String,

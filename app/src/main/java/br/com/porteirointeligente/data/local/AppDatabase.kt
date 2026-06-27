@@ -24,8 +24,8 @@ import br.com.porteirointeligente.data.local.entity.VisitEntity
         VisitEntity::class,
         OwnerEntity::class
     ],
-    version = 6,
-    exportSchema = true
+    version = 7,
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
