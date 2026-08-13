@@ -32,3 +32,8 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
+
+# Gson serializa os modelos do backup por reflexão; preservá-los evita que o R8
+# remova/renomeie campos apenas no APK release.
+-keep class br.com.porteirointeligente.domain.model.** { *; }
+-keep class br.com.porteirointeligente.util.BackupManager$BackupData { *; }

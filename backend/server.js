@@ -1,3 +1,30 @@
+const fs = require('fs');
+const path = require('path');
+
+function loadLocalEnvironment() {
+  const envPath = path.join(__dirname, '..', '.env.local');
+  if (!fs.existsSync(envPath)) return;
+
+  for (const rawLine of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const separator = line.indexOf('=');
+    if (separator <= 0) continue;
+
+    const name = line.slice(0, separator).trim();
+    if (process.env[name] !== undefined) continue;
+
+    let value = line.slice(separator + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[name] = value;
+  }
+}
+
+loadLocalEnvironment();
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -5,44 +32,260 @@ const jwt = require('jsonwebtoken');
 const { getDatabase } = require('./db');
 const crypto = require('crypto');
 
-const ENCRYPTION_KEY = 'PorteiroInteligente2026KeySecure'; // 32 characters
-const ENCRYPTION_IV = '1234567890123456'; // 16 characters
+// Mantida apenas para descriptografar QR Codes antigos. QR Codes novos usam envelope RSA.
+const LEGACY_ENCRYPTION_KEY = process.env.LEGACY_QR_KEY || null;
+const LEGACY_ENCRYPTION_IV = '1234567890123456'; // IV dos QR Codes antigos
+const GCM_IV_LENGTH = 12;
+const GCM_TAG_LENGTH = 16;
+function loadQrPrivateKey() {
+  if (process.env.QR_PRIVATE_KEY) {
+    return process.env.QR_PRIVATE_KEY.replace(/\\n/g, '\n');
+  }
 
-function decryptPayload(text) {
+  if (!process.env.QR_PRIVATE_KEY_FILE) return null;
+
   try {
-    let base64 = text.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) {
-      base64 += '=';
-    }
-    
-    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), Buffer.from(ENCRYPTION_IV));
-    let decrypted = decipher.update(base64, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    const json = JSON.parse(decrypted);
-    return {
-      phone: json.p,
-      name: json.n,
-      isOffline: json.o === 1,
-      offlineMessage: json.m
-    };
-  } catch (e) {
+    return fs.readFileSync(path.resolve(process.cwd(), process.env.QR_PRIVATE_KEY_FILE), 'utf8');
+  } catch (_) {
+    console.error('QR_PRIVATE_KEY_FILE não pôde ser lido.');
     return null;
   }
+}
+
+const QR_PRIVATE_KEY = loadQrPrivateKey();
+
+function decodeBase64Url(text) {
+  let base64 = String(text).replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  return Buffer.from(base64, 'base64');
+}
+
+function normalizePayload(json) {
+  if (!json || typeof json.p !== 'string' || !json.p.trim()) return null;
+  const numericOfflineUntil = Number(json.u);
+  const offlineUntil = Number.isFinite(numericOfflineUntil) && numericOfflineUntil > 0
+    ? numericOfflineUntil
+    : null;
+  return {
+    phone: json.p,
+    name: typeof json.n === 'string' ? json.n : '',
+    isOffline: json.o === 1 && (!offlineUntil || Date.now() < offlineUntil),
+    offlineMessage: typeof json.m === 'string' ? json.m : '',
+    offlineUntil
+  };
+}
+
+function decryptHybridPayload(text) {
+  if (!QR_PRIVATE_KEY || !String(text).startsWith('v2.')) return null;
+
+  try {
+    const parts = String(text).split('.');
+    if (parts.length !== 5 || !/^\d+$/.test(parts[1])) return null;
+
+    const encryptedKey = decodeBase64Url(parts[2]);
+    const iv = decodeBase64Url(parts[3]);
+    const ciphertextWithTag = decodeBase64Url(parts[4]);
+    if (encryptedKey.length === 0 || iv.length !== GCM_IV_LENGTH || ciphertextWithTag.length <= GCM_TAG_LENGTH) {
+      return null;
+    }
+
+    const aesKey = crypto.privateDecrypt(
+      {
+        key: QR_PRIVATE_KEY,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256'
+      },
+      encryptedKey
+    );
+    if (aesKey.length !== 32) return null;
+
+    const authTag = ciphertextWithTag.subarray(ciphertextWithTag.length - GCM_TAG_LENGTH);
+    const ciphertext = ciphertextWithTag.subarray(0, ciphertextWithTag.length - GCM_TAG_LENGTH);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, iv);
+    decipher.setAuthTag(authTag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    return normalizePayload(JSON.parse(decrypted));
+  } catch (_) {
+    return null;
+  }
+}
+
+function decryptPayload(text) {
+  const hybridPayload = decryptHybridPayload(text);
+  if (hybridPayload) return hybridPayload;
+
+  if (!LEGACY_ENCRYPTION_KEY) return null;
+  const payload = decodeBase64Url(text);
+
+  // Compatibilidade: AES-GCM com IV aleatório emitido por uma versão anterior.
+  try {
+    if (payload.length <= GCM_IV_LENGTH + GCM_TAG_LENGTH) throw new Error('Payload GCM inválido');
+    const iv = payload.subarray(0, GCM_IV_LENGTH);
+    const authTag = payload.subarray(payload.length - GCM_TAG_LENGTH);
+    const ciphertext = payload.subarray(GCM_IV_LENGTH, payload.length - GCM_TAG_LENGTH);
+    const decipher = crypto.createDecipheriv(
+      'aes-256-gcm',
+      Buffer.from(LEGACY_ENCRYPTION_KEY, 'utf8'),
+      iv
+    );
+    decipher.setAuthTag(authTag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
+    const json = JSON.parse(decrypted);
+    return normalizePayload(json);
+  } catch (_) { /* tenta o formato legado abaixo */ }
+
+  // Compatibilidade com QR Codes AES-CBC emitidos por versões anteriores.
+  try {
+    const decipher = crypto.createDecipheriv(
+      'aes-256-cbc',
+      Buffer.from(LEGACY_ENCRYPTION_KEY, 'utf8'),
+      Buffer.from(LEGACY_ENCRYPTION_IV, 'utf8')
+    );
+    const decrypted = Buffer.concat([decipher.update(payload), decipher.final()]).toString('utf8');
+    const json = JSON.parse(decrypted);
+    return normalizePayload({ ...json, u: null });
+  } catch (_) {
+    return null;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
 }
 
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const SECRET_KEY = process.env.SECRET_KEY || 'your-very-secret-key';
+const SECRET_KEY = process.env.SECRET_KEY;
+const DEFAULT_CORS_ORIGINS = ['https://porteiro-inteligente-2026.vercel.app'];
+const CORS_ORIGINS = new Set(
+  (process.env.CORS_ORIGINS || DEFAULT_CORS_ORIGINS.join(','))
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+);
 
-app.use(cors());
-app.use(express.json());
+if (!SECRET_KEY) {
+  console.error('SECRET_KEY não configurada; as rotas autenticadas ficarão indisponíveis.');
+} else if (SECRET_KEY.length < 32) {
+  throw new Error('SECRET_KEY deve ter pelo menos 32 caracteres.');
+}
+
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+  );
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (!req.secure) {
+      return res.redirect(308, `https://${req.headers.host}${req.originalUrl}`);
+    }
+    next();
+  });
+}
+app.use(cors({
+  origin: (origin, callback) => callback(null, !origin || CORS_ORIGINS.has(origin))
+}));
+app.use(express.json({ limit: '100kb' }));
+
+const authAttempts = new Map();
+function authRateLimit(req, res, next) {
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 10;
+  const current = authAttempts.get(key);
+  if (!current || now - current.startedAt >= windowMs) {
+    authAttempts.set(key, { startedAt: now, count: 1 });
+    return next();
+  }
+  if (current.count >= maxAttempts) {
+    return res.status(429).json({ error: 'Muitas tentativas. Tente novamente mais tarde.' });
+  }
+  current.count += 1;
+  return next();
+}
+
+function validateCredentials(username, password) {
+  if (typeof username !== 'string' || typeof password !== 'string') return 'Usuário e senha são obrigatórios';
+  if (username.trim().length < 3 || username.trim().length > 64) return 'Usuário inválido';
+  if (password.length < 8 || password.length > 128) return 'A senha deve ter entre 8 e 128 caracteres';
+  return null;
+}
+
+function requiredText(value, field, maxLength = 256) {
+  if (typeof value !== 'string' || !value.trim() || value.length > maxLength) {
+    return `${field} inválido`;
+  }
+  return null;
+}
+
+function validateOwnerInput(body) {
+  const fields = [
+    ['nome', 'Nome'],
+    ['endereco', 'Endereço'],
+    ['apartamento', 'Apartamento'],
+    ['telefone', 'Telefone']
+  ];
+  for (const [key, label] of fields) {
+    const error = requiredText(body[key], label);
+    if (error) return error;
+  }
+  const phoneDigits = body.telefone.replace(/\D/g, '');
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) return 'Telefone inválido';
+  if (body.qrCodePayload != null && typeof body.qrCodePayload !== 'string') return 'QR Code inválido';
+  return null;
+}
+
+function validateVisitInput(body) {
+  if (!Number.isInteger(Number(body.ownerId)) || Number(body.ownerId) <= 0) return 'Morador inválido';
+  for (const [key, label] of [['nome', 'Nome'], ['apartamento', 'Apartamento']]) {
+    const error = requiredText(body[key], label);
+    if (error) return error;
+  }
+  for (const [key, label] of [['documento', 'Documento'], ['telefone', 'Telefone'], ['motivo', 'Motivo']]) {
+    if (body[key] != null && (typeof body[key] !== 'string' || body[key].length > 256)) {
+      return `${label} inválido`;
+    }
+  }
+  if (body.telefone) {
+    const phoneDigits = body.telefone.replace(/\D/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) return 'Telefone inválido';
+  }
+  const validStatuses = new Set(['ENTRADA_REGISTRADA', 'SAIDA_REGISTRADA', 'CANCELADA']);
+  if (body.status != null && !validStatuses.has(body.status)) return 'Status inválido';
+  return null;
+}
+
+function integerOrNull(value) {
+  return Number.isInteger(Number(value)) && Number(value) > 0 ? Number(value) : null;
+}
 
 // =====================
 // Middleware de Autenticação
 // =====================
 function authenticateToken(req, res, next) {
+  if (!SECRET_KEY) {
+    return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
+  }
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -64,24 +307,29 @@ function authenticateToken(req, res, next) {
 // =====================
 
 // POST /api/register - Registra um novo usuário
-app.post('/api/register', (req, res) => {
+app.post('/api/register', authRateLimit, (req, res) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
+    if (!SECRET_KEY) {
+      return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
     }
+    const { username, password } = req.body || {};
+    const validationError = validateCredentials(username, password);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+    const normalizedUsername = username.trim();
 
     const db = getDatabase();
-    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(normalizedUsername);
     if (existingUser) {
       return res.status(409).json({ error: 'Usuário já existe' });
     }
 
     const hashedPassword = bcrypt.hashSync(password, 10);
     const stmt = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    const result = stmt.run(username, hashedPassword);
+    const result = stmt.run(normalizedUsername, hashedPassword);
 
-    res.status(201).json({ id: result.lastInsertRowid, username });
+    res.status(201).json({ id: result.lastInsertRowid, username: normalizedUsername });
   } catch (err) {
     console.error('Erro ao registrar usuário:', err);
     res.status(500).json({ error: 'Erro ao registrar usuário' });
@@ -89,11 +337,19 @@ app.post('/api/register', (req, res) => {
 });
 
 // POST /api/login - Efetua login e retorna um token
-app.post('/api/login', (req, res) => {
+app.post('/api/login', authRateLimit, (req, res) => {
   try {
-    const { username, password } = req.body;
+    if (!SECRET_KEY) {
+      return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
+    }
+    const { username, password } = req.body || {};
+    const validationError = validateCredentials(username, password);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+    const normalizedUsername = username.trim();
     const db = getDatabase();
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(normalizedUsername);
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
@@ -119,6 +375,7 @@ app.get('/scan/:id_hash', (req, res) => {
     let phone = '';
     let isOffline = false;
     let offlineMessage = '';
+    let offlineUntil = null;
     
     // 1. Tenta descriptografar o payload offline primeiro (Novo Formato)
     const decrypted = decryptPayload(id_hash);
@@ -127,6 +384,11 @@ app.get('/scan/:id_hash', (req, res) => {
       phone = decrypted.phone;
       isOffline = decrypted.isOffline;
       offlineMessage = decrypted.offlineMessage;
+      offlineUntil = decrypted.offlineUntil;
+    } else if (id_hash.startsWith('v2.')) {
+      return res
+        .status(QR_PRIVATE_KEY ? 400 : 503)
+        .send(QR_PRIVATE_KEY ? 'QR Code inválido' : 'QR Code temporariamente indisponível');
     } else {
       // 2. Fallback: busca clássica no banco sqlite (Formato Legado)
       const idPart = id_hash.split('_')[0];
@@ -145,7 +407,8 @@ app.get('/scan/:id_hash', (req, res) => {
       
       name = owner.nome;
       phone = owner.telefone;
-      isOffline = owner.isOffline === 1;
+      offlineUntil = owner.offlineUntil || null;
+      isOffline = owner.isOffline === 1 && (!offlineUntil || Date.now() < offlineUntil);
       offlineMessage = owner.offlineMessage;
     }
     
@@ -155,8 +418,19 @@ app.get('/scan/:id_hash', (req, res) => {
       cleanPhone = '55' + cleanPhone;
     }
     
-    const messageText = `Olá ${name.split(' ')[0]}, sou o entregador e estou na portaria.`;
+    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+      return res.status(400).send('QR Code sem telefone válido');
+    }
+
+    res.setHeader('Cache-Control', 'no-store');
+
+    const rawName = String(name || 'morador').trim();
+    const messageText = `Olá ${rawName.split(/\s+/)[0]}, sou o entregador e estou na portaria.`;
     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(messageText)}`;
+    const displayName = escapeHtml(rawName);
+    const displayOfflineMessage = escapeHtml(
+      offlineMessage || 'Não posso atender no momento. Por favor, deixe a encomenda na portaria ou com o zelador.'
+    );
     
     // Renderiza a página HTML premium intermediária (para apresentar as opções online/offline)
     const html = `<!DOCTYPE html>
@@ -519,7 +793,7 @@ app.get('/scan/:id_hash', (req, res) => {
                     <div class="status-dot"></div>
                     <span>MORADOR INDISPONÍVEL</span>
                 </div>
-                <h1 class="animate-item item-3">${name}</h1>
+                <h1 class="animate-item item-3">${displayName}</h1>
                 <p class="info-subtitle animate-item item-4">O morador configurou o status para indisponível no momento.</p>
                 
                 <div class="offline-box animate-item item-5">
@@ -529,14 +803,14 @@ app.get('/scan/:id_hash', (req, res) => {
                         </svg>
                         <span>Instruções Importantes</span>
                     </div>
-                    <div class="offline-box-content">"${offlineMessage || 'Não posso atender no momento. Por favor, deixe a encomenda na portaria ou com o zelador.'}"</div>
+                    <div class="offline-box-content">&quot;${displayOfflineMessage}&quot;</div>
                 </div>
             ` : `
                 <div class="status-badge online animate-item item-2">
                     <div class="status-dot"></div>
                     <span>MORADOR DISPONÍVEL</span>
                 </div>
-                <h1 class="animate-item item-3">${name}</h1>
+                <h1 class="animate-item item-3">${displayName}</h1>
                 <p class="info-subtitle animate-item item-4">Para notificar sua chegada e realizar a entrega com segurança, clique no botão abaixo e fale direto com o morador no WhatsApp.</p>
                 
                 <a href="${waUrl}" class="btn btn-whatsapp animate-item item-5">
@@ -584,7 +858,13 @@ app.get('/api/owners', authenticateToken, (req, res) => {
 app.post('/api/owners', authenticateToken, (req, res) => {
   try {
     const db = getDatabase();
-    const { nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil } = req.body;
+    const body = req.body || {};
+    const validationError = validateOwnerInput(body);
+    if (validationError) return res.status(400).json({ error: validationError });
+    const { nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil } = body;
+    const normalizedDataCadastro = integerOrNull(dataCadastro) || Date.now();
+    const normalizedOfflineUntil = integerOrNull(offlineUntil);
+    const normalizedOfflineMessage = typeof offlineMessage === 'string' ? offlineMessage.trim().slice(0, 1000) : '';
 
     const stmt = db.prepare(`
       INSERT INTO owners (userId, nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil)
@@ -592,11 +872,14 @@ app.post('/api/owners', authenticateToken, (req, res) => {
     `);
 
     const result = stmt.run(
-      req.user.id, nome, nomeCondominio, endereco, cep, apartamento, telefone,
-      photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil
+      req.user.id, nome.trim(), typeof nomeCondominio === 'string' ? nomeCondominio.trim() : '',
+      endereco.trim(), typeof cep === 'string' ? cep.trim() : '', apartamento.trim(), telefone.trim(),
+      typeof photoUri === 'string' ? photoUri : null, typeof qrCodePayload === 'string' ? qrCodePayload : '',
+      normalizedDataCadastro, isOffline === true || isOffline === 1 ? 1 : 0,
+      normalizedOfflineMessage, normalizedOfflineUntil
     );
 
-    res.status(201).json({ id: result.lastInsertRowid, ...req.body });
+    res.status(201).json({ id: result.lastInsertRowid, ...body });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar morador' });
   }
@@ -607,7 +890,13 @@ app.put('/api/owners/:id', authenticateToken, (req, res) => {
     try {
       const db = getDatabase();
       const { id } = req.params;
-      const { nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil } = req.body;
+      const body = req.body || {};
+      const validationError = validateOwnerInput(body);
+      if (validationError) return res.status(400).json({ error: validationError });
+      const { nome, nomeCondominio, endereco, cep, apartamento, telefone, photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil } = body;
+      const normalizedDataCadastro = integerOrNull(dataCadastro) || Date.now();
+      const normalizedOfflineUntil = integerOrNull(offlineUntil);
+      const normalizedOfflineMessage = typeof offlineMessage === 'string' ? offlineMessage.trim().slice(0, 1000) : '';
   
       // Primeiro, verifique se o morador pertence ao usuário logado
       const owner = db.prepare('SELECT id FROM owners WHERE id = ? AND userId = ?').get(id, req.user.id);
@@ -622,12 +911,15 @@ app.put('/api/owners/:id', authenticateToken, (req, res) => {
       `);
   
       const result = stmt.run(
-        nome, nomeCondominio, endereco, cep, apartamento, telefone,
-        photoUri, qrCodePayload, dataCadastro, isOffline, offlineMessage, offlineUntil,
+        nome.trim(), typeof nomeCondominio === 'string' ? nomeCondominio.trim() : '', endereco.trim(),
+        typeof cep === 'string' ? cep.trim() : '', apartamento.trim(), telefone.trim(),
+        typeof photoUri === 'string' ? photoUri : null, typeof qrCodePayload === 'string' ? qrCodePayload : '',
+        normalizedDataCadastro, isOffline === true || isOffline === 1 ? 1 : 0,
+        normalizedOfflineMessage, normalizedOfflineUntil,
         id, req.user.id
       );
-  
-      res.json({ id: parseInt(id), ...req.body });
+
+      res.json({ id: parseInt(id), ...body });
     } catch (err) {
       res.status(500).json({ error: 'Erro ao atualizar morador' });
     }
@@ -679,10 +971,17 @@ app.get('/api/visits', authenticateToken, (req, res) => {
 app.post('/api/visits', authenticateToken, (req, res) => {
     try {
       const db = getDatabase();
-      const { ownerId, nome, documento, apartamento, telefone, motivo, dataEntrada, dataSaida, status } = req.body;
+      const body = req.body || {};
+      const validationError = validateVisitInput(body);
+      if (validationError) return res.status(400).json({ error: validationError });
+      const { ownerId, nome, documento, apartamento, telefone, motivo, dataEntrada, dataSaida, status } = body;
+      const normalizedOwnerId = Number(ownerId);
+      const normalizedDataEntrada = integerOrNull(dataEntrada) || Date.now();
+      const normalizedDataSaida = integerOrNull(dataSaida);
+      const normalizedStatus = status || 'ENTRADA_REGISTRADA';
       
       // Verifique se o ownerId pertence ao usuário logado
-      const owner = db.prepare('SELECT id FROM owners WHERE id = ? AND userId = ?').get(ownerId, req.user.id);
+      const owner = db.prepare('SELECT id FROM owners WHERE id = ? AND userId = ?').get(normalizedOwnerId, req.user.id);
       if (!owner) {
         return res.status(403).json({ error: 'Você não pode registrar visitas para este morador.' });
       }
@@ -693,11 +992,12 @@ app.post('/api/visits', authenticateToken, (req, res) => {
       `);
   
       const result = stmt.run(
-        ownerId, nome, documento, apartamento, telefone, motivo,
-        dataEntrada || Date.now(), dataSaida, status
+        normalizedOwnerId, nome.trim(), typeof documento === 'string' ? documento.trim() : '', apartamento.trim(),
+        typeof telefone === 'string' ? telefone.trim() : '', typeof motivo === 'string' ? motivo.trim() : '',
+        normalizedDataEntrada, normalizedDataSaida, normalizedStatus
       );
-  
-      res.status(201).json({ id: result.lastInsertRowid, ...req.body });
+
+      res.status(201).json({ id: result.lastInsertRowid, ...body });
     } catch (err) {
       res.status(500).json({ error: 'Erro ao criar visita' });
     }
@@ -709,7 +1009,11 @@ app.put('/api/visits/:id', authenticateToken, (req, res) => {
     try {
         const db = getDatabase();
         const { id } = req.params;
-        const { ownerId, nome, documento, apartamento, telefone, motivo, dataEntrada, dataSaida, status } = req.body;
+        const body = req.body || {};
+        const validationError = validateVisitInput(body);
+        if (validationError) return res.status(400).json({ error: validationError });
+        const { ownerId, nome, documento, apartamento, telefone, motivo, dataEntrada, dataSaida, status } = body;
+        const normalizedOwnerId = Number(ownerId);
 
         // Verificação de segurança: Garante que a visita a ser atualizada pertence a um morador do usuário logado
         const visit = db.prepare(`
@@ -722,14 +1026,23 @@ app.put('/api/visits/:id', authenticateToken, (req, res) => {
             return res.status(404).json({ error: 'Visita não encontrada ou não pertence a este usuário' });
         }
 
+        const owner = db.prepare('SELECT id FROM owners WHERE id = ? AND userId = ?').get(normalizedOwnerId, req.user.id);
+        if (!owner) {
+            return res.status(403).json({ error: 'O novo morador não pertence a este usuário' });
+        }
+
         const stmt = db.prepare(`
             UPDATE visits SET ownerId=?, nome=?, documento=?, apartamento=?, telefone=?, motivo=?, dataEntrada=?, dataSaida=?, status=?
             WHERE id=?
         `);
 
-        stmt.run(ownerId, nome, documento, apartamento, telefone, motivo, dataEntrada, dataSaida, status, id);
+        stmt.run(
+          normalizedOwnerId, nome.trim(), typeof documento === 'string' ? documento.trim() : '', apartamento.trim(),
+          typeof telefone === 'string' ? telefone.trim() : '', typeof motivo === 'string' ? motivo.trim() : '',
+          integerOrNull(dataEntrada) || Date.now(), integerOrNull(dataSaida), status || 'ENTRADA_REGISTRADA', id
+        );
 
-        res.json({ id: parseInt(id), ...req.body });
+        res.json({ id: parseInt(id), ...body });
     } catch (err) {
         console.error('Erro ao atualizar visita:', err);
         res.status(500).json({ error: 'Erro ao atualizar visita' });
@@ -742,8 +1055,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`🏠 Porteiro Inteligente API rodando em http://localhost:${PORT}`);
-});
+// Em Vercel/Serverless o runtime importa o Express como handler e não deve abrir
+// uma porta própria. O listen continua disponível para execução local.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🏠 Porteiro Inteligente API rodando em http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;

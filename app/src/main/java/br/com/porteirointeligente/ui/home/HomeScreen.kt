@@ -158,8 +158,8 @@ fun HomeScreen(
 
                     item {
                         StatsSection(
-                            totalVisitsToday = state.recentVisits.size,
-                            activeVisitsCount = state.recentVisits.count { it.status == br.com.porteirointeligente.domain.model.VisitStatus.ENTRADA_REGISTRADA },
+                            totalVisitsToday = state.totalVisitsToday,
+                            activeVisitsCount = state.activeVisitsCount,
                             totalOwners = state.allOwners.size
                         )
                     }

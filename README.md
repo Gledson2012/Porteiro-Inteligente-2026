@@ -26,12 +26,13 @@ Aplicativo Android nativo para gestão de portaria em condomínios. Moradores ca
 ###   Recursos implementados
 
 - **Cadastro de morador** com foto, nome, condomínio, endereço, CEP, apartamento e WhatsApp
-- **QR Code dinâmico** — gerado automaticamente com payload criptografado para redirecionamento ao WhatsApp
+- **QR Code dinâmico** — payload híbrido RSA/AES-GCM, sem chave privada no APK
 - **Scanner de QR Code** com CameraX, lanterna e detecção em tempo real
 - **Modo Offline** — permite configurar mensagem de ausência exibida ao escanear o QR Code
 - **Registro de visitas** com nome, documento, apartamento, telefone e motivo
 - **Histórico com filtros** — visitas ativas (no prédio) e concluídas
-- **Backup e restauração** completo em JSON (perfil + visitas)
+- **Backup e restauração** portátil cifrado por senha (perfil + visitas)
+- **Privacidade** — exclusão local da conta, moradores e visitas
 - **Tema dinâmico** Material You (Android 12+) opcional
 - **Modo escuro** completo
 - **Skeleton loading** animado no carregamento inicial
@@ -61,7 +62,7 @@ Aplicativo Android nativo para gestão de portaria em condomínios. Moradores ca
 | **QR Code** | ZXing (geração) + CameraX Analyzer (leitura) |
 | **Imagens** | Coil (AsyncImage) |
 | **Tema persistente** | DataStore Preferences |
-| **Backup** | Gson (JSON export/import) |
+| **Backup** | Gson + AES-GCM/PBKDF2 |
 | **SDK mínimo** | 23 (Android 6.0) |
 | **SDK alvo** | 35 (Android 15) |
 
@@ -77,7 +78,8 @@ app/
 │   ├── AppViewModel.kt                     # Estado global do tema
 │   ├── data/
 │   │   ├── local/
-│   │   │   ├── AppDatabase.kt              # Room Database (v6)
+│   │   │   ├── AppDatabase.kt              # Room Database (v8, migrações não destrutivas)
+│   │   │   ├── LocalDataStore.kt           # Transações de backup/exclusão
 │   │   │   ├── dao/OwnerDao.kt             # CRUD morador
 │   │   │   ├── dao/VisitDao.kt             # CRUD visitas
 │   │   │   ├── entity/OwnerEntity.kt
@@ -93,9 +95,11 @@ app/
 │   │   ├── ThemeManager.kt                 # DataStore tema
 │   │   ├── QrCodeGenerator.kt
 │   │   ├── QrCodeAnalyzer.kt               # CameraX analyzer
-│   │   ├── CryptoUtil.kt                   # Criptografia payload
+│   │   ├── CryptoUtil.kt                   # Compatibilidade com payload legado local
+│   │   ├── OfflineCryptoHelper.kt          # QR híbrido RSA/AES-GCM
+│   │   ├── KeyDerivation.kt                 # PBKDF2 para backup e senha local
 │   │   ├── PhotoSaver.kt                   # Salvar QR na galeria
-│   │   └── BackupManager.kt               # JSON backup
+│   │   └── BackupManager.kt               # Backup .pib cifrado
 │   └── ui/
 │       ├── theme/                          # Color, Theme, Shape, Type
 │       ├── navigation/NavGraph.kt          # Bottom nav + rotas
@@ -154,13 +158,13 @@ UI (Compose) → ViewModel → Repository → Room / DataStore
 ```
 Morador cadastra perfil
        ↓
-App gera QR Code com payload criptografado (whatsapp://send?phone=...)
+App salva o morador e gera QR Code v2 (RSA-OAEP + AES-GCM)
        ↓
-Entregador escaneia com câmera do app
+Entregador escaneia com a câmera do app ou navegador
        ↓
-App decodifica e abre WhatsApp com mensagem padrão
+O app usa o cadastro local; a página web usa QR_PRIVATE_KEY no backend
        ↓
-Visita registrada no histórico
+WhatsApp é aberto com mensagem padrão
 ```
 
 ---
@@ -180,6 +184,7 @@ Visita registrada no histórico
 | `dataEntrada` | `Long` | Epoch de entrada |
 | `dataSaida` | `Long?` | Epoch de saída |
 | `status` | `VisitStatus` | `ENTRADA_REGISTRADA`, `SAIDA_REGISTRADA` ou `CANCELADA` |
+| `ownerId` | `Long?` | Morador associado; visitas legadas ambíguas permanecem sem vínculo |
 
 ### Owner
 
@@ -211,6 +216,16 @@ Visita registrada no histórico
 - [ ] Testes instrumentados (Compose Test)
 - [ ] CI/CD com GitHub Actions
 - [ ] Tradução para outros idiomas
+
+## Backend e publicação
+
+O Express em `backend/` é usado pela página pública `/scan` e pelas rotas autenticadas opcionais.
+Copie `.env.example`, configure `SECRET_KEY` e a chave privada RSA correspondente à chave pública
+embutida em `OfflineCryptoHelper.kt` como `QR_PRIVATE_KEY`. Nunca versione a chave privada.
+
+O SQLite em Vercel é efêmero (`/tmp`); para usar cadastro/login da API em produção, configure um
+banco persistente antes de habilitar esse fluxo. A página `/scan` com QR v2 não precisa consultar
+o banco quando `QR_PRIVATE_KEY` está configurada.
 
 ---
 

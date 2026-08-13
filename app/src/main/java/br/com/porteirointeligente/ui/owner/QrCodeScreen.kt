@@ -43,7 +43,7 @@ import java.io.FileOutputStream
  *
  * Conforme especificação do prompt:
  * - QR Code centralizado em card com cantos arredondados
- * - URL mascarada (LGPD): apenas ID, sem dados pessoais
+ * - URL protegida (LGPD): dados pessoais ficam dentro do payload cifrado
  * - Botão "SALVAR OU COMPARTILHAR" que aciona Intent nativo
  *
  * ═══════════════════════════════════════════════

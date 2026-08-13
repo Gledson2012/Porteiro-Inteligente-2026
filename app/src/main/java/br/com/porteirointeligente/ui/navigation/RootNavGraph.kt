@@ -1,6 +1,7 @@
 package br.com.porteirointeligente.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import br.com.porteirointeligente.ui.auth.RegistrationScreen
 import br.com.porteirointeligente.ui.onboarding.OnboardingScreen
 import br.com.porteirointeligente.ui.onboarding.OnboardingViewModel
 import br.com.porteirointeligente.ui.splash.SplashScreen
+import androidx.navigation.NavDestination.Companion.hasRoute
 
 @Composable
 fun RootNavGraph(
@@ -25,6 +27,16 @@ fun RootNavGraph(
 
     val startDestination = remember {
         if (shouldShowOnboarding) Onboarding else Splash
+    }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Unauthenticated &&
+            navController.currentDestination?.hasRoute<Home>() == true
+        ) {
+            navController.navigate(Login) {
+                popUpTo<Home> { inclusive = true }
+            }
+        }
     }
 
     NavHost(
@@ -69,7 +81,7 @@ fun RootNavGraph(
         }
 
         composable<Home> {
-            MainScreenNavGraph()
+            MainScreenNavGraph(onLogout = authViewModel::logout)
         }
     }
 }

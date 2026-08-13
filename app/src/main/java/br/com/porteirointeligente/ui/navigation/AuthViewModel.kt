@@ -8,11 +8,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    authRepository: AuthRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     val authState: StateFlow<AuthState> =
@@ -27,6 +28,12 @@ class AuthViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = AuthState.Loading
         )
+
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.logout()
+        }
+    }
 }
 
 sealed class AuthState {

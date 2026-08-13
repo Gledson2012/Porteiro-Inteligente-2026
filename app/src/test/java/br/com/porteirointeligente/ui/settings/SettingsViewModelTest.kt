@@ -2,6 +2,8 @@ package br.com.porteirointeligente.ui.settings
 
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
+import br.com.porteirointeligente.data.local.LocalDataStore
+import br.com.porteirointeligente.data.repository.AuthRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.AppTheme
 import br.com.porteirointeligente.util.BackupManager
@@ -42,6 +44,12 @@ class SettingsViewModelTest {
     @MockK
     private lateinit var ownerSelectionManager: OwnerSelectionManager
 
+    @MockK
+    private lateinit var localDataStore: LocalDataStore
+
+    @MockK
+    private lateinit var authRepository: AuthRepository
+
     private lateinit var viewModel: SettingsViewModel
 
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -60,7 +68,7 @@ class SettingsViewModelTest {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
         every { ownerSelectionManager.selectedOwnerId } returns flowOf(null)
         coEvery { ownerSelectionManager.getSelectedOwnerId() } returns null
-        coEvery { backupManager.generateBackupAndShare() } just runs
+        coEvery { backupManager.generateBackupAndShare(any()) } just runs
     }
 
     @After
@@ -70,7 +78,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `themeState should default to SYSTEM`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         assert(viewModel.themeState.value == AppTheme.SYSTEM) {
             "Expected SYSTEM but got ${viewModel.themeState.value}"
         }
@@ -78,7 +86,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `dynamicColorState should default to false`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         assert(!viewModel.dynamicColorState.value) {
             "Expected false but got ${viewModel.dynamicColorState.value}"
         }
@@ -86,29 +94,29 @@ class SettingsViewModelTest {
 
     @Test
     fun `setTheme should call themeManager setTheme`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         viewModel.setTheme(AppTheme.DARK)
         coVerify { themeManager.setTheme(AppTheme.DARK) }
     }
 
     @Test
     fun `setDynamicColor should call themeManager setDynamicColor`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         viewModel.setDynamicColor(true)
         coVerify { themeManager.setDynamicColor(true) }
     }
 
     @Test
     fun `backupState should be Idle initially`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         assert(viewModel.backupState.value is SettingsViewModel.BackupState.Idle)
     }
 
     @Test
     fun `performBackup should call backupManager`() {
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
-        viewModel.performBackup()
-        coVerify { backupManager.generateBackupAndShare() }
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
+        viewModel.performBackup("senha-segura")
+        coVerify { backupManager.generateBackupAndShare("senha-segura") }
     }
 
     @Test
@@ -126,7 +134,7 @@ class SettingsViewModelTest {
         coEvery { ownerRepository.updateOwner(any()) } just runs
         coEvery { ownerSelectionManager.getSelectedOwnerId() } returns 1L
 
-        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager)
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
         viewModel.updateOfflineStatus(true, "Estou ausente", 3600000L)
 
         coVerify { ownerRepository.updateOwner(match { it.isOffline && it.offlineMessage == "Estou ausente" }) }

@@ -2,25 +2,21 @@ let Database;
 try {
   Database = require('better-sqlite3');
 } catch (e) {
-  console.warn('better-sqlite3 não está disponível. O backend rodará em modo sem banco de dados local.');
+  console.warn('better-sqlite3 não está disponível; rotas que exigem banco ficarão indisponíveis.');
 }
 
 const path = require('path');
-const DB_PATH = path.join(__dirname, 'porteiro_inteligente.db');
+const DB_PATH = process.env.DATABASE_PATH || (
+  process.env.VERCEL
+    ? path.join('/tmp', 'porteiro_inteligente.db')
+    : path.join(__dirname, 'porteiro_inteligente.db')
+);
 
 let db = null;
 
 function getDatabase() {
   if (!Database) {
-    // Retorna um banco de dados mockado para evitar erros de compilação ou execução em ambientes sem SQLite (como Vercel)
-    return {
-      prepare: () => ({
-        get: () => null,
-        all: () => [],
-        run: () => ({ lastInsertRowid: 0 })
-      }),
-      exec: () => {}
-    };
+    throw new Error('SQLite indisponível. Instale better-sqlite3 ou configure um banco persistente.');
   }
 
   if (!db) {

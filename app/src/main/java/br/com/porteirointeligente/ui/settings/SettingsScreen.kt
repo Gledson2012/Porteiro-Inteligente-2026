@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
@@ -69,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.BuildConfig
@@ -80,6 +82,7 @@ import br.com.porteirointeligente.util.AppTheme
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val themeState by viewModel.themeState.collectAsState()
@@ -95,13 +98,20 @@ fun SettingsScreen(
     var showOwnerDialog by remember { mutableStateOf(false) }
     var showMessageDialog by remember { mutableStateOf(false) }
     var showDurationDialog by remember { mutableStateOf(false) }
+    var showBackupPassphraseDialog by remember { mutableStateOf(false) }
+    var showRestorePassphraseDialog by remember { mutableStateOf(false) }
+    var showDeleteDataDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var tempMessage by remember { mutableStateOf("") }
+    var backupPassphrase by remember { mutableStateOf("") }
+    var restorePassphrase by remember { mutableStateOf("") }
+    var restorePassphraseForFile by remember { mutableStateOf("") }
 
     val restoreLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            viewModel.restoreBackup(uri)
+            viewModel.restoreBackup(uri, restorePassphraseForFile)
         }
     }
 
@@ -292,7 +302,7 @@ fun SettingsScreen(
                     // Backup
                     BackupItem(
                         state = backupState,
-                        onBackup = { viewModel.performBackup() },
+                        onBackup = { showBackupPassphraseDialog = true },
                         onReset = { viewModel.resetBackupState() }
                     )
 
@@ -302,9 +312,20 @@ fun SettingsScreen(
                     RestoreItem(
                         state = restoreState,
                         onRestore = {
-                            restoreLauncher.launch(arrayOf("application/json"))
+                            showRestorePassphraseDialog = true
                         },
                         onReset = { viewModel.resetRestoreState() }
+                    )
+
+                    Divider()
+
+                    SettingsClickItem(
+                        icon = Icons.Default.Delete,
+                        iconBackground = MaterialTheme.colorScheme.errorContainer,
+                        iconTint = MaterialTheme.colorScheme.onErrorContainer,
+                        title = "Excluir meus dados",
+                        subtitle = "Apaga moradores, visitas e a conta deste aparelho",
+                        onClick = { showDeleteDataDialog = true }
                     )
                 }
             }
@@ -359,12 +380,143 @@ fun SettingsScreen(
                             context.startActivity(Intent.createChooser(shareIntent, "Compartilhar App"))
                         }
                     )
+
+                    Divider()
+
+                    SettingsClickItem(
+                        icon = Icons.Default.Delete,
+                        iconBackground = MaterialTheme.colorScheme.surfaceVariant,
+                        iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        title = "Sair da conta",
+                        subtitle = "Encerrar a sessão neste aparelho",
+                        onClick = { showLogoutDialog = true }
+                    )
                 }
             }
 
             item { br.com.porteirointeligente.ui.components.AppSignature() }
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
+    }
+
+    if (showBackupPassphraseDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showBackupPassphraseDialog = false
+                backupPassphrase = ""
+            },
+            title = { Text("Proteger backup", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Use esta senha para restaurar o arquivo em outro aparelho.")
+                    OutlinedTextField(
+                        value = backupPassphrase,
+                        onValueChange = { backupPassphrase = it },
+                        label = { Text("Senha do backup") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        supportingText = { Text("Mínimo de 8 caracteres") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = backupPassphrase.length >= 8,
+                    onClick = {
+                        val passphrase = backupPassphrase
+                        backupPassphrase = ""
+                        showBackupPassphraseDialog = false
+                        viewModel.performBackup(passphrase)
+                    }
+                ) { Text("Gerar") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showBackupPassphraseDialog = false
+                    backupPassphrase = ""
+                }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (showRestorePassphraseDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showRestorePassphraseDialog = false
+                restorePassphrase = ""
+            },
+            title = { Text("Restaurar backup", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Informe a senha usada ao criar o backup. Para um backup antigo do mesmo aparelho, deixe em branco.")
+                    OutlinedTextField(
+                        value = restorePassphrase,
+                        onValueChange = { restorePassphrase = it },
+                        label = { Text("Senha do backup") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        supportingText = { Text("Backup portátil: mínimo de 8 caracteres") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = restorePassphrase.isBlank() || restorePassphrase.length >= 8,
+                    onClick = {
+                        restorePassphraseForFile = restorePassphrase
+                        restorePassphrase = ""
+                        showRestorePassphraseDialog = false
+                        restoreLauncher.launch(arrayOf("*/*"))
+                    }
+                ) { Text("Escolher arquivo") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showRestorePassphraseDialog = false
+                    restorePassphrase = ""
+                }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (showDeleteDataDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDataDialog = false },
+            title = { Text("Excluir todos os dados?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("Esta ação apaga a conta local, moradores, visitas e configurações de QR deste aparelho. Não é possível desfazê-la.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDataDialog = false
+                        viewModel.deleteAllData()
+                    }
+                ) { Text("Excluir", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDataDialog = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Sair da conta?", fontWeight = FontWeight.Bold) },
+            text = { Text("Seus dados permanecerão neste aparelho e poderão ser acessados após um novo login.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    }
+                ) { Text("Sair") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 
     // Theme dialog

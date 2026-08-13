@@ -8,7 +8,6 @@ import com.google.gson.JsonParser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,11 +24,12 @@ class ScannerViewModel @Inject constructor(
         viewModelScope.launch {
             var finalUrl: String? = null
             var targetOwnerId: Long? = null
+            var checkLocalOwnerStatus = false
 
             when {
                 // ============================================================
-                // NOVO FORMATO LGPD
-                // URL mascarada com apenas o ID do proprietário
+                // FORMATO QR V2
+                // URL com identificador do morador e payload híbrido criptografado
                 // Suporta tanto o domínio legado web.app quanto o novo vercel.app
                 // ============================================================
                 content.startsWith("https://porteiro-inteligente.web.app/scan/") ||
@@ -52,7 +52,13 @@ class ScannerViewModel @Inject constructor(
                         // Novo formato encriptado: obtemos tudo diretamente do payload de forma offline
                         val name = decryptedJson.optString("n", "")
                         val rawPhone = decryptedJson.optString("p", "")
-                        val isOffline = decryptedJson.optInt("o", 0) == 1
+                        val offlineUntil = try {
+                            decryptedJson.optLong("u", 0L).takeIf { it > 0L }
+                        } catch (_: Exception) {
+                            null
+                        }
+                        val isOffline = decryptedJson.optInt("o", 0) == 1 &&
+                            (offlineUntil == null || System.currentTimeMillis() < offlineUntil)
                         val offlineMessage = decryptedJson.optString("m", "")
                         
                         val digitsOnly = rawPhone.replace(Regex("\\D"), "")
@@ -71,15 +77,28 @@ class ScannerViewModel @Inject constructor(
                         return@launch
                     } else {
                         // Formato legado: busca no banco local pelo ID
-                        val ownerId = idPart.substringBefore("_").toLongOrNull()
+                        val ownerId = if (idPart.startsWith("v2.")) {
+                            idPart.split('.', limit = 3).getOrNull(1)?.toLongOrNull()
+                        } else {
+                            idPart.substringBefore("_").toLongOrNull()
+                        }
                         if (ownerId != null) {
                             targetOwnerId = ownerId
+                            checkLocalOwnerStatus = true
                             val owner = ownerRepository.getOwnerById(ownerId)
                             if (owner != null) {
                                 val digitsOnly = owner.telefone.replace(Regex("\\D"), "")
                                 val formattedPhone = if (digitsOnly.startsWith("55")) digitsOnly else "55$digitsOnly"
                                 finalUrl = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
                             }
+                        } else if (idPart.startsWith("v2.")) {
+                            // Outro aparelho pode não ter o morador local. Nesse caso o navegador
+                            // fará a descriptografia no backend configurado com QR_PRIVATE_KEY.
+                            finalUrl = content
+                        } else if (idPart.isNotBlank()) {
+                            // QR legado: o app não carrega mais a chave simétrica antiga; o
+                            // backend pode tratá-lo enquanto LEGACY_QR_KEY estiver configurada.
+                            finalUrl = content
                         }
                     }
                 }
@@ -88,8 +107,13 @@ class ScannerViewModel @Inject constructor(
                 // FORMATO LEGADO 1: wa.me (texto puro, sem criptografia)
                 // ============================================================
                 content.startsWith("https://wa.me/") -> {
-                    finalUrl = content
-                    targetOwnerId = null // Links externos diretos do WhatsApp não são associados a moradores locais
+                    val validWhatsAppLink = Regex(
+                        "^https://wa\\.me/\\d{10,15}(?:\\?.*)?$"
+                    ).matches(content)
+                    if (validWhatsAppLink) {
+                        finalUrl = content
+                        targetOwnerId = null // Link direto não é associado a morador local.
+                    }
                 }
 
                 // ============================================================
@@ -119,10 +143,10 @@ class ScannerViewModel @Inject constructor(
             }
 
             // Verifica status offline do proprietário
-            val owner = if (targetOwnerId != null) {
+            val owner = if (checkLocalOwnerStatus && targetOwnerId != null) {
                 ownerRepository.getOwnerById(targetOwnerId)
             } else {
-                ownerRepository.observeAllOwners().first().firstOrNull()
+                null
             }
 
             if (owner != null && owner.isCurrentlyOffline()) {

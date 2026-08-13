@@ -1,0 +1,24 @@
+# Android source and generated artifacts are not part of the Vercel deployment.
+app/
+build/
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# Local and repository-only files.
+.git/
+.air/
+.idea/
+local.properties
+PorteiroInteligente.apk
+ANALISE_*.md
+README.md
+
+# Dependencies are installed by Vercel from package manifests.
+node_modules/
+backend/node_modules/

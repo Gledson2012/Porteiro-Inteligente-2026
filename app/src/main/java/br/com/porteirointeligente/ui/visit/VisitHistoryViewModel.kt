@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
+import br.com.porteirointeligente.util.OwnerSelectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -14,7 +15,8 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class VisitHistoryViewModel @Inject constructor(
-    private val visitRepository: VisitRepository
+    private val visitRepository: VisitRepository,
+    private val ownerSelectionManager: OwnerSelectionManager
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(Filter.ALL)
@@ -29,10 +31,20 @@ class VisitHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = VisitHistoryUIState.Loading
             try {
-                _filter.flatMapLatest { filter ->
+                combine(_filter, ownerSelectionManager.selectedOwnerId) { filter, selectedOwnerId ->
+                    filter to selectedOwnerId
+                }.flatMapLatest { (filter, selectedOwnerId) ->
                     when (filter) {
                         Filter.ALL -> visitRepository.observeAllVisits()
                         Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
+                    }.map { visits ->
+                        if (selectedOwnerId == null) {
+                            visits
+                        } else {
+                            // Registros nulos são ambíguos quando há mais de um morador e não
+                            // podem aparecer no histórico de um proprietário arbitrário.
+                            visits.filter { it.ownerId == selectedOwnerId }
+                        }
                     }
                 }.collect { visits ->
                     _uiState.value = VisitHistoryUIState.Success(

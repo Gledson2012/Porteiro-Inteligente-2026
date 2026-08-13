@@ -33,7 +33,9 @@ import br.com.porteirointeligente.ui.visit.VisitHistoryScreen
 import br.com.porteirointeligente.ui.visit.VisitRegistrationScreen
 
 @Composable
-fun MainScreenNavGraph() {
+fun MainScreenNavGraph(
+    onLogout: () -> Unit
+) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -179,7 +181,8 @@ fun MainScreenNavGraph() {
                 }
             ) {
                 SettingsScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onLogout = onLogout
                 )
             }
 

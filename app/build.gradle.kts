@@ -1,4 +1,3 @@
-import org.gradle.api.GradleException
 import java.util.Properties
 
 plugins {
@@ -12,12 +11,17 @@ plugins {
     id("com.github.triplet.play") version "3.11.0"
 }
 
-// Carrega configurações do keystore a partir de keystore.properties (se existir)
+// Carrega configurações do keystore a partir de keystore.properties (se existir).
+// A configuração de release não pode bloquear tarefas debug/test em clones novos.
 val keystorePropertiesFile = rootProject.file("app/keystore.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
+
+val releaseSigningKeys = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+val hasReleaseSigning = keystorePropertiesFile.exists() &&
+    releaseSigningKeys.all { keystoreProperties.getProperty(it).isNullOrBlank().not() }
 
 android {
     namespace = "br.com.porteirointeligente"
@@ -38,20 +42,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            val storeFileProp = keystoreProperties.getProperty("storeFile")
-
-                ?: throw GradleException("keystore.properties must define 'storeFile'")
-            val storePasswordProp = keystoreProperties.getProperty("storePassword")
-                ?: throw GradleException("keystore.properties must define 'storePassword'")
-            val keyAliasProp = keystoreProperties.getProperty("keyAlias")
-                ?: throw GradleException("keystore.properties must define 'keyAlias'")
-            val keyPasswordProp = keystoreProperties.getProperty("keyPassword")
-                ?: throw GradleException("keystore.properties must define 'keyPassword'")
-            storeFile = file(storeFileProp)
-            storePassword = storePasswordProp
-            keyAlias = keyAliasProp
-            keyPassword = keyPasswordProp
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
         }
     }
 
@@ -60,12 +57,16 @@ android {
             isDebuggable = true
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                logger.warn("Release sem assinatura configurada: crie app/keystore.properties antes de publicar.")
+            }
         }
     }
 

@@ -2,6 +2,8 @@ package br.com.porteirointeligente.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.data.local.LocalDataStore
+import br.com.porteirointeligente.data.repository.AuthRepository
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Owner
@@ -23,7 +25,9 @@ class SettingsViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
     private val themeManager: ThemeManager,
     private val backupManager: BackupManager,
-    private val ownerSelectionManager: OwnerSelectionManager
+    private val ownerSelectionManager: OwnerSelectionManager,
+    private val localDataStore: LocalDataStore,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     val themeState: StateFlow<AppTheme> = themeManager.themeFlow
@@ -90,11 +94,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun performBackup() {
+    fun performBackup(passphrase: String) {
         viewModelScope.launch {
             _backupState.value = BackupState.Loading
             try {
-                backupManager.generateBackupAndShare()
+                backupManager.generateBackupAndShare(passphrase)
                 _backupState.value = BackupState.Success
             } catch (e: Exception) {
                 _backupState.value = BackupState.Error(e.message ?: "Erro ao gerar backup")
@@ -120,11 +124,13 @@ class SettingsViewModel @Inject constructor(
 
         viewModelScope.launch {
             val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                ownerId = currentOwner.id,
                 phone = currentOwner.telefone,
                 name = currentOwner.nome,
                 isOffline = isOffline,
-                offlineMessage = message
-            ) ?: ""
+                offlineMessage = message,
+                offlineUntil = until
+            ) ?: return@launch
             val newPayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
 
             ownerRepository.updateOwner(
@@ -143,13 +149,12 @@ class SettingsViewModel @Inject constructor(
         _owner.value = _allOwners.value.find { it.id == ownerId }
     }
 
-    fun restoreBackup(uri: android.net.Uri) {
+    fun restoreBackup(uri: android.net.Uri, passphrase: String?) {
         viewModelScope.launch {
             _restoreState.value = RestoreState.Loading
-            val success = backupManager.restoreBackup(uri)
+            val success = backupManager.restoreBackup(uri, passphrase)
             if (success) {
                 _restoreState.value = RestoreState.Success
-                loadOwners()
             } else {
                 _restoreState.value = RestoreState.Error("Falha ao importar o arquivo de backup.")
             }
@@ -158,6 +163,14 @@ class SettingsViewModel @Inject constructor(
 
     fun resetRestoreState() {
         _restoreState.value = RestoreState.Idle
+    }
+
+    fun deleteAllData() {
+        viewModelScope.launch {
+            localDataStore.clearAll()
+            authRepository.deleteAccount()
+            runCatching { ownerSelectionManager.clearSelection() }
+        }
     }
 
     sealed class BackupState {

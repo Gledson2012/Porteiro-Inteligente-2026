@@ -35,14 +35,6 @@ class OwnerRegistrationViewModel @Inject constructor(
             val offlineMsg = existing?.offlineMessage ?: ""
             val offlineUntil = existing?.offlineUntil
 
-            val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
-                phone = telefone.trim(),
-                name = nome.trim(),
-                isOffline = isOffline,
-                offlineMessage = offlineMsg
-            ) ?: ""
-            val payload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
-
             val owner = Owner(
                 id = id,
                 nome = nome.trim(),
@@ -52,21 +44,53 @@ class OwnerRegistrationViewModel @Inject constructor(
                 apartamento = apartamento.trim(),
                 telefone = telefone.trim(),
                 photoUri = photoUri,
-                qrCodePayload = payload,
+                // Um novo morador ainda não possui ID. O QR será preenchido logo após o INSERT.
+                qrCodePayload = existing?.qrCodePayload ?: "",
                 isOffline = isOffline,
                 offlineMessage = offlineMsg,
-                offlineUntil = offlineUntil
+                offlineUntil = offlineUntil,
+                dataCadastro = existing?.dataCadastro ?: System.currentTimeMillis()
             )
 
+            var insertedOwner: Owner? = null
             try {
                 val savedOwner = if (id > 0L) {
-                    ownerRepository.updateOwner(owner)
-                    owner
+                    val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                        ownerId = id,
+                        phone = telefone.trim(),
+                        name = nome.trim(),
+                        isOffline = isOffline,
+                        offlineMessage = offlineMsg,
+                        offlineUntil = offlineUntil
+                    ) ?: throw IllegalStateException("Não foi possível gerar o QR Code.")
+                    val updatedOwner = owner.copy(
+                        qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+                    )
+                    ownerRepository.updateOwner(updatedOwner)
+                    updatedOwner
                 } else {
-                    ownerRepository.insertOwner(owner)
+                    val createdOwner = ownerRepository.insertOwner(owner)
+                    insertedOwner = createdOwner
+                    if (createdOwner.id <= 0L) {
+                        throw IllegalStateException("Não foi possível salvar o morador.")
+                    }
+                    val encryptedData = br.com.porteirointeligente.util.OfflineCryptoHelper.encryptOwnerData(
+                        ownerId = createdOwner.id,
+                        phone = telefone.trim(),
+                        name = nome.trim(),
+                        isOffline = isOffline,
+                        offlineMessage = offlineMsg,
+                        offlineUntil = offlineUntil
+                    ) ?: throw IllegalStateException("Não foi possível gerar o QR Code.")
+                    val updatedOwner = createdOwner.copy(
+                        qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+                    )
+                    ownerRepository.updateOwner(updatedOwner)
+                    updatedOwner
                 }
                 _uiState.value = OwnerRegistrationUIState.Success(savedOwner)
             } catch (e: Exception) {
+                insertedOwner?.let { runCatching { ownerRepository.deleteOwner(it) } }
                 _uiState.value = OwnerRegistrationUIState.Error(e.message ?: "Erro desconhecido")
             }
         }
@@ -79,4 +103,3 @@ sealed interface OwnerRegistrationUIState {
     data class Success(val owner: Owner) : OwnerRegistrationUIState
     data class Error(val message: String) : OwnerRegistrationUIState
 }
-

@@ -3,9 +3,11 @@ package br.com.porteirointeligente.ui.visit
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
+import br.com.porteirointeligente.util.OwnerSelectionManager
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.runs
@@ -27,12 +29,16 @@ class VisitHistoryViewModelTest {
     @MockK
     private lateinit var visitRepository: VisitRepository
 
+    @MockK
+    private lateinit var ownerSelectionManager: OwnerSelectionManager
+
     private lateinit var viewModel: VisitHistoryViewModel
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
     private val activeVisit = Visit(
         id = 1L,
+        ownerId = 1L,
         nome = "Carlos",
         documento = "RG123",
         apartamento = "101",
@@ -44,6 +50,7 @@ class VisitHistoryViewModelTest {
 
     private val completedVisit = Visit(
         id = 2L,
+        ownerId = 1L,
         nome = "Ana",
         documento = "RG456",
         apartamento = "202",
@@ -58,6 +65,7 @@ class VisitHistoryViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         MockKAnnotations.init(this)
+        every { ownerSelectionManager.selectedOwnerId } returns flowOf(1L)
     }
 
     @After
@@ -70,7 +78,7 @@ class VisitHistoryViewModelTest {
         // flow {} (empty lambda) never emits, keeping ViewModel in Loading state
         coEvery { visitRepository.observeAllVisits() } returns flow { }
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         assert(viewModel.uiState.value is VisitHistoryUIState.Loading) {
             "Expected Loading state initially, got ${viewModel.uiState.value::class.simpleName}"
@@ -81,7 +89,7 @@ class VisitHistoryViewModelTest {
     fun `loadVisits with ALL filter should emit Success with all visits`() {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit, completedVisit))
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         val state = viewModel.uiState.value as? VisitHistoryUIState.Success
         assert(state != null) { "Expected Success state" }
@@ -96,7 +104,7 @@ class VisitHistoryViewModelTest {
         coEvery { visitRepository.observeAllVisits() } returns allVisitsFlow
         coEvery { visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA) } returns flowOf(listOf(activeVisit))
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         // Wait for initial load
         viewModel.setFilter(VisitHistoryViewModel.Filter.ACTIVE)
@@ -113,7 +121,7 @@ class VisitHistoryViewModelTest {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit, completedVisit))
         coEvery { visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA) } returns flowOf(listOf(activeVisit))
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         viewModel.setFilter(VisitHistoryViewModel.Filter.ACTIVE)
         viewModel.setFilter(VisitHistoryViewModel.Filter.ALL)
@@ -128,7 +136,7 @@ class VisitHistoryViewModelTest {
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit))
         coEvery { visitRepository.updateVisit(any()) } just runs
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         viewModel.registrarSaida(activeVisit)
 
@@ -147,7 +155,7 @@ class VisitHistoryViewModelTest {
 
         coEvery { visitRepository.observeAllVisits() } returns visitsFlow
 
-        viewModel = VisitHistoryViewModel(visitRepository)
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
 
         // Initial state
         var state = viewModel.uiState.value as? VisitHistoryUIState.Success

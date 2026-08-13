@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
+import br.com.porteirointeligente.data.local.LocalDataStore
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.domain.model.Visit
 import io.mockk.MockKAnnotations
@@ -42,6 +43,9 @@ class BackupManagerTest {
     @MockK
     private lateinit var cryptoUtil: CryptoUtil
 
+    @MockK
+    private lateinit var localDataStore: LocalDataStore
+
     private lateinit var backupManager: BackupManager
 
     @Before
@@ -77,12 +81,9 @@ class BackupManagerTest {
 
         coEvery { ownerRepository.observeAllOwners() } returns flowOf(listOf(testOwner))
         coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(testVisit))
-        coEvery { ownerRepository.deleteAll() } just runs
-        coEvery { visitRepository.clearAll() } just runs
-        coEvery { ownerRepository.insertOwner(any()) } returns testOwner
-        coEvery { visitRepository.insertVisit(any()) } returns testVisit
+        coEvery { localDataStore.replaceAll(any(), any()) } just runs
 
-        backupManager = BackupManager(context, ownerRepository, visitRepository, cryptoUtil)
+        backupManager = BackupManager(context, ownerRepository, visitRepository, cryptoUtil, localDataStore)
     }
 
     @After

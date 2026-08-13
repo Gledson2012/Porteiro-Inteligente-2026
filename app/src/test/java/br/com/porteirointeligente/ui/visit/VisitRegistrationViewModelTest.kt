@@ -3,6 +3,7 @@ package br.com.porteirointeligente.ui.visit
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
+import br.com.porteirointeligente.util.OwnerSelectionManager
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -24,6 +25,9 @@ class VisitRegistrationViewModelTest {
 
     @MockK
     private lateinit var visitRepository: VisitRepository
+
+    @MockK
+    private lateinit var ownerSelectionManager: OwnerSelectionManager
 
     private lateinit var viewModel: VisitRegistrationViewModel
 
@@ -47,8 +51,9 @@ class VisitRegistrationViewModelTest {
 
         coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
         coEvery { visitRepository.insertVisit(any()) } returns testVisit
+        coEvery { ownerSelectionManager.getSelectedOwnerId() } returns 1L
         
-        viewModel = VisitRegistrationViewModel(visitRepository)
+        viewModel = VisitRegistrationViewModel(visitRepository, ownerSelectionManager)
     }
 
     @After

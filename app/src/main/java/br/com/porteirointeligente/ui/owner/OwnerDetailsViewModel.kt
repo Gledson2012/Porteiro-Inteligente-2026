@@ -85,6 +85,9 @@ class OwnerDetailsViewModel @Inject constructor(
                 // Remove a foto do armazenamento interno antes de deletar
                 owner.photoUri?.let { PhotoSaver.deletePhoto(context, it) }
                 ownerRepository.deleteOwner(owner)
+                if (ownerSelectionManager.getSelectedOwnerId() == ownerId) {
+                    runCatching { ownerSelectionManager.clearSelection() }
+                }
             }
         }
     }

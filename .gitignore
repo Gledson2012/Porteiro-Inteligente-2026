@@ -1,6 +1,5 @@
 # Built application files
 *.apk
-!PorteiroInteligente.apk
 *.aar
 *.ap_
 *.aab
@@ -74,3 +73,10 @@ lint/outputs/
 lint/tmp/
 lint/reports/
 .vercel
+
+# Local secrets
+.env
+.env.local
+.env.*.local
+backend/qr-private.pem
+.env*

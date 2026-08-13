@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
+import br.com.porteirointeligente.util.OwnerSelectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class VisitRegistrationViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
+    private val ownerSelectionManager: OwnerSelectionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<VisitRegistrationUIState>(VisitRegistrationUIState.Idle)
@@ -34,6 +36,7 @@ class VisitRegistrationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = VisitRegistrationUIState.Loading
             val visit = Visit(
+                ownerId = ownerSelectionManager.getSelectedOwnerId(),
                 nome = nome.trim(),
                 documento = documento.trim(),
                 apartamento = apartamento.trim(),
@@ -58,4 +61,3 @@ sealed interface VisitRegistrationUIState {
     object Success : VisitRegistrationUIState
     data class Error(val message: String) : VisitRegistrationUIState
 }
-
