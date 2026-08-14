@@ -30,8 +30,14 @@ object PhotoSaver {
 
     fun deletePhoto(context: Context, photoPath: String) {
         try {
-            val file = File(Uri.parse(photoPath).path ?: return)
-            if (file.exists()) file.delete()
+            val file = File(Uri.parse(photoPath).path ?: return).canonicalFile
+            val photoDirectory = File(context.filesDir, PHOTO_DIR).canonicalFile
+
+            // photoUri pode vir de um backup; nunca permita que um valor externo
+            // seja usado para apagar outro arquivo privado do aplicativo.
+            if (file.parentFile == photoDirectory && file.exists()) {
+                file.delete()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

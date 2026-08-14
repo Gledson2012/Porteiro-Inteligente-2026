@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -38,9 +39,13 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import br.com.porteirointeligente.ui.theme.GradientGold
 import br.com.porteirointeligente.ui.theme.Slate400
 import coil.compose.AsyncImage
+import br.com.porteirointeligente.util.PhotoSaver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +58,7 @@ fun CadastroScreen(
     val isEditing = ownerId > 0L
     val uiState by viewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // Campos do formulário
     var nome by remember { mutableStateOf("") }
@@ -75,7 +81,22 @@ fun CadastroScreen(
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { photoUri = it.toString() }
+        uri?.let { selectedUri ->
+            val previousPhotoUri = photoUri
+            coroutineScope.launch {
+                val internalPhoto = withContext(Dispatchers.IO) {
+                    PhotoSaver.savePhotoToInternalStorage(context, selectedUri)
+                }
+                if (internalPhoto != null) {
+                    photoUri = internalPhoto
+                    if (previousPhotoUri != null && previousPhotoUri != internalPhoto) {
+                        withContext(Dispatchers.IO) {
+                            PhotoSaver.deletePhoto(context, previousPhotoUri)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Carrega dados existentes para edição
@@ -139,7 +160,7 @@ fun CadastroScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)

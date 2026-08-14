@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
@@ -49,9 +49,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,13 +62,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import br.com.porteirointeligente.util.QrCodeAnalyzer
 import br.com.porteirointeligente.ui.theme.GradientGold
 import br.com.porteirointeligente.ui.theme.ScannerOverlay
@@ -87,6 +89,13 @@ fun ScannerScreen(
     var isTorchOn by remember { mutableStateOf(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
     var showOfflineDialog by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val currentIsScanning by rememberUpdatedState(isScanning)
+
+    DisposableEffect(cameraExecutor) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -150,9 +159,13 @@ fun ScannerScreen(
                             .build()
                             .also {
                                 it.setAnalyzer(cameraExecutor, QrCodeAnalyzer { qrContent ->
-                                    if (isScanning) {
-                                        isScanning = false
-                                        viewModel.onQrCodeDetected(qrContent)
+                                    if (currentIsScanning) {
+                                        ContextCompat.getMainExecutor(ctx).execute {
+                                            if (currentIsScanning) {
+                                                isScanning = false
+                                                viewModel.onQrCodeDetected(qrContent)
+                                            }
+                                        }
                                     }
                                 })
                             }
@@ -209,7 +222,7 @@ fun ScannerScreen(
                         .background(Color.Black.copy(alpha = 0.3f))
                 ) {
                     Icon(
-                        Icons.Default.ArrowBack,
+                        Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
                         tint = Color.White
                     )

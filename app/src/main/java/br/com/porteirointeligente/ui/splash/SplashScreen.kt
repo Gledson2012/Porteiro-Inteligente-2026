@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.R
 import kotlinx.coroutines.delay
 
@@ -307,7 +308,7 @@ fun SplashScreen(
 
         // Version at bottom
         Text(
-            text = "v 1.2.0",
+            text = "v ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.labelSmall,
             color = Color.White.copy(alpha = 0.35f),
             modifier = Modifier

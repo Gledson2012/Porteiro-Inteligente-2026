@@ -36,6 +36,7 @@ fun RootNavGraph(
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val shouldShowOnboarding by onboardingViewModel.shouldShowOnboarding.collectAsState()
     var availableUpdate by remember { mutableStateOf<AppUpdateInfo?>(null) }
+    var splashFinished by remember { mutableStateOf(false) }
 
     val startDestination = remember {
         if (shouldShowOnboarding) Onboarding else Splash
@@ -64,6 +65,25 @@ fun RootNavGraph(
         }
     }
 
+    // A autenticação e a leitura do DataStore podem demorar mais que a animação
+    // da Splash. Aguarda os dois estados antes de navegar, evitando ficar preso
+    // na tela inicial quando o callback da Splash ocorrer enquanto auth ainda
+    // estiver em Loading.
+    LaunchedEffect(authState, splashFinished) {
+        if (!splashFinished || authState is AuthState.Loading) return@LaunchedEffect
+        if (navController.currentDestination?.hasRoute<Splash>() != true) return@LaunchedEffect
+
+        when (authState) {
+            is AuthState.Authenticated -> navController.navigate(Home) {
+                popUpTo<Splash> { inclusive = true }
+            }
+            is AuthState.Unauthenticated -> navController.navigate(Login) {
+                popUpTo<Splash> { inclusive = true }
+            }
+            is AuthState.Loading -> Unit
+        }
+    }
+
     LaunchedEffect(Unit) {
         availableUpdate = AppUpdateChecker.check()
     }
@@ -84,21 +104,7 @@ fun RootNavGraph(
         }
 
         composable<Splash> {
-            SplashScreen(onSplashFinished = {
-                when (authState) {
-                    is AuthState.Authenticated -> {
-                        navController.navigate(Home) {
-                            popUpTo<Splash> { inclusive = true }
-                        }
-                    }
-                    is AuthState.Unauthenticated -> {
-                        navController.navigate(Login) {
-                            popUpTo<Splash> { inclusive = true }
-                        }
-                    }
-                    is AuthState.Loading -> { /* Should not happen */ }
-                }
-            })
+            SplashScreen(onSplashFinished = { splashFinished = true })
         }
 
         composable<Login> {

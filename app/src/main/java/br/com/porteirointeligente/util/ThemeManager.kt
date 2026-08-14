@@ -26,7 +26,8 @@ class ThemeManager @Inject constructor(
     val themeFlow: Flow<AppTheme> = context.dataStore.data
         .map { preferences ->
             val themeName = preferences[THEME_KEY] ?: AppTheme.SYSTEM.name
-            AppTheme.valueOf(themeName)
+            runCatching { AppTheme.valueOf(themeName) }
+                .getOrDefault(AppTheme.SYSTEM)
         }
 
     val dynamicColorFlow: Flow<Boolean> = context.dataStore.data

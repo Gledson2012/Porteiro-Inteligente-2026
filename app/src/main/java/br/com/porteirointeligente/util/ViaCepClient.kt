@@ -37,8 +37,19 @@ object ViaCepClient {
                 connection.connectTimeout = 5000
                 connection.readTimeout = 5000
 
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                connection.disconnect()
+                val response = try {
+                    if (connection.responseCode !in 200..299) return@withContext CepResult(
+                        cep = cep,
+                        logradouro = "",
+                        bairro = "",
+                        cidade = "",
+                        estado = "",
+                        erro = true
+                    )
+                    connection.inputStream.bufferedReader().use { it.readText() }
+                } finally {
+                    connection.disconnect()
+                }
 
                 val json = JsonParser.parseString(response).asJsonObject
 
