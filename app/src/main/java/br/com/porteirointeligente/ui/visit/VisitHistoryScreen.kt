@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -216,7 +218,7 @@ fun VisitHistoryScreen(
                         it.motivo.contains(searchQuery, ignoreCase = true) ||
                         it.documento.contains(searchQuery, ignoreCase = true) ||
                         it.telefone.contains(searchQuery, ignoreCase = true)
-                    }
+                    }.sortedByDescending { it.dataEntrada }
 
                     if (visits.isEmpty()) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -258,10 +260,15 @@ fun VisitHistoryScreen(
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    text = "Tente buscar por outro termo",
+                                    text = "Tente buscar por outro termo ou limpe a busca",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Slate400
                                 )
+                                if (searchQuery.isNotBlank()) {
+                                    TextButton(onClick = { searchQuery = "" }) {
+                                        Text("Limpar busca")
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -327,7 +334,8 @@ fun FilterChips(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FilterChip(
@@ -340,6 +348,12 @@ fun FilterChips(
             selected = selectedFilter == VisitHistoryViewModel.Filter.ACTIVE,
             onClick = { onFilterSelected(VisitHistoryViewModel.Filter.ACTIVE) },
             label = { Text("Ativas") },
+            shape = RoundedCornerShape(10.dp)
+        )
+        FilterChip(
+            selected = selectedFilter == VisitHistoryViewModel.Filter.COMPLETED,
+            onClick = { onFilterSelected(VisitHistoryViewModel.Filter.COMPLETED) },
+            label = { Text("Concluídas") },
             shape = RoundedCornerShape(10.dp)
         )
     }

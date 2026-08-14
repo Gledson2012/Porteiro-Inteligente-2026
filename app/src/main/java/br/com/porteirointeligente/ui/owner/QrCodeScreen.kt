@@ -3,6 +3,9 @@ package br.com.porteirointeligente.ui.owner
 import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Log
+import android.widget.Toast
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -180,6 +183,13 @@ fun QrCodeScreen(
                             }
                         }
                     }
+
+                    Text(
+                        text = "Mostre este código para permitir que visitantes entrem em contato com você.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
                     // === Card do QR Code ===
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -248,50 +258,96 @@ fun QrCodeScreen(
                             }
 
                             Spacer(Modifier.height(16.dp))
+
+                            Surface(
+                                color = if (state.owner.isCurrentlyOffline()) {
+                                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
+                                } else {
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                                },
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (state.owner.isCurrentlyOffline()) Icons.Default.CloudOff else Icons.Default.Verified,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = if (state.owner.isCurrentlyOffline()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = if (state.owner.isCurrentlyOffline()) "Modo offline ativo" else "Código ativo e protegido",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
 
-                    // === Botão SALVAR OU COMPARTILHAR ===
-                    Button(
-                        onClick = {
-                            state.qrCode?.let { bitmap ->
-                                try {
-                                    val cacheDir = File(context.cacheDir, "shared_images")
-                                    cacheDir.mkdirs()
-                                    val file = File(cacheDir, "qrcode_${state.owner.id}.png")
-                                    FileOutputStream(file).use { out ->
-                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                                    }
-                                    val uri = FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        file
-                                    )
-                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "image/png"
-                                        putExtra(Intent.EXTRA_STREAM, uri)
-                                        putExtra(Intent.EXTRA_TEXT, "QR Code do ${state.owner.nome} - Ap. ${state.owner.apartamento}\n\nEscaneie para entrar em contato via WhatsApp")
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Compartilhar QR Code"))
-                                } catch (e: Exception) {
-                                    Log.e("QRCODE_SHARE", "Erro ao compartilhar QR Code", e)
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        contentPadding = PaddingValues(0.dp)
+                    // === Ações do QR Code ===
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            "SALVAR OU COMPARTILHAR",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
-                        )
+                        Button(
+                            onClick = {
+                                state.qrCode?.let { bitmap ->
+                                    try {
+                                        val cacheDir = File(context.cacheDir, "shared_images")
+                                        cacheDir.mkdirs()
+                                        val file = File(cacheDir, "qrcode_${state.owner.id}.png")
+                                        FileOutputStream(file).use { out ->
+                                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                                        }
+                                        val uri = FileProvider.getUriForFile(
+                                            context,
+                                            "${context.packageName}.fileprovider",
+                                            file
+                                        )
+                                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "image/png"
+                                            putExtra(Intent.EXTRA_STREAM, uri)
+                                            putExtra(Intent.EXTRA_TEXT, "QR Code do ${state.owner.nome} - Ap. ${state.owner.apartamento}\n\nEscaneie para entrar em contato via WhatsApp")
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(Intent.createChooser(shareIntent, "Compartilhar QR Code"))
+                                    } catch (e: Exception) {
+                                        Log.e("QRCODE_SHARE", "Erro ao compartilhar QR Code", e)
+                                        Toast.makeText(context, "Não foi possível compartilhar o QR Code", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Compartilhar", style = MaterialTheme.typography.labelLarge)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val clipboard = context.getSystemService(ClipboardManager::class.java)
+                                clipboard?.setPrimaryClip(
+                                    ClipData.newPlainText("Link do QR Code", state.owner.qrCodePayload)
+                                )
+                                Toast.makeText(context, "Link copiado", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.weight(1f).height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Copiar link", style = MaterialTheme.typography.labelLarge)
+                        }
                     }
 
                     // === Instruções LGPD ===

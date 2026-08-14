@@ -37,6 +37,7 @@ class VisitHistoryViewModel @Inject constructor(
                     when (filter) {
                         Filter.ALL -> visitRepository.observeAllVisits()
                         Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
+                        Filter.COMPLETED -> visitRepository.observeVisitsByStatus(VisitStatus.SAIDA_REGISTRADA)
                     }.map { visits ->
                         if (selectedOwnerId == null) {
                             visits
@@ -86,7 +87,7 @@ class VisitHistoryViewModel @Inject constructor(
         }
     }
 
-    enum class Filter { ALL, ACTIVE }
+    enum class Filter { ALL, ACTIVE, COMPLETED }
 }
 
 sealed interface VisitHistoryUIState {

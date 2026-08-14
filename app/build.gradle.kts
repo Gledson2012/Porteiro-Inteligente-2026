@@ -64,7 +64,9 @@ android {
             )
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
-            } else {
+            } else if (gradle.startParameter.taskNames.any { taskName ->
+                    taskName.contains("release", ignoreCase = true)
+                }) {
                 logger.warn("Release sem assinatura configurada: crie app/keystore.properties antes de publicar.")
             }
         }

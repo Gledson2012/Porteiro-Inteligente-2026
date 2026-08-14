@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Delete
@@ -52,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -149,6 +151,14 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                SettingsOverviewCard(
+                    ownerName = ownerState?.nome,
+                    ownerCount = allOwnersState.size,
+                    isOffline = ownerState?.isCurrentlyOffline() == true
+                )
+            }
+
             // Appearance section
             item {
                 SectionHeader(
@@ -375,7 +385,7 @@ fun SettingsScreen(
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_SUBJECT, "Porteiro Inteligente")
-                                putExtra(Intent.EXTRA_TEXT, "Baixe o Porteiro Inteligente — app para gestão de portaria em condomínios: https://porteirointeligente.com")
+                                putExtra(Intent.EXTRA_TEXT, "Baixe o Porteiro Inteligente — app para gestão de portaria em condomínios: https://porteiro-inteligente-2026.vercel.app")
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Compartilhar App"))
                         }
@@ -867,6 +877,78 @@ fun SettingsScreen(
 }
 
 @Composable
+private fun SettingsOverviewCard(
+    ownerName: String?,
+    ownerCount: Int,
+    isOffline: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.BrightnessMedium,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("Central de controle", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (ownerName.isNullOrBlank()) "Configure seu perfil e preferências" else "Preferências de $ownerName",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OverviewPill(
+                    text = if (ownerCount == 1) "1 morador" else "$ownerCount moradores",
+                    color = MaterialTheme.colorScheme.primary
+                )
+                OverviewPill(
+                    text = if (isOffline) "Modo offline" else "Modo online",
+                    color = if (isOffline) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverviewPill(text: String, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.14f),
+        contentColor = color,
+        shape = RoundedCornerShape(50)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
 private fun SectionHeader(icon: ImageVector, title: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -947,6 +1029,12 @@ private fun SettingsClickItem(
                 color = Slate400
             )
         }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
