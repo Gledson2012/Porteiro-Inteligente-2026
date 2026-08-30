@@ -1,7 +1,6 @@
 package br.com.porteirointeligente.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -39,8 +38,8 @@ interface VisitDao {
     @Update
     suspend fun updateVisit(visit: VisitEntity)
 
-    @Delete
-    suspend fun deleteVisit(visit: VisitEntity)
+    @Query("DELETE FROM visits WHERE id = :id")
+    suspend fun deleteVisitById(id: Long)
 
     @Query("DELETE FROM visits")
     suspend fun clearAll()

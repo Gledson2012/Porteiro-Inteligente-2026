@@ -3,6 +3,7 @@ package br.com.porteirointeligente.data.local
 import androidx.room.withTransaction
 import br.com.porteirointeligente.data.local.entity.OwnerEntity
 import br.com.porteirointeligente.data.local.entity.VisitEntity
+import br.com.porteirointeligente.util.LocalDataCrypto
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,7 +12,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class LocalDataStore @Inject constructor(
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val localDataCrypto: LocalDataCrypto
 ) {
     suspend fun clearAll() {
         database.withTransaction {
@@ -24,8 +26,8 @@ class LocalDataStore @Inject constructor(
         database.withTransaction {
             database.visitDao().clearAll()
             database.ownerDao().deleteAll()
-            database.ownerDao().insertAll(owners)
-            database.visitDao().insertAll(visits)
+            database.ownerDao().insertAll(owners.map(localDataCrypto::encryptOwner))
+            database.visitDao().insertAll(visits.map(localDataCrypto::encryptVisit))
         }
     }
 }

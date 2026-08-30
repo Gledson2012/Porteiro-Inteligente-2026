@@ -81,3 +81,4 @@ lint/reports/
 .env.*.local
 backend/qr-private.pem
 .env*
+!.env.example

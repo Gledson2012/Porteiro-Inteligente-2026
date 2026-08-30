@@ -1,5 +1,6 @@
 package br.com.porteirointeligente.util
 
+import android.net.Uri
 import br.com.porteirointeligente.BuildConfig
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,8 @@ data class AppUpdateInfo(
 object AppUpdateChecker {
     private const val VERSION_URL =
         "https://porteiro-inteligente-2026.vercel.app/app-version.json"
+    private const val DOWNLOAD_HOST = "porteiro-inteligente-2026.vercel.app"
+    private const val DOWNLOAD_PATH = "/PorteiroInteligente.apk"
 
     suspend fun check(): AppUpdateInfo? = withContext(Dispatchers.IO) {
         try {
@@ -39,8 +42,13 @@ object AppUpdateChecker {
                 val downloadUrl = root.get("downloadUrl")?.asString ?: return@withContext null
                 val releaseNotes = root.get("releaseNotes")?.asString.orEmpty()
 
+                val downloadUri = runCatching { Uri.parse(downloadUrl) }.getOrNull()
                 if (versionCode <= BuildConfig.VERSION_CODE ||
-                    !downloadUrl.startsWith("https://") ||
+                    downloadUri?.scheme != "https" ||
+                    downloadUri.host != DOWNLOAD_HOST ||
+                    downloadUri.path != DOWNLOAD_PATH ||
+                    !downloadUri?.query.isNullOrBlank() ||
+                    !downloadUri?.fragment.isNullOrBlank() ||
                     versionName.isBlank()
                 ) {
                     return@withContext null

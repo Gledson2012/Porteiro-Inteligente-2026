@@ -76,20 +76,27 @@ class ScannerViewModel @Inject constructor(
                         }
                         return@launch
                     } else {
-                        // Formato legado: busca no banco local pelo ID
+                        // Compatibilidade local: o ID só é usado junto com uma
+                        // comparação do conteúdo completo do QR salvo.
                         val ownerId = if (idPart.startsWith("v2.")) {
                             idPart.split('.', limit = 3).getOrNull(1)?.toLongOrNull()
                         } else {
                             idPart.substringBefore("_").toLongOrNull()
                         }
                         if (ownerId != null) {
-                            targetOwnerId = ownerId
-                            checkLocalOwnerStatus = true
                             val owner = ownerRepository.getOwnerById(ownerId)
-                            if (owner != null) {
+                            // O ID sozinho não autentica um QR. Só usamos o
+                            // cadastro local quando o conteúdo inteiro bate
+                            // com o QR salvo; caso contrário, o backend deve
+                            // validar o payload criptograficamente.
+                            if (owner != null && owner.qrCodePayload == content) {
+                                targetOwnerId = ownerId
+                                checkLocalOwnerStatus = true
                                 val digitsOnly = owner.telefone.replace(Regex("\\D"), "")
                                 val formattedPhone = if (digitsOnly.startsWith("55")) digitsOnly else "55$digitsOnly"
                                 finalUrl = "https://wa.me/$formattedPhone?text=Olá,%20sou%20o%20entregador%20e%20estou%20na%20portaria."
+                            } else if (idPart.startsWith("v2.") || idPart.isNotBlank()) {
+                                finalUrl = content
                             }
                         } else if (idPart.startsWith("v2.")) {
                             // Outro aparelho pode não ter o morador local. Nesse caso o navegador

@@ -45,6 +45,9 @@ object OfflineCryptoHelper {
     ): String? {
         return try {
             val json = JsonObject().apply {
+                // O ID é autenticado pelo AES-GCM junto com os demais campos.
+                // O backend compara este valor com o segmento do QR.
+                addProperty("i", ownerId)
                 addProperty("p", phone)
                 addProperty("n", name)
                 addProperty("o", if (isOffline) 1 else 0)

@@ -57,7 +57,7 @@ Aplicativo Android nativo para gestão de portaria em condomínios. Moradores ca
 | **Navegação** | Navigation Compose (Single Activity) |
 | **Arquitetura** | MVVM com ViewModel + StateFlow |
 | **Injeção** | Dagger Hilt + KSP |
-| **Banco local** | Room |
+| **Banco local** | Room + AES-GCM por campo (chave no Android Keystore) |
 | **Câmera** | CameraX (Preview + ImageAnalysis) |
 | **QR Code** | ZXing (geração) + CameraX Analyzer (leitura) |
 | **Imagens** | Coil (AsyncImage) |
@@ -98,6 +98,7 @@ app/
 │   │   ├── CryptoUtil.kt                   # Compatibilidade com payload legado local
 │   │   ├── OfflineCryptoHelper.kt          # QR híbrido RSA/AES-GCM
 │   │   ├── KeyDerivation.kt                 # PBKDF2 para backup e senha local
+│   │   ├── LocalDataCrypto.kt                # AES-GCM dos campos pessoais locais
 │   │   ├── PhotoSaver.kt                   # Salvar QR na galeria
 │   │   └── BackupManager.kt               # Backup .pib cifrado
 │   └── ui/
@@ -223,9 +224,17 @@ O Express em `backend/` é usado pela página pública `/scan` e pelas rotas aut
 Copie `.env.example`, configure `SECRET_KEY` e a chave privada RSA correspondente à chave pública
 embutida em `OfflineCryptoHelper.kt` como `QR_PRIVATE_KEY`. Nunca versione a chave privada.
 
-O SQLite em Vercel é efêmero (`/tmp`); para usar cadastro/login da API em produção, configure um
-banco persistente antes de habilitar esse fluxo. A página `/scan` com QR v2 não precisa consultar
-o banco quando `QR_PRIVATE_KEY` está configurada.
+O APK continua deliberadamente offline e não sincroniza automaticamente com essas rotas REST. O
+backend é independente e só deve ser habilitado quando houver necessidade de publicação do QR ou de
+uma futura integração de sincronização.
+
+O backend não usa mais o ID do QR como fallback público: somente payloads criptograficamente válidos
+são aceitos. QR v2 não precisa consultar o banco quando `QR_PRIVATE_KEY` está configurada.
+
+O SQLite local da Vercel é efêmero. Por segurança, as rotas de cadastro/login, moradores e visitas
+respondem `503` quando executadas na Vercel sem `DATABASE_PATH` persistente explicitamente configurado.
+Use um armazenamento persistente compatível antes de habilitar esse fluxo; `ALLOW_EPHEMERAL_DATABASE`
+deve ficar restrito a desenvolvimento/testes.
 
 ---
 

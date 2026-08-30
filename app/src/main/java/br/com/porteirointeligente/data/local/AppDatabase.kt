@@ -15,9 +15,9 @@ import br.com.porteirointeligente.data.local.entity.VisitEntity
  * Banco de dados Room do aplicativo.
  *
  * Os dados são armazenados localmente em SQLite.
- * O Android já oferece criptografia em nível de sistema (FBE - File-Based Encryption)
- * para todos os dados no diretório do app, garantindo que estejam seguros mesmo
- * em dispositivos com bloqueio de tela.
+ * Os campos pessoais são cifrados antes de chegar ao SQLite por LocalDataCrypto,
+ * com chave protegida pelo Android Keystore. O FBE do Android acrescenta uma
+ * camada de proteção para os arquivos do aplicativo quando o aparelho está bloqueado.
  *
  * Para backup externo, utilize a funcionalidade "Backup para Google Drive" nos Ajustes.
  */

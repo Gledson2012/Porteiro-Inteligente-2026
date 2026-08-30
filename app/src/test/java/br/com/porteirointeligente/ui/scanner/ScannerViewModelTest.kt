@@ -148,4 +148,29 @@ class ScannerViewModelTest {
         assert(showOfflineEvent.url.contains("5511999998888"))
         job.cancel()
     }
+
+    @Test
+    fun `onQrCodeDetected with forged owner id must not use local phone`() = runTest(testDispatcher) {
+        val savedOwner = br.com.porteirointeligente.domain.model.Owner(
+            id = 1L,
+            nome = "Morador Local",
+            endereco = "Rua 1",
+            apartamento = "42",
+            telefone = "11988887777",
+            qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.valid-payload"
+        )
+        coEvery { ownerRepository.getOwnerById(1L) } returns savedOwner
+        every { OfflineCryptoHelper.decryptOwnerData(any()) } returns null
+
+        val forgedUrl = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.forged-payload"
+        val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
+
+        viewModel.onQrCodeDetected(forgedUrl)
+        advanceUntilIdle()
+
+        assert(events.first() is ScannerViewModel.ScannerUiEvent.OpenWhatsApp)
+        assert((events.first() as ScannerViewModel.ScannerUiEvent.OpenWhatsApp).url == forgedUrl)
+        job.cancel()
+    }
 }

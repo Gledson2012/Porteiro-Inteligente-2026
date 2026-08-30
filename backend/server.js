@@ -29,7 +29,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDatabase } = require('./db');
+const { getDatabase, databaseStatus } = require('./db');
 const crypto = require('crypto');
 
 // Mantida apenas para descriptografar QR Codes antigos. QR Codes novos usam envelope RSA.
@@ -66,12 +66,14 @@ function normalizePayload(json) {
   const offlineUntil = Number.isFinite(numericOfflineUntil) && numericOfflineUntil > 0
     ? numericOfflineUntil
     : null;
+  const numericOwnerId = Number(json.i);
   return {
     phone: json.p,
-    name: typeof json.n === 'string' ? json.n : '',
+    name: typeof json.n === 'string' ? json.n.slice(0, 128) : '',
     isOffline: json.o === 1 && (!offlineUntil || Date.now() < offlineUntil),
-    offlineMessage: typeof json.m === 'string' ? json.m : '',
-    offlineUntil
+    offlineMessage: typeof json.m === 'string' ? json.m.slice(0, 1000) : '',
+    offlineUntil,
+    ownerId: Number.isInteger(numericOwnerId) && numericOwnerId > 0 ? numericOwnerId : null
   };
 }
 
@@ -104,7 +106,9 @@ function decryptHybridPayload(text) {
     const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, iv);
     decipher.setAuthTag(authTag);
     const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
-    return normalizePayload(JSON.parse(decrypted));
+    const normalized = normalizePayload(JSON.parse(decrypted));
+    if (normalized?.ownerId != null && normalized.ownerId !== Number(parts[1])) return null;
+    return normalized;
   } catch (_) {
     return null;
   }
@@ -163,7 +167,10 @@ function escapeHtml(value) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 const SECRET_KEY = process.env.SECRET_KEY;
+const JWT_ISSUER = 'porteiro-inteligente';
+const MAX_SCAN_PAYLOAD_LENGTH = 4096;
 const DEFAULT_CORS_ORIGINS = ['https://porteiro-inteligente-2026.vercel.app'];
+const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN || DEFAULT_CORS_ORIGINS[0];
 const CORS_ORIGINS = new Set(
   (process.env.CORS_ORIGINS || DEFAULT_CORS_ORIGINS.join(','))
     .split(',')
@@ -196,7 +203,7 @@ app.use((req, res, next) => {
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
     if (!req.secure) {
-      return res.redirect(308, `https://${req.headers.host}${req.originalUrl}`);
+      return res.redirect(308, `${PUBLIC_ORIGIN}${req.originalUrl}`);
     }
     next();
   });
@@ -204,23 +211,72 @@ if (process.env.NODE_ENV === 'production') {
 app.use(cors({
   origin: (origin, callback) => callback(null, !origin || CORS_ORIGINS.has(origin))
 }));
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '100kb', strict: true }));
 
 const authAttempts = new Map();
-function authRateLimit(req, res, next) {
-  const key = req.ip || req.socket.remoteAddress || 'unknown';
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000;
-  const maxAttempts = 10;
-  const current = authAttempts.get(key);
-  if (!current || now - current.startedAt >= windowMs) {
-    authAttempts.set(key, { startedAt: now, count: 1 });
+const scanAttempts = new Map();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_TRACKED_IPS = 10_000;
+
+function cleanupRateLimitEntries(store, now) {
+  for (const [key, entry] of store) {
+    if (now - entry.startedAt >= RATE_LIMIT_WINDOW_MS) store.delete(key);
+  }
+  if (store.size <= MAX_TRACKED_IPS) return;
+
+  const oldest = [...store.entries()]
+    .sort((left, right) => left[1].startedAt - right[1].startedAt)
+    .slice(0, store.size - MAX_TRACKED_IPS);
+  for (const [key] of oldest) store.delete(key);
+}
+
+function ipRateLimit(store, maxAttempts, message) {
+  return (req, res, next) => {
+    const key = req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    cleanupRateLimitEntries(store, now);
+    const current = store.get(key);
+    if (!current || now - current.startedAt >= RATE_LIMIT_WINDOW_MS) {
+      store.set(key, { startedAt: now, count: 1 });
+      return next();
+    }
+    if (current.count >= maxAttempts) {
+      res.setHeader('Retry-After', Math.ceil((RATE_LIMIT_WINDOW_MS - (now - current.startedAt)) / 1000));
+      return res.status(429).json({ error: message });
+    }
+    current.count += 1;
     return next();
+  };
+}
+
+const authRateLimit = ipRateLimit(
+  authAttempts,
+  10,
+  'Muitas tentativas. Tente novamente mais tarde.'
+);
+const scanRateLimit = ipRateLimit(
+  scanAttempts,
+  120,
+  'Muitas leituras. Tente novamente mais tarde.'
+);
+
+function requireDatabase(req, res, next) {
+  const status = databaseStatus();
+  if (!status.available) {
+    return res.status(503).json({ error: status.reason });
   }
-  if (current.count >= maxAttempts) {
-    return res.status(429).json({ error: 'Muitas tentativas. Tente novamente mais tarde.' });
+  return next();
+}
+
+function parsePositiveId(value) {
+  return /^\d+$/.test(String(value)) && Number(value) > 0 ? Number(value) : null;
+}
+
+function validateScanPayload(req, res, next) {
+  const payload = String(req.params.id_hash || '');
+  if (!payload || payload.length > MAX_SCAN_PAYLOAD_LENGTH) {
+    return res.status(400).send('QR Code inválido');
   }
-  current.count += 1;
   return next();
 }
 
@@ -251,7 +307,14 @@ function validateOwnerInput(body) {
   }
   const phoneDigits = body.telefone.replace(/\D/g, '');
   if (phoneDigits.length < 10 || phoneDigits.length > 15) return 'Telefone inválido';
-  if (body.qrCodePayload != null && typeof body.qrCodePayload !== 'string') return 'QR Code inválido';
+  if (body.qrCodePayload != null &&
+      (typeof body.qrCodePayload !== 'string' || body.qrCodePayload.length > MAX_SCAN_PAYLOAD_LENGTH)) {
+    return 'QR Code inválido';
+  }
+  if (body.photoUri != null &&
+      (typeof body.photoUri !== 'string' || body.photoUri.length > 4096)) {
+    return 'Foto inválida';
+  }
   return null;
 }
 
@@ -287,13 +350,16 @@ function authenticateToken(req, res, next) {
     return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
   }
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const tokenMatch = typeof authHeader === 'string'
+    ? authHeader.match(/^Bearer\s+([^\s]+)$/i)
+    : null;
+  const token = tokenMatch?.[1];
 
   if (token == null) {
     return res.status(401).json({ error: 'Token não fornecido' });
   }
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
+  jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'], issuer: JWT_ISSUER }, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Token inválido' });
     }
@@ -307,7 +373,7 @@ function authenticateToken(req, res, next) {
 // =====================
 
 // POST /api/register - Registra um novo usuário
-app.post('/api/register', authRateLimit, (req, res) => {
+app.post('/api/register', authRateLimit, requireDatabase, (req, res) => {
   try {
     if (!SECRET_KEY) {
       return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
@@ -329,15 +395,16 @@ app.post('/api/register', authRateLimit, (req, res) => {
     const stmt = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
     const result = stmt.run(normalizedUsername, hashedPassword);
 
-    res.status(201).json({ id: result.lastInsertRowid, username: normalizedUsername });
+    res.status(201).json({ id: Number(result.lastInsertRowid), username: normalizedUsername });
   } catch (err) {
     console.error('Erro ao registrar usuário:', err);
-    res.status(500).json({ error: 'Erro ao registrar usuário' });
+    res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+      .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao registrar usuário' });
   }
 });
 
 // POST /api/login - Efetua login e retorna um token
-app.post('/api/login', authRateLimit, (req, res) => {
+app.post('/api/login', authRateLimit, requireDatabase, (req, res) => {
   try {
     if (!SECRET_KEY) {
       return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
@@ -355,11 +422,16 @@ app.post('/api/login', authRateLimit, (req, res) => {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '7d' });
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      SECRET_KEY,
+      { expiresIn: '7d', algorithm: 'HS256', issuer: JWT_ISSUER }
+    );
     res.json({ token });
   } catch (err) {
     console.error('Erro ao efetuar login:', err);
-    res.status(500).json({ error: 'Erro ao efetuar login' });
+    res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+      .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao efetuar login' });
   }
 });
 
@@ -368,49 +440,24 @@ app.post('/api/login', authRateLimit, (req, res) => {
 // QR Code Scan - Rota Pública
 // =====================
 
-app.get('/scan/:id_hash', (req, res) => {
+app.get('/scan/:id_hash', scanRateLimit, validateScanPayload, (req, res) => {
   try {
     const { id_hash } = req.params;
-    let name = '';
-    let phone = '';
-    let isOffline = false;
-    let offlineMessage = '';
-    let offlineUntil = null;
-    
-    // 1. Tenta descriptografar o payload offline primeiro (Novo Formato)
+    // O QR precisa ser autenticado criptograficamente. Nunca use um ID vindo
+    // da URL como fallback, pois isso permitiria enumerar moradores.
     const decrypted = decryptPayload(id_hash);
-    if (decrypted) {
-      name = decrypted.name;
-      phone = decrypted.phone;
-      isOffline = decrypted.isOffline;
-      offlineMessage = decrypted.offlineMessage;
-      offlineUntil = decrypted.offlineUntil;
-    } else if (id_hash.startsWith('v2.')) {
+    if (!decrypted) {
+      if (id_hash.startsWith('v2.')) {
+        return res
+          .status(QR_PRIVATE_KEY ? 400 : 503)
+          .send(QR_PRIVATE_KEY ? 'QR Code inválido' : 'QR Code temporariamente indisponível');
+      }
       return res
-        .status(QR_PRIVATE_KEY ? 400 : 503)
-        .send(QR_PRIVATE_KEY ? 'QR Code inválido' : 'QR Code temporariamente indisponível');
-    } else {
-      // 2. Fallback: busca clássica no banco sqlite (Formato Legado)
-      const idPart = id_hash.split('_')[0];
-      const ownerId = parseInt(idPart, 10);
-      
-      if (isNaN(ownerId)) {
-        return res.status(400).send('QR Code Inválido');
-      }
-      
-      const db = getDatabase();
-      const owner = db.prepare('SELECT * FROM owners WHERE id = ?').get(ownerId);
-      
-      if (!owner) {
-        return res.status(404).send('Morador Não Encontrado');
-      }
-      
-      name = owner.nome;
-      phone = owner.telefone;
-      offlineUntil = owner.offlineUntil || null;
-      isOffline = owner.isOffline === 1 && (!offlineUntil || Date.now() < offlineUntil);
-      offlineMessage = owner.offlineMessage;
+        .status(400)
+        .send(LEGACY_ENCRYPTION_KEY ? 'QR Code legado inválido' : 'QR Code legado não suportado');
     }
+
+    const { name, phone, isOffline, offlineMessage } = decrypted;
     
     // Formata o número do WhatsApp
     let cleanPhone = phone.replace(/\D/g, '');
@@ -844,7 +891,7 @@ app.get('/scan/:id_hash', (req, res) => {
 // =====================
 
 // GET /api/owners - Lista moradores do usuário logado
-app.get('/api/owners', authenticateToken, (req, res) => {
+app.get('/api/owners', authenticateToken, requireDatabase, (req, res) => {
   try {
     const db = getDatabase();
     const owners = db.prepare('SELECT * FROM owners WHERE userId = ? ORDER BY nome ASC').all(req.user.id);
@@ -855,7 +902,7 @@ app.get('/api/owners', authenticateToken, (req, res) => {
 });
 
 // POST /api/owners - Cria um novo morador para o usuário logado
-app.post('/api/owners', authenticateToken, (req, res) => {
+app.post('/api/owners', authenticateToken, requireDatabase, (req, res) => {
   try {
     const db = getDatabase();
     const body = req.body || {};
@@ -879,17 +926,19 @@ app.post('/api/owners', authenticateToken, (req, res) => {
       normalizedOfflineMessage, normalizedOfflineUntil
     );
 
-    res.status(201).json({ id: result.lastInsertRowid, ...body });
+    res.status(201).json({ id: Number(result.lastInsertRowid) });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar morador' });
+    res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+      .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao criar morador' });
   }
 });
 
 // PUT /api/owners/:id - Atualiza um morador do usuário logado
-app.put('/api/owners/:id', authenticateToken, (req, res) => {
+app.put('/api/owners/:id', authenticateToken, requireDatabase, (req, res) => {
     try {
       const db = getDatabase();
-      const { id } = req.params;
+      const id = parsePositiveId(req.params.id);
+      if (id == null) return res.status(400).json({ error: 'ID de morador inválido' });
       const body = req.body || {};
       const validationError = validateOwnerInput(body);
       if (validationError) return res.status(400).json({ error: validationError });
@@ -919,17 +968,19 @@ app.put('/api/owners/:id', authenticateToken, (req, res) => {
         id, req.user.id
       );
 
-      res.json({ id: parseInt(id), ...body });
+      res.json({ id });
     } catch (err) {
-      res.status(500).json({ error: 'Erro ao atualizar morador' });
+      res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+        .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao atualizar morador' });
     }
 });
 
 // DELETE /api/owners/:id - Exclui um morador do usuário logado
-app.delete('/api/owners/:id', authenticateToken, (req, res) => {
+app.delete('/api/owners/:id', authenticateToken, requireDatabase, (req, res) => {
     try {
       const db = getDatabase();
-      const { id } = req.params;
+      const id = parsePositiveId(req.params.id);
+      if (id == null) return res.status(400).json({ error: 'ID de morador inválido' });
   
       // Primeiro, verifique se o morador pertence ao usuário logado
       const owner = db.prepare('SELECT id FROM owners WHERE id = ? AND userId = ?').get(id, req.user.id);
@@ -951,7 +1002,7 @@ app.delete('/api/owners/:id', authenticateToken, (req, res) => {
 // =====================
 
 // GET /api/visits - Lista visitas dos moradores do usuário logado
-app.get('/api/visits', authenticateToken, (req, res) => {
+app.get('/api/visits', authenticateToken, requireDatabase, (req, res) => {
   try {
     const db = getDatabase();
     // Este join garante que apenas visitas de moradores do usuário logado sejam retornadas
@@ -968,7 +1019,7 @@ app.get('/api/visits', authenticateToken, (req, res) => {
 });
 
 // POST /api/visits - Cria uma nova visita
-app.post('/api/visits', authenticateToken, (req, res) => {
+app.post('/api/visits', authenticateToken, requireDatabase, (req, res) => {
     try {
       const db = getDatabase();
       const body = req.body || {};
@@ -997,18 +1048,20 @@ app.post('/api/visits', authenticateToken, (req, res) => {
         normalizedDataEntrada, normalizedDataSaida, normalizedStatus
       );
 
-      res.status(201).json({ id: result.lastInsertRowid, ...body });
+      res.status(201).json({ id: Number(result.lastInsertRowid) });
     } catch (err) {
-      res.status(500).json({ error: 'Erro ao criar visita' });
+      res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+        .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao criar visita' });
     }
 });
   
 
 // PUT /api/visits/:id - Atualiza uma visita
-app.put('/api/visits/:id', authenticateToken, (req, res) => {
+app.put('/api/visits/:id', authenticateToken, requireDatabase, (req, res) => {
     try {
         const db = getDatabase();
-        const { id } = req.params;
+        const id = parsePositiveId(req.params.id);
+        if (id == null) return res.status(400).json({ error: 'ID de visita inválido' });
         const body = req.body || {};
         const validationError = validateVisitInput(body);
         if (validationError) return res.status(400).json({ error: validationError });
@@ -1042,17 +1095,47 @@ app.put('/api/visits/:id', authenticateToken, (req, res) => {
           integerOrNull(dataEntrada) || Date.now(), integerOrNull(dataSaida), status || 'ENTRADA_REGISTRADA', id
         );
 
-        res.json({ id: parseInt(id), ...body });
+        res.json({ id });
     } catch (err) {
         console.error('Erro ao atualizar visita:', err);
-        res.status(500).json({ error: 'Erro ao atualizar visita' });
+        res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+          .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao atualizar visita' });
     }
+});
+
+// DELETE /api/visits/:id - Exclui uma visita pertencente ao usuário logado
+app.delete('/api/visits/:id', authenticateToken, requireDatabase, (req, res) => {
+  try {
+    const db = getDatabase();
+    const id = parsePositiveId(req.params.id);
+    if (id == null) return res.status(400).json({ error: 'ID de visita inválido' });
+
+    const result = db.prepare(`
+      DELETE FROM visits
+      WHERE id = ?
+        AND ownerId IN (SELECT id FROM owners WHERE userId = ?)
+    `).run(id, req.user.id);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Visita não encontrada ou não pertence a este usuário' });
+    }
+    return res.json({ message: 'Visita excluída com sucesso', id });
+  } catch (err) {
+    console.error('Erro ao excluir visita:', err);
+    return res.status(err.code === 'PERSISTENT_DATABASE_REQUIRED' ? 503 : 500)
+      .json({ error: err.code === 'PERSISTENT_DATABASE_REQUIRED' ? err.message : 'Erro ao excluir visita' });
+  }
 });
 
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const database = databaseStatus();
+  res.status(database.available ? 200 : 503).json({
+    status: database.available ? 'ok' : 'degraded',
+    database: database.available ? 'configured' : 'unavailable',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Em Vercel/Serverless o runtime importa o Express como handler e não deve abrir

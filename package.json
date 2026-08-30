@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "Porteiro Inteligente Root Project for Vercel Deployment",
   "main": "api/index.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "test:backend": "npm --prefix backend test"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.0.0",

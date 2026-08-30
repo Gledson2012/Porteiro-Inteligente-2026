@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import br.com.porteirointeligente.util.KeyDerivation
+import br.com.porteirointeligente.util.LocalDataCrypto
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -24,7 +25,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  */
 @Singleton
 class AuthRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val localDataCrypto: LocalDataCrypto
 ) {
     private val dataStore = context.dataStore
 
@@ -55,8 +57,12 @@ class AuthRepository @Inject constructor(
 
         val prefs = dataStore.data.first()
         val savedUser = prefs[REGISTERED_USERNAME_KEY] ?: prefs[LEGACY_USERNAME_KEY]
-        val savedHash = prefs[PASSWORD_HASH_KEY]
-        val savedSalt = prefs[PASSWORD_SALT_KEY]
+        val savedHash = prefs[PASSWORD_HASH_KEY]?.let {
+            runCatching { localDataCrypto.decryptText(it) }.getOrNull()
+        }
+        val savedSalt = prefs[PASSWORD_SALT_KEY]?.let {
+            runCatching { localDataCrypto.decryptText(it) }.getOrNull()
+        }
         val legacyPassword = prefs[LEGACY_PASSWORD_KEY]
 
         if (savedUser == null) {
@@ -75,10 +81,14 @@ class AuthRepository @Inject constructor(
                 editPrefs[REGISTERED_USERNAME_KEY] = normalizedUsername
                 editPrefs[AUTHENTICATED_USERNAME_KEY] = normalizedUsername
 
-                if (savedHash == null || savedSalt == null) {
+                if (savedHash != null && savedSalt != null) {
+                    // Regrava verificadores legados em formato protegido após o login.
+                    editPrefs[PASSWORD_SALT_KEY] = localDataCrypto.encryptText(savedSalt)
+                    editPrefs[PASSWORD_HASH_KEY] = localDataCrypto.encryptText(savedHash)
+                } else {
                     val salt = KeyDerivation.newSalt()
-                    editPrefs[PASSWORD_SALT_KEY] = KeyDerivation.encode(salt)
-                    editPrefs[PASSWORD_HASH_KEY] = hashPassword(password, salt)
+                    editPrefs[PASSWORD_SALT_KEY] = localDataCrypto.encryptText(KeyDerivation.encode(salt))
+                    editPrefs[PASSWORD_HASH_KEY] = localDataCrypto.encryptText(hashPassword(password, salt))
                 }
 
                 editPrefs.remove(LEGACY_USERNAME_KEY)
@@ -111,8 +121,8 @@ class AuthRepository @Inject constructor(
         val salt = KeyDerivation.newSalt()
         dataStore.edit { prefs ->
             prefs[REGISTERED_USERNAME_KEY] = normalizedUsername
-            prefs[PASSWORD_SALT_KEY] = KeyDerivation.encode(salt)
-            prefs[PASSWORD_HASH_KEY] = hashPassword(password, salt)
+            prefs[PASSWORD_SALT_KEY] = localDataCrypto.encryptText(KeyDerivation.encode(salt))
+            prefs[PASSWORD_HASH_KEY] = localDataCrypto.encryptText(hashPassword(password, salt))
             prefs.remove(AUTHENTICATED_USERNAME_KEY)
         }
         return Result.success(Unit)

@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "API REST para sincronização do Porteiro Inteligente",
   "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test server.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -1,7 +1,6 @@
 package br.com.porteirointeligente.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -33,8 +32,8 @@ interface OwnerDao {
     @Update
     suspend fun updateOwner(owner: OwnerEntity)
 
-    @Delete
-    suspend fun deleteOwner(owner: OwnerEntity)
+    @Query("DELETE FROM owners WHERE id = :id")
+    suspend fun deleteOwnerById(id: Long)
 
     @Query("DELETE FROM owners")
     suspend fun deleteAll()
