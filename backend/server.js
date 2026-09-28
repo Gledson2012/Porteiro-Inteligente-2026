@@ -265,7 +265,13 @@ function requireDatabase(req, res, next) {
   if (!status.available) {
     return res.status(503).json({ error: status.reason });
   }
-  return next();
+  try {
+    getDatabase();
+    return next();
+  } catch (err) {
+    console.error('Banco de dados indisponível:', err.message);
+    return res.status(503).json({ error: 'Banco de dados indisponível' });
+  }
 }
 
 function parsePositiveId(value) {
@@ -1131,11 +1137,32 @@ app.delete('/api/visits/:id', authenticateToken, requireDatabase, (req, res) => 
 // Health check
 app.get('/api/health', (req, res) => {
   const database = databaseStatus();
-  res.status(database.available ? 200 : 503).json({
-    status: database.available ? 'ok' : 'degraded',
-    database: database.available ? 'configured' : 'unavailable',
-    timestamp: new Date().toISOString()
-  });
+  if (!database.available) {
+    return res.status(503).json({
+      status: 'degraded',
+      database: 'unavailable',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  try {
+    getDatabase();
+    return res.status(200).json({
+      status: 'ok',
+      database: 'configured',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error(
+      'Health check não conseguiu acessar o banco de dados:',
+      err.message.split('\n')[0]
+    );
+    return res.status(503).json({
+      status: 'degraded',
+      database: 'unavailable',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Em Vercel/Serverless o runtime importa o Express como handler e não deve abrir

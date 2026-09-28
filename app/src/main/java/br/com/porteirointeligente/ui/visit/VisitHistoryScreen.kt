@@ -44,10 +44,20 @@ fun VisitHistoryScreen(
     viewModel: VisitHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var currentFilter by remember { mutableStateOf(VisitHistoryViewModel.Filter.ALL) }
     var searchQuery by remember { mutableStateOf("") }
-    
+
+    LaunchedEffect(actionError) {
+        actionError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearActionError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -62,26 +72,26 @@ fun VisitHistoryScreen(
                     }
                 },
                 actions = {
-                    val hasVisits = (uiState as? VisitHistoryUIState.Success)?.visits?.isNotEmpty() ?: false
-                    if (hasVisits) {
+                    val successState = uiState as? VisitHistoryUIState.Success
+                    if (successState?.visits?.isNotEmpty() == true && successState.selectedOwnerId != null) {
                         var showClearAllConfirm by remember { mutableStateOf(false) }
                         IconButton(onClick = { showClearAllConfirm = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = "Limpar Histórico")
+                            Icon(Icons.Default.DeleteSweep, contentDescription = "Limpar histórico do morador selecionado")
                         }
                         if (showClearAllConfirm) {
                             AlertDialog(
                                 onDismissRequest = { showClearAllConfirm = false },
                                 title = { Text("Limpar Histórico") },
-                                text = { Text("Deseja apagar TODO o histórico de visitas? Esta ação é irreversível.") },
+                                text = { Text("Deseja apagar todas as visitas deste morador? O histórico dos demais moradores será preservado.") },
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            viewModel.clearAllVisits()
+                                            viewModel.clearAllVisits(successState.selectedOwnerId)
                                             showClearAllConfirm = false
                                         },
                                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                                     ) {
-                                        Text("Limpar Tudo")
+                                        Text("Limpar visitas")
                                     }
                                 },
                                 dismissButton = {

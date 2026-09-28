@@ -29,9 +29,22 @@ function databaseStatus() {
     Boolean(configuredDatabasePath && !isEphemeralPath(configuredDatabasePath))
   );
 
+  if (!persistent) {
+    return {
+      available: false,
+      reason: 'Configure DATABASE_PATH persistente antes de habilitar o SQLite na Vercel.'
+    };
+  }
+  if (!Database) {
+    return {
+      available: false,
+      reason: 'SQLite indisponível. Instale better-sqlite3 ou configure um banco persistente.'
+    };
+  }
+
   return {
-    available: persistent,
-    reason: persistent ? null : 'Configure DATABASE_PATH persistente antes de habilitar o SQLite na Vercel.'
+    available: true,
+    reason: null
   };
 }
 

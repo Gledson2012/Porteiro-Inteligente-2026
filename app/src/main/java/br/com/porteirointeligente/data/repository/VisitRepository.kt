@@ -60,6 +60,9 @@ class VisitRepository @Inject constructor(
     /** Remove todas as visitas */
     suspend fun clearAll() = visitDao.clearAll()
 
+    /** Remove somente as visitas associadas ao morador informado */
+    suspend fun clearByOwnerId(ownerId: Long) = visitDao.clearByOwnerId(ownerId)
+
     /** Deleta uma visita específica */
     suspend fun deleteVisit(visit: Visit) {
         visitDao.deleteVisitById(visit.id)

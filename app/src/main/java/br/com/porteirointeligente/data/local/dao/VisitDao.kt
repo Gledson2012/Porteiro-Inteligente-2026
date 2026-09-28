@@ -41,6 +41,9 @@ interface VisitDao {
     @Query("DELETE FROM visits WHERE id = :id")
     suspend fun deleteVisitById(id: Long)
 
+    @Query("DELETE FROM visits WHERE ownerId = :ownerId")
+    suspend fun clearByOwnerId(ownerId: Long)
+
     @Query("DELETE FROM visits")
     suspend fun clearAll()
 }

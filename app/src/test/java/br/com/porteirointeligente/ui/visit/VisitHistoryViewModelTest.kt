@@ -150,6 +150,40 @@ class VisitHistoryViewModelTest {
     }
 
     @Test
+    fun `clearAllVisits should clear only the selected owner's visits`() {
+        coEvery { visitRepository.clearByOwnerId(1L) } just runs
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit))
+
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
+        viewModel.clearAllVisits(ownerId = 1L)
+
+        coVerify(exactly = 1) { visitRepository.clearByOwnerId(1L) }
+        coVerify(exactly = 0) { visitRepository.clearAll() }
+    }
+
+    @Test
+    fun `clearAllVisits should refuse to clear when no owner is selected`() {
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit))
+
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
+        viewModel.clearAllVisits(ownerId = null)
+
+        coVerify(exactly = 0) { visitRepository.clearByOwnerId(any()) }
+        assert(viewModel.actionError.value == "Selecione um morador antes de limpar o histórico.")
+    }
+
+    @Test
+    fun `deleteVisit should expose repository failures to the UI`() {
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit))
+        coEvery { visitRepository.deleteVisit(activeVisit) } throws IllegalStateException("Falha ao excluir")
+
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
+        viewModel.deleteVisit(activeVisit)
+
+        assert(viewModel.actionError.value == "Falha ao excluir")
+    }
+
+    @Test
     fun `visitRepository flow updates should be reflected in uiState`() {
         val visitsFlow = MutableStateFlow(listOf(activeVisit))
 

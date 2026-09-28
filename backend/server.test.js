@@ -4,6 +4,7 @@ const { spawnSync } = require('node:child_process');
 const http = require('node:http');
 
 process.env.SECRET_KEY = 'test-secret-key-with-at-least-32-characters';
+process.env.DATABASE_PATH = ':memory:';
 delete process.env.QR_PRIVATE_KEY;
 delete process.env.QR_PRIVATE_KEY_FILE;
 delete process.env.LEGACY_QR_KEY;
@@ -45,12 +46,56 @@ async function withServer(callback) {
   }
 }
 
-test('health reports a healthy local configuration', async () => {
+test('health reflects actual local database availability', async () => {
+  let expectedStatus = 200;
+  try {
+    require('./db').getDatabase();
+  } catch (_) {
+    expectedStatus = 503;
+  }
+
   await withServer(async server => {
     const response = await request(server, 'GET', '/api/health');
-    assert.equal(response.status, 200);
-    assert.equal(JSON.parse(response.body).status, 'ok');
+    assert.equal(response.status, expectedStatus);
+    assert.equal(JSON.parse(response.body).status, expectedStatus === 200 ? 'ok' : 'degraded');
   });
+});
+
+test('health reports unavailable when SQLite cannot be loaded', () => {
+  const script = `
+    const Module = require('node:module');
+    const originalLoad = Module._load;
+    Module._load = function(request, parent, isMain) {
+      if (request === 'better-sqlite3') throw new Error('simulated missing SQLite');
+      return originalLoad.call(this, request, parent, isMain);
+    };
+    const app = require('./server');
+    const server = app.listen(0, '127.0.0.1', () => {
+      require('node:http').get({
+        host: '127.0.0.1',
+        port: server.address().port,
+        path: '/api/health'
+      }, response => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', chunk => { body += chunk; });
+        response.on('end', () => {
+          process.stdout.write(JSON.stringify({ status: response.statusCode, body }));
+          server.close();
+        });
+      });
+    });
+  `;
+  const result = spawnSync(process.execPath, ['-e', script], {
+    cwd: __dirname,
+    env: { ...process.env, DATABASE_PATH: ':memory:' },
+    encoding: 'utf8'
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  const response = JSON.parse(result.stdout);
+  assert.equal(response.status, 503);
+  assert.match(response.body, /"database":"unavailable"/);
 });
 
 test('legacy scan never falls back to an enumerable owner ID', async () => {

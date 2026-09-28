@@ -8,6 +8,7 @@ import br.com.porteirointeligente.domain.model.VisitStatus
 import br.com.porteirointeligente.util.OwnerSelectionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,6 +23,9 @@ class VisitHistoryViewModel @Inject constructor(
     private val _filter = MutableStateFlow(Filter.ALL)
     private val _uiState = MutableStateFlow<VisitHistoryUIState>(VisitHistoryUIState.Loading)
     val uiState: StateFlow<VisitHistoryUIState> = _uiState
+
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError
 
     init {
         loadVisits()
@@ -50,7 +54,8 @@ class VisitHistoryViewModel @Inject constructor(
                 }.collect { visits ->
                     _uiState.value = VisitHistoryUIState.Success(
                         visits = visits,
-                        filter = _filter.value
+                        filter = _filter.value,
+                        selectedOwnerId = selectedOwnerId
                     )
                 }
             } catch (e: Exception) {
@@ -64,26 +69,45 @@ class VisitHistoryViewModel @Inject constructor(
     }
 
     fun registrarSaida(visit: Visit) {
-        viewModelScope.launch {
+        performAction {
             visitRepository.updateVisit(
                 visit.copy(
                     dataSaida = System.currentTimeMillis(),
                     status = VisitStatus.SAIDA_REGISTRADA
                 )
             )
-            // A UI irá se atualizar automaticamente por causa do Flow reativo do Room
         }
     }
 
     fun deleteVisit(visit: Visit) {
-        viewModelScope.launch {
+        performAction {
             visitRepository.deleteVisit(visit)
         }
     }
 
-    fun clearAllVisits() {
+    fun clearAllVisits(ownerId: Long?) {
+        performAction {
+            if (ownerId == null) {
+                throw IllegalStateException("Selecione um morador antes de limpar o histórico.")
+            }
+            visitRepository.clearByOwnerId(ownerId)
+        }
+    }
+
+    fun clearActionError() {
+        _actionError.value = null
+    }
+
+    private fun performAction(action: suspend () -> Unit) {
         viewModelScope.launch {
-            visitRepository.clearAll()
+            try {
+                action()
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                _actionError.value = exception.message?.takeIf(String::isNotBlank)
+                    ?: "Não foi possível concluir a operação."
+            }
         }
     }
 
@@ -92,6 +116,10 @@ class VisitHistoryViewModel @Inject constructor(
 
 sealed interface VisitHistoryUIState {
     object Loading : VisitHistoryUIState
-    data class Success(val visits: List<Visit>, val filter: VisitHistoryViewModel.Filter) : VisitHistoryUIState
+    data class Success(
+        val visits: List<Visit>,
+        val filter: VisitHistoryViewModel.Filter,
+        val selectedOwnerId: Long?
+    ) : VisitHistoryUIState
     data class Error(val message: String) : VisitHistoryUIState
 }
