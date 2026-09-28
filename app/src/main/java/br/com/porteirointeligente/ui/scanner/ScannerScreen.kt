@@ -163,6 +163,7 @@ fun ScannerScreen(
                                         ContextCompat.getMainExecutor(ctx).execute {
                                             if (currentIsScanning) {
                                                 isScanning = false
+                                                br.com.porteirointeligente.util.FeedbackHelper.playScanSuccess(ctx)
                                                 viewModel.onQrCodeDetected(qrContent)
                                             }
                                         }

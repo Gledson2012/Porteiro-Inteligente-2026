@@ -31,9 +31,11 @@ import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
@@ -89,6 +91,8 @@ fun SettingsScreen(
 ) {
     val themeState by viewModel.themeState.collectAsState()
     val dynamicColorState by viewModel.dynamicColorState.collectAsState()
+    val flagSecureState by viewModel.flagSecureState.collectAsState()
+    val biometricLoginState by viewModel.biometricLoginState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
     val ownerState by viewModel.owner.collectAsState()
@@ -194,6 +198,42 @@ fun SettingsScreen(
                         subtitle = "Usar paleta de cores do sistema",
                         checked = dynamicColorState,
                         onCheckedChange = { viewModel.setDynamicColor(it) }
+                    )
+                }
+            }
+
+            // Security & Privacy Section
+            item {
+                SectionHeader(
+                    icon = Icons.Default.Security,
+                    title = "Segurança & Privacidade"
+                )
+            }
+
+            item {
+                SettingsCard {
+                    // Biometric Authentication
+                    SettingsSwitchItem(
+                        icon = Icons.Default.Fingerprint,
+                        iconBackground = MaterialTheme.colorScheme.primaryContainer,
+                        iconTint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        title = "Autenticação Biométrica",
+                        subtitle = "Entrar usando digital ou reconhecimento facial",
+                        checked = biometricLoginState,
+                        onCheckedChange = { viewModel.setBiometricLogin(it) }
+                    )
+
+                    Divider()
+
+                    // FLAG_SECURE
+                    SettingsSwitchItem(
+                        icon = Icons.Default.Security,
+                        iconBackground = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        iconTint = MaterialTheme.colorScheme.error,
+                        title = "Proteção de Tela",
+                        subtitle = "Impedir capturas e gravações de dados sensíveis",
+                        checked = flagSecureState,
+                        onCheckedChange = { viewModel.setFlagSecure(it) }
                     )
                 }
             }

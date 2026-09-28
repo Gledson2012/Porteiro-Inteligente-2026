@@ -15,7 +15,8 @@ data class Visit(
     val motivo: String,
     val dataEntrada: Long,
     val dataSaida: Long? = null,
-    val status: VisitStatus = VisitStatus.ENTRADA_REGISTRADA
+    val status: VisitStatus = VisitStatus.ENTRADA_REGISTRADA,
+    val placa: String? = null
 )
 
 /**

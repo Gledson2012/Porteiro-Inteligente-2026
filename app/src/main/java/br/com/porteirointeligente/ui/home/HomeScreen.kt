@@ -67,16 +67,20 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.ui.components.AppSignature
 import br.com.porteirointeligente.ui.components.ShimmerCard
 import br.com.porteirointeligente.ui.components.VisitItem
+import br.com.porteirointeligente.ui.theme.Emerald
 import br.com.porteirointeligente.ui.theme.GradientGold
+import br.com.porteirointeligente.ui.theme.GradientHero
 import br.com.porteirointeligente.ui.theme.GradientPrimary
 import br.com.porteirointeligente.ui.theme.GradientTeal
 import br.com.porteirointeligente.ui.theme.GradientNeon
 import br.com.porteirointeligente.ui.theme.Slate400
+
 
 // ... imports
 
@@ -257,32 +261,70 @@ private fun OwnerSwitcher(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true },
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OwnerAvatar(
-                    photoUri = selectedOwner?.photoUri,
-                    name = currentName,
-                    modifier = Modifier.size(40.dp)
-                )
+                Box {
+                    OwnerAvatar(
+                        photoUri = selectedOwner?.photoUri,
+                        name = currentName,
+                        modifier = Modifier.size(42.dp)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Emerald)
+                            .align(Alignment.BottomEnd)
+                    )
+                }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Morador ativo", style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(currentName, style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(
+                        "Morador ativo",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        currentName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
                     selectedOwner?.apartamento?.takeIf { it.isNotBlank() }?.let {
-                        Text("Apartamento $it", style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            "Apartamento $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-                Icon(Icons.Default.ArrowDropDown, contentDescription = "Trocar morador",
-                    tint = MaterialTheme.colorScheme.primary)
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = "Trocar morador",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -328,10 +370,9 @@ private fun EmptyOwnersCard(onManageOwners: () -> Unit) {
     }
 }
 
-
 @Composable
 private fun StatsSection(totalVisitsToday: Int, activeVisitsCount: Int, totalOwners: Int) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         StatCard(icon = Icons.Default.CalendarMonth, value = "$totalVisitsToday", label = "Hoje", gradient = GradientGold, modifier = Modifier.weight(1f))
         StatCard(icon = Icons.Default.Visibility, value = "$activeVisitsCount", label = "No local", gradient = GradientTeal, modifier = Modifier.weight(1f))
         StatCard(icon = Icons.Default.People, value = "$totalOwners", label = "Moradores", gradient = GradientPrimary, modifier = Modifier.weight(1f))
@@ -348,12 +389,22 @@ private fun WelcomeCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            Color.White.copy(alpha = 0.18f)
+        )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.linearGradient(GradientPrimary))
+                .background(
+                    Brush.linearGradient(
+                        colors = GradientHero,
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset(1000f, 1000f)
+                    )
+                )
                 .padding(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -364,34 +415,50 @@ private fun WelcomeCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.16f)),
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.18f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.QrCodeScanner,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF34D399))
+                            )
+                            Text(
+                                text = "PORTARIA ATIVA",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = Color.White.copy(alpha = 0.85f)
+                            )
+                        }
                         Text(
-                            text = "Tudo sob controle",
+                            text = if (ownerName.isBlank()) "Tudo sob controle" else ownerName,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        Text(
-                            text = if (ownerName.isBlank()) "Gerencie o acesso com praticidade" else "Acompanhe o acesso de $ownerName",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.78f)
-                        )
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Button(
                         onClick = onRegisterVisit,
                         colors = ButtonDefaults.buttonColors(
@@ -399,20 +466,26 @@ private fun WelcomeCard(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Nova visita", fontWeight = FontWeight.Bold)
                     }
-                    TextButton(
+                    Button(
                         onClick = onScan,
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.16f),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Ler QR")
+                        Text("Ler QR", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -422,25 +495,40 @@ private fun WelcomeCard(
 
 @Composable
 private fun StatCard(icon: ImageVector, value: String, label: String, gradient: List<Color>, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.height(108.dp), shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
+    Card(
+        modifier = modifier.height(110.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            gradient[0].copy(alpha = 0.25f)
+        )
+    ) {
         Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.linearGradient(colors = gradient, start = androidx.compose.ui.geometry.Offset(0f, 0f), end = androidx.compose.ui.geometry.Offset(1000f, 1000f))
-            ).padding(14.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = gradient,
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset(800f, 800f)
+                    )
+                )
+                .padding(14.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.18f)),
+                        .background(Color.White.copy(alpha = 0.22f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                 }
                 Column {
                     Text(text = value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.8f))
+                    Text(text = label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = Color.White.copy(alpha = 0.85f))
                 }
             }
         }
@@ -456,18 +544,19 @@ private fun QuickActionsSection(
 ) {
     Column {
         Text(text = "Ações Rápidas", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickActionCard(icon = Icons.Default.QrCodeScanner, label = "Escanear QR", gradient = GradientNeon, onClick = onScan, modifier = Modifier.weight(1f))
                 QuickActionCard(icon = Icons.Default.Person, label = "Nova Visita", gradient = GradientTeal, onClick = onRegisterVisit, modifier = Modifier.weight(1f))
             }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickActionCard(icon = Icons.Default.Groups, label = "Moradores", gradient = GradientPrimary, onClick = onManageOwners, modifier = Modifier.weight(1f))
                 QuickActionCard(icon = Icons.Default.History, label = "Histórico", gradient = GradientGold, onClick = onViewHistory, modifier = Modifier.weight(1f))
             }
         }
     }
 }
+
 
 @Composable
 private fun OfflineAlertBanner(onSetOnline: () -> Unit) {

@@ -103,7 +103,8 @@ class LocalDataCrypto @Inject constructor() {
         documento = encryptText(visit.documento),
         apartamento = encryptText(visit.apartamento),
         telefone = encryptText(visit.telefone),
-        motivo = encryptText(visit.motivo)
+        motivo = encryptText(visit.motivo),
+        placa = visit.placa?.let(::encryptText)
     )
 
     fun decryptVisit(visit: VisitEntity): VisitEntity = visit.copy(
@@ -111,6 +112,7 @@ class LocalDataCrypto @Inject constructor() {
         documento = decryptText(visit.documento),
         apartamento = decryptText(visit.apartamento),
         telefone = decryptText(visit.telefone),
-        motivo = decryptText(visit.motivo)
+        motivo = decryptText(visit.motivo),
+        placa = visit.placa?.let(::decryptText)
     )
 }

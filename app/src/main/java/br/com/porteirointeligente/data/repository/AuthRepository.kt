@@ -128,6 +128,24 @@ class AuthRepository @Inject constructor(
         return Result.success(Unit)
     }
 
+    /** Verifica se há uma conta de usuário cadastrada */
+    suspend fun hasRegisteredUser(): Boolean {
+        val prefs = dataStore.data.first()
+        return (prefs[REGISTERED_USERNAME_KEY] ?: prefs[LEGACY_USERNAME_KEY]) != null
+    }
+
+    /** Login via biometria após autenticação bem-sucedida pelo BiometricPrompt */
+    suspend fun loginWithBiometrics(): Result<Unit> {
+        val prefs = dataStore.data.first()
+        val savedUser = prefs[REGISTERED_USERNAME_KEY] ?: prefs[LEGACY_USERNAME_KEY]
+            ?: return Result.failure(Exception("Nenhuma conta cadastrada"))
+
+        dataStore.edit { editPrefs ->
+            editPrefs[AUTHENTICATED_USERNAME_KEY] = savedUser
+        }
+        return Result.success(Unit)
+    }
+
     /** Logout — remove os dados de autenticação */
     suspend fun logout() {
         dataStore.edit { prefs ->

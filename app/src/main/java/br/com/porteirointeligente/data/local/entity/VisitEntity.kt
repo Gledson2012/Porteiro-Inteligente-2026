@@ -33,7 +33,8 @@ data class VisitEntity(
     val motivo: String,
     val dataEntrada: Long,
     val dataSaida: Long? = null,
-    val status: VisitStatus = VisitStatus.ENTRADA_REGISTRADA
+    val status: VisitStatus = VisitStatus.ENTRADA_REGISTRADA,
+    val placa: String? = null
 ) {
     /**
      * Converte a entidade em modelo de domínio.
@@ -48,7 +49,8 @@ data class VisitEntity(
         motivo = motivo,
         dataEntrada = dataEntrada,
         dataSaida = dataSaida,
-        status = status
+        status = status,
+        placa = placa
     )
 
     companion object {
@@ -65,7 +67,8 @@ data class VisitEntity(
             motivo = visit.motivo,
             dataEntrada = visit.dataEntrada,
             dataSaida = visit.dataSaida,
-            status = visit.status
+            status = visit.status,
+            placa = visit.placa
         )
     }
 }

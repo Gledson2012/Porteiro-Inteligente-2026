@@ -13,6 +13,13 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://porteiro-inteligente-2026.vercel.app/">
     
+    <!-- PWA Manifest & Mobile Web App Meta -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#FFB000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Porteiro">
+    
     <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -465,21 +472,34 @@
             user-select: none;
         }
 
-        /* Notch / Dynamic Island */
+        /* Notch / Dynamic Island 2026 */
         .phone-notch {
             position: absolute;
             top: 6px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
-            height: 20px;
-            background: #171E2D;
-            border-radius: 12px;
+            width: 104px;
+            height: 22px;
+            background: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 100px;
             z-index: 999;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
+            transition: all 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            padding: 0 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .phone-notch.island-expanded {
+            width: 270px;
+            height: 34px;
+            background: #0B0F1A;
+            border-color: rgba(255, 176, 0, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 18px rgba(255, 176, 0, 0.25);
         }
 
         .phone-notch-lens {
@@ -487,7 +507,91 @@
             height: 8px;
             background: #090B10;
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .phone-notch-lens::after {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #3B82F6;
+            border-radius: 50%;
+            top: 1px;
+            left: 1px;
+            opacity: 0.7;
+        }
+
+        .dynamic-island-content {
+            display: none;
+            font-size: 10px;
+            font-weight: 700;
+            color: #FFFFFF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.2px;
+        }
+
+        .phone-notch.island-expanded .dynamic-island-content {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            animation: fadeInScreen 0.2s ease-out;
+        }
+
+        /* Light Mode for Phone Simulator */
+        .phone-screen.light-mode {
+            background: #F8FAFD;
+            color: #0F172A;
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+        .phone-screen.light-mode .phone-status {
+            color: #0F172A;
+        }
+        .phone-screen.light-mode .phone-app-title {
+            color: #0F172A;
+        }
+        .phone-screen.light-mode .phone-card {
+            background: #FFFFFF;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+        .phone-screen.light-mode .phone-card div[style*="color: white"],
+        .phone-screen.light-mode .phone-list-item div[style*="color: white"],
+        .phone-screen.light-mode .phone-modal-sheet div[style*="color: white"] {
+            color: #0F172A !important;
+        }
+        .phone-screen.light-mode .phone-stat-card {
+            background: #FFFFFF;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .phone-screen.light-mode .phone-list-item {
+            background: #FFFFFF;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .phone-screen.light-mode .phone-nav-bar {
+            background: rgba(255, 255, 255, 0.96);
+            border-top-color: rgba(0, 0, 0, 0.08);
+        }
+        .phone-screen.light-mode .phone-nav-btn {
+            color: #64748B;
+        }
+        .phone-screen.light-mode .phone-nav-btn.active {
+            color: var(--primary-dark);
+        }
+        .phone-screen.light-mode .phone-input {
+            background: #F1F5F9;
+            color: #0F172A;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        .phone-screen.light-mode .badge-out {
+            background: rgba(0, 0, 0, 0.06);
+            color: #64748B;
         }
 
         .phone-status {
@@ -501,6 +605,7 @@
             color: rgba(255, 255, 255, 0.7);
             z-index: 100;
         }
+
 
         /* Screen Container */
         .screen-container {
@@ -659,23 +764,29 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 10px;
-            background: rgba(255, 255, 255, 0.025);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 9px 11px;
+            background: rgba(255, 255, 255, 0.035);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
             font-size: 11px;
             transition: var(--transition);
         }
 
+        .phone-list-item:hover {
+            border-color: rgba(255, 176, 0, 0.25);
+            transform: translateY(-1px);
+        }
+
         .phone-list-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.06);
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(255, 176, 0, 0.15), rgba(99, 102, 241, 0.15));
+            border: 1px solid rgba(255, 176, 0, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 11px;
             color: var(--primary);
             flex-shrink: 0;
@@ -684,21 +795,52 @@
         .badge-status {
             font-size: 8px;
             font-weight: 800;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 2.5px 7px;
+            border-radius: 6px;
             text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .badge-active { background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.4); }
-        .badge-out { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+        .badge-active {
+            background: rgba(16, 185, 129, 0.18);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .badge-active::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background: #34D399;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px #34D399;
+            animation: pulseDot 1.5s infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .badge-out {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .badge-time {
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
 
         .btn-phone-action {
             background: rgba(255, 176, 0, 0.15);
             border: 1px solid rgba(255, 176, 0, 0.35);
             color: var(--primary);
             border-radius: 6px;
-            padding: 3px 6px;
+            padding: 3px 8px;
             font-size: 9px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
             transition: var(--transition);
         }
@@ -706,7 +848,9 @@
         .btn-phone-action:hover {
             background: var(--primary);
             color: #000;
+            box-shadow: 0 2px 8px rgba(255, 176, 0, 0.3);
         }
+
 
         /* In-Phone Modal Overlay */
         .phone-modal-overlay {
@@ -1394,7 +1538,7 @@
                 <span>Porteiro Inteligente</span>
                 <span class="brand-version-badge">
                     <span class="pulse-dot"></span>
-                    v0.2.0 (2026)
+                    v0.3.0 (2026)
                 </span>
             </a>
 
@@ -1414,7 +1558,7 @@
                 </a>
                 <a href="PorteiroInteligente.apk" class="btn-apk-nav" download>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                    <span>Baixar APK (27.8 MB)</span>
+                    <span>Baixar APK (22.0 MB)</span>
                 </a>
                 <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Abrir Menu">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -1431,7 +1575,7 @@
             <a href="#faq" class="mobile-nav-link" onclick="toggleMobileMenu()">❓ Perguntas Frequentes</a>
             <a href="PorteiroInteligente.apk" class="btn-apk-nav" download style="margin-top: 8px; justify-content: center; width: 100%;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                <span>Baixar APK (v0.2.0 • 27.8 MB)</span>
+                <span>Baixar APK (v0.3.0 • 22.0 MB)</span>
             </a>
         </div>
     </nav>
@@ -1460,7 +1604,7 @@
                     <a href="PorteiroInteligente.apk" class="btn btn-primary" download>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
                         <span>Baixar APK Grátis</span>
-                        <span class="btn-meta">v0.2.0 • 27.8 MB</span>
+                        <span class="btn-meta">v0.3.0 • 22.0 MB</span>
                     </a>
                     <a href="#simulador" class="btn btn-secondary">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
@@ -1477,15 +1621,19 @@
                 <div class="phone-frame">
                     <div class="phone-screen">
                         
-                        <!-- Notch -->
-                        <div class="phone-notch">
+                        <!-- Notch / Dynamic Island 2026 -->
+                        <div class="phone-notch" id="dynamic-island" onclick="showDynamicIsland('Portaria 100% Offline • Pronta', '🛡️')">
                             <div class="phone-notch-lens"></div>
+                            <div class="dynamic-island-content" id="dynamic-island-content">⚡ Portaria Ativa</div>
                         </div>
 
                         <!-- Top Status Bar -->
                         <div class="phone-status">
                             <span id="live-phone-clock">13:10</span>
-                            <span style="font-size: 11px; letter-spacing: 2px;">5G 🔋</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button id="phone-theme-toggle" onclick="togglePhoneTheme()" title="Alternar Modo Escuro / Claro" style="background: none; border: none; font-size: 12px; cursor: pointer; padding: 0; line-height: 1;" aria-label="Alternar Tema">🌙</button>
+                                <span style="font-size: 11px; letter-spacing: 1px;">5G 🔋</span>
+                            </div>
                         </div>
 
                         <!-- Screen Content Area -->
@@ -1558,6 +1706,13 @@
                                     </button>
                                 </div>
 
+                                <!-- Live Search Bar inside Phone -->
+                                <div style="position: relative; margin-bottom: 2px;">
+                                    <input type="text" id="phone-search-input" class="phone-input" placeholder="Buscar visitante, apto..." oninput="onSearchVisitsLive(this.value)" style="padding-left: 26px; padding-right: 24px; font-size: 10px; height: 32px;" />
+                                    <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.6; pointer-events: none;">🔍</span>
+                                    <button id="phone-search-clear" onclick="clearSearchVisits()" style="display: none; position: absolute; right: 8px; top: 7px; background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer;">✕</button>
+                                </div>
+
                                 <!-- Filter Pills -->
                                 <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.03); padding: 3px; border-radius: 8px;">
                                     <button id="filter-btn-all" onclick="filterVisits('all')" style="flex:1; border: none; background: var(--primary); color: #000; font-weight: 800; font-size: 9px; padding: 4px; border-radius: 6px; cursor: pointer;">Todas (<span id="count-all">3</span>)</button>
@@ -1565,10 +1720,11 @@
                                 </div>
 
                                 <!-- Visitors List -->
-                                <div id="phone-visitors-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 380px;">
+                                <div id="phone-visitors-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 340px;">
                                     <!-- Rendered dynamically by JS -->
                                 </div>
                             </div>
+
 
                             <!-- 3. PROFILE SCREEN -->
                             <div id="screen-profile" class="screen-content">
@@ -2032,7 +2188,7 @@
                 <div class="install-card">
                     <div class="install-step-tag">Passo 1</div>
                     <h4>Baixar o Arquivo APK</h4>
-                    <p>Clique no botão <strong>"Baixar APK"</strong> nesta página. O download do arquivo <code>PorteiroInteligente.apk</code> (27.8 MB) começará imediatamente.</p>
+                    <p>Clique no botão <strong>"Baixar APK"</strong> nesta página. O download do arquivo <code>PorteiroInteligente.apk</code> (22.0 MB) começará imediatamente.</p>
                 </div>
                 <div class="install-card">
                     <div class="install-step-tag">Passo 2</div>
@@ -2130,14 +2286,14 @@
                 <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
                     <a href="PorteiroInteligente.apk" class="btn btn-primary" style="padding: 18px 40px; font-size: 16px;" download>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                        <span>Baixar APK do Aplicativo (v0.2.0)</span>
+                        <span>Baixar APK do Aplicativo (v0.3.0)</span>
                     </a>
                     <a href="https://github.com/Gledson2012/Porteiro-Inteligente-2026" target="_blank" rel="noopener" class="btn btn-secondary" style="padding: 18px 30px; font-size: 16px;">
                         <span>Ver Código no GitHub</span>
                     </a>
                 </div>
                 <div style="margin-top: 20px; font-size: 12px; color: var(--text-dim);">
-                    Compatível com Android 8.0 (Oreo) até Android 15 • SHA-256 Verificado • Tamanho: 27.8 MB
+                    Compatível com Android 8.0 (Oreo) até Android 15 • SHA-256 Verificado • Tamanho: 22.0 MB
                 </div>
             </div>
         </div>
@@ -2208,10 +2364,12 @@
                 isOffline: false,
                 offlineMessage: "Ausente até as 18h. Deixar encomendas com o Sr. José (Ap 41)."
             },
+            currentFilter: 'all',
+            searchQuery: '',
             visitors: [
-                { id: 1, name: "Carlos Lima", role: "Entrega", apt: "42", time: "14:30", status: "active", checkoutTime: null },
-                { id: 2, name: "Maria Souza", role: "Visita", apt: "15", time: "11:10", status: "completed", checkoutTime: "12:40" },
-                { id: 3, name: "José Silva", role: "Prestador Enel", apt: "04", time: "08:45", status: "completed", checkoutTime: "09:30" }
+                { id: 1, name: "Carlos Lima", role: "Entrega Mercado Livre", apt: "42", time: "14:30", relative: "Há 12 min", status: "active", checkoutTime: null },
+                { id: 2, name: "Maria Souza", role: "Visita Familiar", apt: "15", time: "11:10", relative: "Há 3h", status: "completed", checkoutTime: "12:40" },
+                { id: 3, name: "José Silva", role: "Prestador Enel", apt: "04", time: "08:45", relative: "Há 5h", status: "completed", checkoutTime: "09:30" }
             ],
             phoneQrInstance: null,
             sheetQrInstance: null
@@ -2226,6 +2384,50 @@
             renderVisitorsList();
             updateMetrics();
         });
+
+        // Dynamic Island 2026 Controller
+        function showDynamicIsland(message, icon = "⚡") {
+            const island = document.getElementById('dynamic-island');
+            const content = document.getElementById('dynamic-island-content');
+            if (!island || !content) return;
+
+            content.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+            island.classList.add('island-expanded');
+
+            clearTimeout(window._islandTimer);
+            window._islandTimer = setTimeout(() => {
+                island.classList.remove('island-expanded');
+            }, 3800);
+        }
+
+        // Phone Dark/Light Theme Toggle
+        function togglePhoneTheme() {
+            const screen = document.querySelector('.phone-screen');
+            const toggleBtn = document.getElementById('phone-theme-toggle');
+            if (!screen) return;
+
+            const isLight = screen.classList.toggle('light-mode');
+            if (toggleBtn) {
+                toggleBtn.textContent = isLight ? '☀️' : '🌙';
+                toggleBtn.title = isLight ? 'Alternar para Modo Escuro' : 'Alternar para Modo Claro';
+            }
+            showDynamicIsland(isLight ? "Tema Claro Ativado" : "Tema Escuro OLED Ativado", isLight ? "☀️" : "🌙");
+            playAudioBeep(650, 0.08);
+        }
+
+        // Search visitors inside simulator
+        function onSearchVisitsLive(query) {
+            appState.searchQuery = (query || '').trim().toLowerCase();
+            const clearBtn = document.getElementById('phone-search-clear');
+            if (clearBtn) clearBtn.style.display = appState.searchQuery ? 'block' : 'none';
+            renderVisitorsList();
+        }
+
+        function clearSearchVisits() {
+            const input = document.getElementById('phone-search-input');
+            if (input) input.value = '';
+            onSearchVisitsLive('');
+        }
 
         // Digital Clock
         function updateLiveClock() {
@@ -2331,15 +2533,39 @@
             renderSheetQrCode();
         }
 
-        // Visitors List Rendering with Interactive Checkout
-        function renderVisitorsList(filter = 'all') {
+        // Visitors List Rendering with Interactive Checkout and Search
+        function renderVisitorsList(filter = null) {
+            if (filter) appState.currentFilter = filter;
+            else filter = appState.currentFilter || 'all';
+
             const listEl = document.getElementById('phone-visitors-list');
             if (!listEl) return;
             listEl.innerHTML = '';
 
             let filtered = appState.visitors;
             if (filter === 'active') {
-                filtered = appState.visitors.filter(v => v.status === 'active');
+                filtered = filtered.filter(v => v.status === 'active');
+            }
+
+            if (appState.searchQuery) {
+                const q = appState.searchQuery;
+                filtered = filtered.filter(v => 
+                    v.name.toLowerCase().includes(q) || 
+                    v.apt.toLowerCase().includes(q) || 
+                    v.role.toLowerCase().includes(q)
+                );
+            }
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div style="text-align: center; padding: 28px 10px; color: var(--text-muted); font-size: 10px;">
+                        <div style="font-size: 26px; margin-bottom: 8px;">🔍</div>
+                        <div style="font-weight: 700; color: white;">Nenhum visitante encontrado</div>
+                        <div style="font-size: 9px; margin-top: 4px;">Tente buscar por outro termo</div>
+                    </div>
+                `;
+                updateMetrics();
+                return;
             }
 
             filtered.forEach(v => {
@@ -2353,14 +2579,19 @@
                     : `<span class="badge-status badge-out">Saída ${v.checkoutTime || ''}</span>`;
 
                 const actionBtn = isActive
-                    ? `<button class="btn-phone-action" onclick="registerExit(${v.id})">Saída</button>`
+                    ? `<button class="btn-phone-action" onclick="registerExit(${v.id})" title="Registrar saída">Saída</button>`
                     : ``;
+
+                const timeLabel = v.relative ? `${v.time} • ${v.relative}` : v.time;
 
                 item.innerHTML = `
                     <div class="phone-list-avatar">${initials}</div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.name}</div>
-                        <div style="font-size: 9px; color: var(--text-muted);">${v.role} • Ap ${v.apt} • ${v.time}</div>
+                        <div style="font-size: 9px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            ${v.role} • Ap ${v.apt}
+                        </div>
+                        <div class="badge-time">${timeLabel}</div>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                         ${statusBadge}
@@ -2374,6 +2605,7 @@
         }
 
         function filterVisits(type) {
+            appState.currentFilter = type;
             document.getElementById('filter-btn-all').style.background = type === 'all' ? 'var(--primary)' : 'transparent';
             document.getElementById('filter-btn-all').style.color = type === 'all' ? '#000' : 'var(--text-muted)';
             document.getElementById('filter-btn-active').style.background = type === 'active' ? 'var(--primary)' : 'transparent';
@@ -2390,9 +2622,11 @@
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 visitor.status = 'completed';
                 visitor.checkoutTime = `${hours}:${minutes}`;
+                visitor.relative = "Agora";
                 renderVisitorsList();
                 playAudioBeep(600, 0.1);
                 showToast(`Saída de ${visitor.name} registrada!`);
+                showDynamicIsland(`Saída: ${visitor.name}`, "🚪");
             }
         }
 
@@ -2423,6 +2657,7 @@
                 role,
                 apt,
                 time,
+                relative: "Agora",
                 status: 'active',
                 checkoutTime: null
             });
@@ -2431,9 +2666,11 @@
             nameInput.value = '';
             renderVisitorsList();
             playAudioBeep(880, 0.15);
-            showToast(`Entrada de ${name} registrada com sucesso!`);
+            showToast(`Entrada de ${name} registrada!`);
+            showDynamicIsland(`Entrada: ${name} (Ap ${apt})`, "✅");
             changeScreen('history');
         }
+
 
         // Scanner Modal
         function openScannerModal() {
@@ -2502,14 +2739,17 @@
             appState.visitors.unshift({
                 id: appState.visitors.length + 1,
                 name: "Entregador Mercado Livre",
-                role: "Entrega",
+                role: "Entrega Encomenda",
                 apt: appState.resident.apt,
                 time,
+                relative: "Agora",
                 status: 'active',
                 checkoutTime: null
             });
             renderVisitorsList();
+            playAudioBeep(880, 0.15);
             showToast("Entrada registrada no Livro!");
+            showDynamicIsland(`Encomenda: Ap ${appState.resident.apt}`, "📦");
             changeScreen('history');
         }
 
@@ -2565,14 +2805,19 @@
                 desc.textContent = "Status: Ausente (Modo Offline Ativo)";
                 desc.style.color = "var(--danger)";
                 showToast("Modo Ausência ativado!");
+                showDynamicIsland("Modo Ausência: Offline Ativo", "⛔");
+                playAudioBeep(450, 0.12);
             } else {
                 toggle.style.background = 'rgba(255,255,255,0.1)';
                 knob.style.left = '3px';
                 desc.textContent = "Status: Disponível (Normal)";
                 desc.style.color = "var(--accent)";
                 showToast("Modo normal restaurado.");
+                showDynamicIsland("Portaria: Online Disponível", "🟢");
+                playAudioBeep(750, 0.1);
             }
         }
+
 
         function testWhatsAppClick() {
             const cleanPhone = appState.resident.phone.replace(/\D/g, '');
@@ -2667,6 +2912,13 @@
         function toggleFaq(element) {
             const item = element.parentElement;
             item.classList.toggle('active');
+        }
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
         }
     </script>
 </body>

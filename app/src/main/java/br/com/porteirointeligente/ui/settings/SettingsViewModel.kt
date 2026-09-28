@@ -44,6 +44,20 @@ class SettingsViewModel @Inject constructor(
             initialValue = false
         )
 
+    val flagSecureState: StateFlow<Boolean> = themeManager.flagSecureFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
+
+    val biometricLoginState: StateFlow<Boolean> = themeManager.biometricLoginFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = true
+        )
+
     private val _owner = MutableStateFlow<Owner?>(null)
     val owner: StateFlow<Owner?> = _owner
 
@@ -91,6 +105,18 @@ class SettingsViewModel @Inject constructor(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             themeManager.setDynamicColor(enabled)
+        }
+    }
+
+    fun setFlagSecure(enabled: Boolean) {
+        viewModelScope.launch {
+            themeManager.setFlagSecure(enabled)
+        }
+    }
+
+    fun setBiometricLogin(enabled: Boolean) {
+        viewModelScope.launch {
+            themeManager.setBiometricLogin(enabled)
         }
     }
 

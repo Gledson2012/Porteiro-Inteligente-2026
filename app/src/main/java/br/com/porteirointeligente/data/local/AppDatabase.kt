@@ -26,7 +26,7 @@ import br.com.porteirointeligente.data.local.entity.VisitEntity
         VisitEntity::class,
         OwnerEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -97,6 +97,15 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * Adiciona a coluna opcional de placa do veículo na tabela de visitas.
+         */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE visits ADD COLUMN placa TEXT")
+            }
+        }
+
+        /**
          * Cria a instância do banco de dados.
          */
         fun create(context: Context): AppDatabase =
@@ -105,7 +114,7 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .build()
     }
 }

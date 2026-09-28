@@ -2,6 +2,7 @@ package br.com.porteirointeligente.ui.visit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Visit
 import br.com.porteirointeligente.domain.model.VisitStatus
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class VisitRegistrationViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
-    private val ownerSelectionManager: OwnerSelectionManager
+    private val ownerSelectionManager: OwnerSelectionManager,
+    private val ownerRepository: OwnerRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<VisitRegistrationUIState>(VisitRegistrationUIState.Idle)
@@ -26,7 +28,8 @@ class VisitRegistrationViewModel @Inject constructor(
         documento: String,
         apartamento: String,
         telefone: String,
-        motivo: String
+        motivo: String,
+        placa: String = ""
     ) {
         if (nome.isBlank() || apartamento.isBlank()) {
             _uiState.value = VisitRegistrationUIState.Error("Nome e apartamento são obrigatórios.")
@@ -35,19 +38,27 @@ class VisitRegistrationViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = VisitRegistrationUIState.Loading
+            val ownerId = ownerSelectionManager.getSelectedOwnerId()
+            val owner = ownerId?.let { ownerRepository?.getOwnerById(it) }
+
             val visit = Visit(
-                ownerId = ownerSelectionManager.getSelectedOwnerId(),
+                ownerId = ownerId,
                 nome = nome.trim(),
                 documento = documento.trim(),
                 apartamento = apartamento.trim(),
                 telefone = telefone.trim(),
                 motivo = motivo.trim(),
                 dataEntrada = System.currentTimeMillis(),
-                status = VisitStatus.ENTRADA_REGISTRADA
+                status = VisitStatus.ENTRADA_REGISTRADA,
+                placa = placa.trim().takeIf { it.isNotBlank() }
             )
             try {
-                visitRepository.insertVisit(visit)
-                _uiState.value = VisitRegistrationUIState.Success
+                val savedVisit = visitRepository.insertVisit(visit)
+                _uiState.value = VisitRegistrationUIState.Success(
+                    visit = savedVisit,
+                    ownerPhone = owner?.telefone,
+                    ownerName = owner?.nome
+                )
             } catch (e: Exception) {
                 _uiState.value = VisitRegistrationUIState.Error(e.message ?: "Erro desconhecido")
             }
@@ -58,6 +69,10 @@ class VisitRegistrationViewModel @Inject constructor(
 sealed interface VisitRegistrationUIState {
     object Idle : VisitRegistrationUIState
     object Loading : VisitRegistrationUIState
-    object Success : VisitRegistrationUIState
+    data class Success(
+        val visit: Visit? = null,
+        val ownerPhone: String? = null,
+        val ownerName: String? = null
+    ) : VisitRegistrationUIState
     data class Error(val message: String) : VisitRegistrationUIState
 }

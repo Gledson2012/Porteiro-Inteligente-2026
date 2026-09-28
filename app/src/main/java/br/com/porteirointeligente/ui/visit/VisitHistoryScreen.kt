@@ -12,8 +12,10 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +46,7 @@ fun VisitHistoryScreen(
     onNavigateToRegister: () -> Unit,
     viewModel: VisitHistoryViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,6 +77,15 @@ fun VisitHistoryScreen(
                 },
                 actions = {
                     val successState = uiState as? VisitHistoryUIState.Success
+                    if (successState?.visits?.isNotEmpty() == true) {
+                        IconButton(
+                            onClick = {
+                                br.com.porteirointeligente.util.VisitReportExporter.shareCsvReport(context, successState.visits)
+                            }
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Exportar Relatório CSV")
+                        }
+                    }
                     if (successState?.visits?.isNotEmpty() == true && successState.selectedOwnerId != null) {
                         var showClearAllConfirm by remember { mutableStateOf(false) }
                         IconButton(onClick = { showClearAllConfirm = true }) {
@@ -227,7 +240,8 @@ fun VisitHistoryScreen(
                         it.apartamento.contains(searchQuery, ignoreCase = true) ||
                         it.motivo.contains(searchQuery, ignoreCase = true) ||
                         it.documento.contains(searchQuery, ignoreCase = true) ||
-                        it.telefone.contains(searchQuery, ignoreCase = true)
+                        it.telefone.contains(searchQuery, ignoreCase = true) ||
+                        (it.placa != null && it.placa.contains(searchQuery, ignoreCase = true))
                     }.sortedByDescending { it.dataEntrada }
 
                     if (visits.isEmpty()) {
@@ -344,27 +358,27 @@ fun FilterChips(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FilterChip(
             selected = selectedFilter == VisitHistoryViewModel.Filter.ALL,
             onClick = { onFilterSelected(VisitHistoryViewModel.Filter.ALL) },
-            label = { Text("Todas") },
-            shape = RoundedCornerShape(10.dp)
+            label = { Text("Todas", fontWeight = FontWeight.Bold) },
+            shape = RoundedCornerShape(12.dp)
         )
         FilterChip(
             selected = selectedFilter == VisitHistoryViewModel.Filter.ACTIVE,
             onClick = { onFilterSelected(VisitHistoryViewModel.Filter.ACTIVE) },
-            label = { Text("Ativas") },
-            shape = RoundedCornerShape(10.dp)
+            label = { Text("No Prédio", fontWeight = FontWeight.Bold) },
+            shape = RoundedCornerShape(12.dp)
         )
         FilterChip(
             selected = selectedFilter == VisitHistoryViewModel.Filter.COMPLETED,
             onClick = { onFilterSelected(VisitHistoryViewModel.Filter.COMPLETED) },
-            label = { Text("Concluídas") },
-            shape = RoundedCornerShape(10.dp)
+            label = { Text("Concluídas", fontWeight = FontWeight.Bold) },
+            shape = RoundedCornerShape(12.dp)
         )
     }
 }
@@ -374,17 +388,17 @@ fun StatusBadge(status: VisitStatus) {
     val (text, containerColor, contentColor) = when (status) {
         VisitStatus.ENTRADA_REGISTRADA -> Triple(
             "No Prédio",
-            Emerald.copy(alpha = 0.12f),
+            Emerald.copy(alpha = 0.14f),
             Emerald
         )
         VisitStatus.SAIDA_REGISTRADA -> Triple(
             "Concluída",
-            Amber.copy(alpha = 0.12f),
+            Amber.copy(alpha = 0.14f),
             Amber
         )
         VisitStatus.CANCELADA -> Triple(
             "Cancelada",
-            Rose.copy(alpha = 0.12f),
+            Rose.copy(alpha = 0.14f),
             Rose
         )
     }
@@ -392,14 +406,25 @@ fun StatusBadge(status: VisitStatus) {
     Surface(
         color = containerColor,
         contentColor = contentColor,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(20.dp),
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(contentColor)
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -413,33 +438,51 @@ fun HistoryVisitItem(
     
     val statusColor = when (visit.status) {
         VisitStatus.ENTRADA_REGISTRADA -> Emerald
-        VisitStatus.SAIDA_REGISTRADA -> Amber
+        VisitStatus.SAIDA_REGISTRADA -> MaterialTheme.colorScheme.primary
         VisitStatus.CANCELADA -> Rose
+    }
+
+    val initials = remember(visit.nome) {
+        if (visit.nome.isNotBlank()) {
+            visit.nome.trim().split(" ")
+                .mapNotNull { it.firstOrNull()?.uppercase() }
+                .take(2)
+                .joinToString("")
+        } else "V"
+    }
+
+    val relativeTime = remember(visit.dataEntrada) {
+        formatRelativeTime(visit.dataEntrada)
     }
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(0.dp)
+                .height(IntrinsicSize.Min)
         ) {
-            // Color accent bar
+            // Left vertical accent bar
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .background(statusColor.copy(alpha = 0.7f))
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(statusColor)
             )
-            
+
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -448,18 +491,60 @@ fun HistoryVisitItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = visit.nome,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Apto: ${visit.apartamento}${if (visit.motivo.isNotBlank()) " • ${visit.motivo}" else ""}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = initials,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = visit.nome,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Apto: ${visit.apartamento}${if (visit.motivo.isNotBlank()) " • ${visit.motivo}" else ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            if (!visit.placa.isNullOrBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.padding(top = 2.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DirectionsCar,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Placa: ${visit.placa.uppercase()}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
                     }
                     
                     Row(
@@ -515,11 +600,20 @@ fun HistoryVisitItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = "Entrada: ${sdf.format(Date(visit.dataEntrada))}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Entrada: ${sdf.format(Date(visit.dataEntrada))}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = "($relativeTime)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                         if (visit.dataSaida != null) {
                             Text(
                                 text = "Saída: ${sdf.format(Date(visit.dataSaida))}",
@@ -534,9 +628,9 @@ fun HistoryVisitItem(
                         FilledTonalButton(
                             onClick = { onRegistrarSaida(visit) },
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = statusColor.copy(alpha = 0.12f),
+                                containerColor = statusColor.copy(alpha = 0.14f),
                                 contentColor = statusColor
                             )
                         ) {
@@ -559,3 +653,4 @@ fun HistoryVisitItem(
         }
     }
 }
+

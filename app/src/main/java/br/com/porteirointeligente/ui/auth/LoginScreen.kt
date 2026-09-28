@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
@@ -20,6 +21,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -46,6 +48,16 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     val loginState by viewModel.loginState.collectAsState()
     val focusManager = LocalFocusManager.current
+
+    val context = LocalContext.current
+    val activity = context as? androidx.fragment.app.FragmentActivity
+    val hasUser by viewModel.hasRegisteredUser.collectAsState()
+    val isBiometricPrefEnabled by viewModel.isBiometricPreferenceEnabled.collectAsState()
+    val isHardwareBiometricAvailable = remember(context) {
+        br.com.porteirointeligente.util.BiometricHelper.isBiometricAvailable(context)
+    }
+    val canUseBiometric = hasUser && isBiometricPrefEnabled && isHardwareBiometricAvailable && activity != null
+    var biometricErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(loginState) {
         if (loginState is LoginState.Success) {
@@ -260,6 +272,66 @@ fun LoginScreen(
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    // Biometric button
+                    if (canUseBiometric) {
+                        OutlinedButton(
+                            onClick = {
+                                biometricErrorMessage = null
+                                activity?.let { act ->
+                                    br.com.porteirointeligente.util.BiometricHelper.showBiometricPrompt(
+                                        activity = act,
+                                        title = "Acesso Rápido",
+                                        subtitle = "Autentique com sua digital ou rosto para entrar",
+                                        onSuccess = {
+                                            viewModel.loginWithBiometrics()
+                                        },
+                                        onError = { err ->
+                                            biometricErrorMessage = err
+                                        }
+                                    )
+                                }
+                            },
+                            enabled = loginState !is LoginState.Loading,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Fingerprint,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "ENTRAR COM BIOMETRIA",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+
+                    // Biometric Error message
+                    biometricErrorMessage?.let { errMsg ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+                        ) {
+                            Text(
+                                text = errMsg,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }

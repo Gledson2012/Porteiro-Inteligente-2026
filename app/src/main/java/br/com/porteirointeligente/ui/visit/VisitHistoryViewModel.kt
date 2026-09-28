@@ -38,23 +38,25 @@ class VisitHistoryViewModel @Inject constructor(
                 combine(_filter, ownerSelectionManager.selectedOwnerId) { filter, selectedOwnerId ->
                     filter to selectedOwnerId
                 }.flatMapLatest { (filter, selectedOwnerId) ->
-                    when (filter) {
+                    val visitsFlow = when (filter) {
                         Filter.ALL -> visitRepository.observeAllVisits()
                         Filter.ACTIVE -> visitRepository.observeVisitsByStatus(VisitStatus.ENTRADA_REGISTRADA)
                         Filter.COMPLETED -> visitRepository.observeVisitsByStatus(VisitStatus.SAIDA_REGISTRADA)
-                    }.map { visits ->
-                        if (selectedOwnerId == null) {
+                    }
+                    visitsFlow.map { visits ->
+                        val filteredVisits = if (selectedOwnerId == null) {
                             visits
                         } else {
                             // Registros nulos são ambíguos quando há mais de um morador e não
                             // podem aparecer no histórico de um proprietário arbitrário.
                             visits.filter { it.ownerId == selectedOwnerId }
                         }
+                        Triple(filteredVisits, filter, selectedOwnerId)
                     }
-                }.collect { visits ->
+                }.collect { (visits, filter, selectedOwnerId) ->
                     _uiState.value = VisitHistoryUIState.Success(
                         visits = visits,
-                        filter = _filter.value,
+                        filter = filter,
                         selectedOwnerId = selectedOwnerId
                     )
                 }

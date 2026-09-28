@@ -190,10 +190,17 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'no-referrer');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
-  );
+  if (req.path.startsWith('/api') || req.path.startsWith('/scan')) {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+    );
+  } else {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline'; base-uri 'self'"
+    );
+  }
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   if (process.env.NODE_ENV === 'production') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -441,6 +448,26 @@ app.post('/api/login', authRateLimit, requireDatabase, (req, res) => {
   }
 });
 
+
+// =====================
+// Landing Page e Recursos Públicos
+// =====================
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+app.get('/qrcode.min.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'qrcode.min.js'));
+});
+
+app.get('/PorteiroInteligente.apk', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'PorteiroInteligente.apk'));
+});
+
+app.get('/app-version.json', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'app-version.json'));
+});
 
 // =====================
 // QR Code Scan - Rota Pública

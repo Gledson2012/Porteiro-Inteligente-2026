@@ -58,16 +58,25 @@ val Slate850 = Color(0xFF172033)
 val Slate900 = Color(0xFF0F172A)
 val Slate950 = Color(0xFF020617)
 
-// ── Superfícies ──
-val SurfaceLight     = Color(0xFFF6F8FC)       // Fundo claro premium
-val SurfaceDark      = Color(0xFF0B0F1A)        // Fundo escuro profundo
-val SurfaceContainer = Color(0xFFFFFFFF)        // Cards/containers light
-val SurfaceContainerDark = Color(0xFF141A2E)    // Cards/containers dark
-val SurfaceElevated  = Color(0xFF1A2240)        // Superfície elevada dark
+// ── Superfícies & Containers ──
+val SurfaceLight         = Color(0xFFF8FAFD)       // Fundo claro ultra-limpo
+val SurfaceDark          = Color(0xFF090D16)       // Fundo escuro OLED profundo
+val SurfaceContainer     = Color(0xFFFFFFFF)       // Cards/containers light
+val SurfaceContainerDark = Color(0xFF121726)       // Cards/containers dark
+val SurfaceElevated      = Color(0xFF192033)       // Superfície elevada dark
+val SurfaceElevatedLight = Color(0xFFEDF2F9)       // Superfície elevada light
+
+// ── Bordas e Vidro (Glassmorphism 2026) ──
+val CardBorderLight      = Color(0x180F172A)       // Borda sutil card light
+val CardBorderDark       = Color(0x1FFFFFFF)       // Borda sutil card dark
+val GlassBorderLight     = Color(0x220F172A)
+val GlassBorderDark      = Color(0x33FFFFFF)
+val GlassSurfaceLight    = Color(0xF5FFFFFF)
+val GlassSurfaceDark     = Color(0xEB121726)
 
 // ── Textos ──
 val TextOnLight      = Color(0xFF0F172A)
-val TextOnDark       = Color(0xFFF1F5F9)
+val TextOnDark       = Color(0xFFF8FAFC)
 val TextSecondary    = Color(0xFF64748B)
 val TextMuted        = Color(0xFF94A3B8)
 
@@ -75,6 +84,7 @@ val TextMuted        = Color(0xFF94A3B8)
 val Emerald = Color(0xFF10B981)
 val EmeraldDark = Color(0xFF059669)
 val EmeraldLight = Color(0xFFD1FAE5)
+val EmeraldPulse = Color(0xFF34D399)
 val Rose = Color(0xFFF43F5E)
 val RoseDark = Color(0xFFE11D48)
 val RoseLight = Color(0xFFFFE4E6)
@@ -82,16 +92,19 @@ val Amber = Color(0xFFF59E0B)
 val AmberDark = Color(0xFFD97706)
 val AmberLight = Color(0xFFFEF3C7)
 
-// ── Gradientes Premium ──
-val GradientPrimary = listOf(Indigo60, Color(0xFF6C63FF))     // Indigo → Purple
-val GradientGold    = listOf(Gold60, Color(0xFFF59E0B))       // Gold → Amber
-val GradientTeal    = listOf(Teal60, Color(0xFF10B981))       // Teal → Emerald
-val GradientRose    = listOf(Rose, Color(0xFFFB7185))         // Rose → Coral
-val GradientNeon    = listOf(Teal60, Indigo60)                // Teal → Indigo
-val GradientDark    = listOf(Slate800, Slate900)              // Deep → Darker
+// ── Gradientes Premium 2026 ──
+val GradientPrimary = listOf(Indigo60, Color(0xFF6C63FF))            // Indigo → Purple
+val GradientHero    = listOf(Color(0xFF4338CA), Indigo60, Color(0xFF8B5CF6)) // Deep Indigo → Purple → Violet
+val GradientGold    = listOf(Gold60, Color(0xFFF59E0B))              // Gold → Amber
+val GradientTeal    = listOf(Teal60, Color(0xFF10B981))              // Teal → Emerald
+val GradientRose    = listOf(Rose, Color(0xFFFB7185))                // Rose → Coral
+val GradientNeon    = listOf(Teal60, Indigo60)                       // Teal → Indigo
+val GradientDark    = listOf(Slate800, Slate900)                     // Deep → Darker
+val GradientCardDark= listOf(Color(0xFF161C2E), Color(0xFF0E1322))   // Card escuro sutil
 
 // ── Splash ──
 val SplashGradient = listOf(Indigo50, Color(0xFF3B2D8A), Indigo40)
 
 // ── Scanner Overlay ──
 val ScannerOverlay = Color(0xCC05070B)
+

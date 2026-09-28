@@ -61,8 +61,12 @@ class SettingsViewModelTest {
 
         every { themeManager.themeFlow } returns flowOf(AppTheme.SYSTEM)
         every { themeManager.dynamicColorFlow } returns flowOf(false)
+        every { themeManager.flagSecureFlow } returns flowOf(false)
+        every { themeManager.biometricLoginFlow } returns flowOf(true)
         coEvery { themeManager.setTheme(any()) } just runs
         coEvery { themeManager.setDynamicColor(any()) } just runs
+        coEvery { themeManager.setFlagSecure(any()) } just runs
+        coEvery { themeManager.setBiometricLogin(any()) } just runs
 
         coEvery { ownerRepository.observeAllOwners() } returns flowOf(emptyList())
         coEvery { visitRepository.observeAllVisits() } returns flowOf(emptyList())
