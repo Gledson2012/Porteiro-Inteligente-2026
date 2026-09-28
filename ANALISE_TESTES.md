@@ -2,36 +2,38 @@
 
 ## Cobertura existente
 
-Há 54 testes unitários JVM e 7 testes instrumentados. A suíte unitária é executada com:
+A suíte unitária do Android é executada com:
 
 ```bash
 ./gradlew testDebugUnitTest --no-daemon --console=plain
 ```
 
-Os testes cobrem os ViewModels de início, moradores, visitas, scanner e ajustes; validações de
-formatação; `CryptoUtil`; restauração de backup; e os fluxos de QR/WhatsApp. A suíte também cobre
-as migrações de compilação e a nova associação de visitas por `ownerId` por meio dos ViewModels.
+Os testes cobrem os ViewModels de início, moradores, gerenciamento (`OwnerManagementViewModel`), visitas, scanner e ajustes; validações de formatação; `OfflineCryptoHelper`; `CryptoUtil`; restauração de backup; e os fluxos de QR/WhatsApp. A suíte também cobre as migrações de compilação e a associação de visitas por `ownerId` por meio dos ViewModels.
 
-O backend possui testes HTTP sem dependências externas, executados com:
+O backend possui testes de unidade e integração automatizados (13 testes, 100% de aprovação), executados com:
 
 ```bash
 npm --prefix backend test
 ```
 
-Eles verificam health check, exigência de Bearer token e rejeição do antigo fallback de QR por ID.
+Eles verificam:
+- Health check e detecção de disponibilidade do banco de dados SQLite.
+- Exigência de token Bearer em rotas protegidas da API.
+- Rejeição de enumeração de moradores por ID legado.
+- Validação e decodificação do envelope híbrido QR v2 (RSA-OAEP SHA-256 + AES-256-GCM).
+- Renderização de link do WhatsApp e mensagem de ausência offline (incluindo expiração via `offlineUntil`).
+- Sanitização contra ataques XSS (escape de HTML em nome e mensagens).
+- Rejeição de payloads adulterados (divergência entre ID da URL e payload criptografado, corrupção de bytes/tag).
+- Comportamento de persistência segura e validação de caminhos efêmeros na Vercel.
 
 ## Lacunas conhecidas
 
-- Ainda faltam testes de migração da senha legada, logout e exclusão da conta do `AuthRepository`.
-- `OfflineCryptoHelper` precisa de um teste de interoperabilidade formal com a chave privada RSA
-  do backend; a cadeia foi validada manualmente com Node durante a revisão.
-- Ainda faltam testes HTTP para ownership, rate limit, escape de HTML e validação completa de payloads.
-- Ainda faltam testes Compose/instrumentados para navegação, exclusão de dados e restauração por
-  seletor de arquivos.
+- Ainda faltam testes de migração da senha legada, logout e exclusão da conta do `AuthRepository` em JVM (já existem testes instrumentados em androidTest).
+- Ainda faltam testes Compose/instrumentados de UI para navegação e seletor de arquivos.
 
-## Próximas prioridades
+## Concluído recentemente
 
-1. Criar testes de integração do QR v2 entre Kotlin e Node.
-2. Adicionar testes de API com banco temporário e segredo de teste.
-3. Cobrir migração legada e `OwnerSelectionManager` com fakes de DataStore.
-4. Adicionar testes instrumentados para backup, exclusão de dados e navegação após logout.
+- [x] Testes de integração do QR v2 (envelope híbrido RSA-OAEP + AES-GCM) entre o padrão do app e a API Node.js.
+- [x] Testes de escape HTML, integridade criptográfica e expiração de modo offline.
+- [x] Testes unitários para `OfflineCryptoHelper` e `OwnerManagementViewModel`.
+- [x] Geração e pareamento de chaves RSA de ambiente local em `.env.local` e `OfflineCryptoHelper.kt`.

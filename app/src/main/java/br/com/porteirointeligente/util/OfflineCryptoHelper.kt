@@ -32,8 +32,8 @@ object OfflineCryptoHelper {
 
     // Chave pública; não é um segredo. A chave privada correspondente deve ser configurada
     // no backend através de QR_PRIVATE_KEY.
-    private const val QR_PUBLIC_KEY_DER_BASE64 =
-        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5ouKuaRmdyoEH5AGOHvKahFka/k/Mnl4Yes7J+SveT+4AqLenxQGbXZNncMqWRN1LjPX0Fh2j6HMYnOJfne63Fvo58ye5DWM8xjSlYq2n74nLeTfPKL6hDSPF7WJcOArxk6l2l0zUnC5PwB9fYnoNKZs9B55KeZ3CUEfhrSGqO7tbHkzwVgv3oclhTyJ8FuRk9SRLl7tqmm1N0iGWfy//+j3upQImK/cuyOKPQeS5tztIHr6Q3rwjy2Y5wu3WTxYrrX3LVO8WrleUl5ByfKu+j8LompBl87nhBp33ZDMPyFGMdzrgz9tmv0/D/u+ATUNAW22gcq3RIzWr2ESLKcNtQIDAQAB"
+    const val QR_PUBLIC_KEY_DER_BASE64 =
+        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsH+osIhBriqe0J4RqBrLuTASa3omb9iy9KWq/rbjLRaaG3EBxyydmLokEsIy3hS6YFn16lDTRKOcBVeSIqVtw6X3IWlzfHj5xnsE+eQ5lOaY9YGg4A69PBENuG9uUEKaHwPUCij8P0oERURZ90tihm/zbLoUEV75Qc41w/vFzAdWgCfSKv8aTfKCLypdfqFl2wCLtV0g7Vx89s9EI3e0RGKeTyJQSCr2LdCAH7LIjjZcYdtdxInjb18MupNrpcM93AVVVn0r2Sp7IAcDj5qOLz2lkf8zU6OpOZ/xU0Qg9yzXTvaNjz8tNZleAldIAm2253E0WtwLDxd7QvHOTY/4vwIDAQAB"
 
     fun encryptOwnerData(
         ownerId: Long,
@@ -41,7 +41,8 @@ object OfflineCryptoHelper {
         name: String,
         isOffline: Boolean,
         offlineMessage: String,
-        offlineUntil: Long? = null
+        offlineUntil: Long? = null,
+        publicKeyDerBase64: String = QR_PUBLIC_KEY_DER_BASE64
     ): String? {
         return try {
             val json = JsonObject().apply {
@@ -66,7 +67,7 @@ object OfflineCryptoHelper {
 
             val encryptedBytes = cipher.doFinal(jsonStr.toByteArray(StandardCharsets.UTF_8))
             val publicKey = KeyFactory.getInstance("RSA").generatePublic(
-                X509EncodedKeySpec(Base64Url.decode(QR_PUBLIC_KEY_DER_BASE64))
+                X509EncodedKeySpec(Base64Url.decode(publicKeyDerBase64))
             )
             val encryptedKey = Cipher.getInstance(RSA_ALGORITHM).apply {
                 init(Cipher.ENCRYPT_MODE, publicKey, RSA_OAEP_SPEC)
