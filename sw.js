@@ -1,4 +1,4 @@
-const CACHE_NAME = 'porteiro-inteligente-v2';
+const CACHE_NAME = 'porteiro-inteligente-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -27,6 +27,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Ignora requisições de API dinâmica
   if (event.request.url.includes('/api/') || event.request.url.includes('/scan/')) {
+    return;
+  }
+
+  // Network-First para navegação HTML para garantir que atualizações na Vercel sejam refletidas imediatamente
+  if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html') || caches.match(event.request))
+    );
     return;
   }
 
