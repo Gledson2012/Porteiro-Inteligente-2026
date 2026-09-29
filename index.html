@@ -1750,7 +1750,7 @@
                                     </div>
                                     <div>
                                         <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">WhatsApp (com DDD)</label>
-                                        <input type="text" id="prof-input-phone" class="phone-input" value="(13) 99206-0675" oninput="updateProfileLive()" />
+                                        <input type="text" id="prof-input-phone" class="phone-input" value="(11) 99999-9999" oninput="updateProfileLive()" />
                                     </div>
                                     <div>
                                         <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Condomínio</label>
@@ -1949,7 +1949,7 @@
 
                     <div class="form-group">
                         <label class="form-label">WhatsApp para Receber Entregas (com DDD)</label>
-                        <input type="text" id="gen-phone" class="form-input" value="13992060675" oninput="updatePrintableSheet()" />
+                        <input type="text" id="gen-phone" class="form-input" value="(11) 99999-9999" oninput="updatePrintableSheet()" />
                     </div>
 
                     <div class="form-group">
@@ -2359,7 +2359,7 @@
                 name: "Gledson Crist",
                 apt: "42",
                 block: "B",
-                phone: "13992060675",
+                phone: "11999999999",
                 condo: "Residencial Parque",
                 isOffline: false,
                 offlineMessage: "Ausente até as 18h. Deixar encomendas com o Sr. José (Ap 41)."
@@ -2483,7 +2483,7 @@
             if (!container) return;
             container.innerHTML = '';
 
-            const phone = (document.getElementById('gen-phone')?.value || "13992060675").replace(/\D/g, '');
+            const phone = (document.getElementById('gen-phone')?.value || "11999999999").replace(/\D/g, '');
             const name = document.getElementById('gen-name')?.value || "Morador";
             const condo = document.getElementById('gen-condo')?.value || "Condomínio";
             const unit = document.getElementById('gen-unit')?.value || "Apto";
@@ -2513,7 +2513,7 @@
             appState.resident.name = document.getElementById('prof-input-name').value || "Morador";
             appState.resident.apt = document.getElementById('prof-input-apt').value || "42";
             appState.resident.block = document.getElementById('prof-input-block').value || "B";
-            appState.resident.phone = document.getElementById('prof-input-phone').value || "13992060675";
+            appState.resident.phone = document.getElementById('prof-input-phone').value || "11999999999";
             appState.resident.condo = document.getElementById('prof-input-condo').value || "Residencial";
 
             document.getElementById('mock-resident-name').textContent = `${appState.resident.name} • Apto ${appState.resident.apt}`;
