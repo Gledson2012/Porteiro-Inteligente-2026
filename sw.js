@@ -1,4 +1,4 @@
-const CACHE_NAME = 'porteiro-inteligente-v3';
+const CACHE_NAME = 'porteiro-inteligente-v7';
 const STATIC_ASSETS = [
   './',
   './index.html',

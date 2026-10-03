@@ -191,6 +191,12 @@ class SettingsViewModel @Inject constructor(
         _restoreState.value = RestoreState.Idle
     }
 
+    fun clearVisitsHistory() {
+        viewModelScope.launch {
+            visitRepository.clearAll()
+        }
+    }
+
     fun deleteAllData() {
         viewModelScope.launch {
             localDataStore.clearAll()

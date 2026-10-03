@@ -9,6 +9,7 @@ import android.content.ClipboardManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.porteirointeligente.ui.components.AppSignature
@@ -90,6 +92,7 @@ fun QrCodeScreen(
             }
             is OwnerDetailsViewModel.OwnerDetailsUiState.Success -> {
                 val context = LocalContext.current
+                var showZoomDialog by remember { mutableStateOf(false) }
 
                 Column(
                     modifier = Modifier
@@ -215,20 +218,49 @@ fun QrCodeScreen(
                                 }
                             }
 
-                            // QR Code gerado com ZXing
+                            // QR Code gerado com ZXing (Toque para ampliar)
                             if (state.qrCode != null) {
                                 Box(
-                                    modifier = Modifier.padding(24.dp).size(240.dp).clip(RoundedCornerShape(16.dp)).background(Color.White),
+                                    modifier = Modifier
+                                        .padding(top = 20.dp, bottom = 6.dp)
+                                        .size(240.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Color.White)
+                                        .clickable { showZoomDialog = true },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Image(
                                         bitmap = state.qrCode.asImageBitmap(),
-                                        contentDescription = "QR Code do morador",
+                                        contentDescription = "QR Code do morador - Toque para ampliar",
                                         modifier = Modifier.size(220.dp).padding(8.dp),
                                         contentScale = ContentScale.Fit
                                     )
                                 }
+
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { showZoomDialog = true }
+                                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ZoomIn,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Toque no código para ampliar",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
+
+                            Spacer(Modifier.height(10.dp))
 
                             // URL mascarada (LGPD - sem dados pessoais)
                             Surface(
@@ -257,7 +289,7 @@ fun QrCodeScreen(
                                 }
                             }
 
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(14.dp))
 
                             Surface(
                                 color = if (state.owner.isCurrentlyOffline()) {
@@ -293,7 +325,7 @@ fun QrCodeScreen(
                     // === Ações do QR Code ===
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = {
@@ -313,7 +345,10 @@ fun QrCodeScreen(
                                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "image/png"
                                             putExtra(Intent.EXTRA_STREAM, uri)
-                                            putExtra(Intent.EXTRA_TEXT, "QR Code do ${state.owner.nome} - Ap. ${state.owner.apartamento}\n\nEscaneie para entrar em contato via WhatsApp")
+                                            putExtra(
+                                                Intent.EXTRA_TEXT,
+                                                "🔔 PORTEIRO INTELIGENTE\nMorador: ${state.owner.nome}\nAp. ${state.owner.apartamento}\n\nEscaneie este QR Code para me chamar diretamente no WhatsApp!\nLink: ${state.owner.qrCodePayload}"
+                                            )
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                         context.startActivity(Intent.createChooser(shareIntent, "Compartilhar QR Code"))
@@ -323,13 +358,28 @@ fun QrCodeScreen(
                                     }
                                 }
                             },
-                            modifier = Modifier.weight(1f).height(52.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp)
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Compartilhar", style = MaterialTheme.typography.labelLarge)
+                            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Compartilhar", style = MaterialTheme.typography.labelMedium)
+                        }
+
+                        FilledTonalButton(
+                            onClick = {
+                                state.qrCode?.let { bitmap ->
+                                    saveQrCodeToGallery(context, bitmap, state.owner)
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Salvar PNG", style = MaterialTheme.typography.labelMedium)
                         }
 
                         OutlinedButton(
@@ -338,15 +388,85 @@ fun QrCodeScreen(
                                 clipboard?.setPrimaryClip(
                                     ClipData.newPlainText("Link do QR Code", state.owner.qrCodePayload)
                                 )
-                                Toast.makeText(context, "Link copiado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Link copiado para a área de transferência", Toast.LENGTH_SHORT).show()
                             },
-                            modifier = Modifier.weight(1f).height(52.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp)
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("Copiar link", style = MaterialTheme.typography.labelLarge)
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Copiar Link", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+
+                    // Modal de visualização ampliada (Full-Screen Zoom)
+                    if (showZoomDialog && state.qrCode != null) {
+                        Dialog(onDismissRequest = { showZoomDialog = false }) {
+                            Card(
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(8.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = state.owner.nome,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = "Apto ${state.owner.apartamento}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        IconButton(onClick = { showZoomDialog = false }) {
+                                            Icon(Icons.Default.Close, contentDescription = "Fechar")
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(260.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(Color.White)
+                                            .padding(12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Image(
+                                            bitmap = state.qrCode.asImageBitmap(),
+                                            contentDescription = "QR Code Ampliado",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    }
+
+                                    Text(
+                                        text = "Aponte a câmera do smartphone para escanear",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Button(
+                                        onClick = { showZoomDialog = false },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Fechar")
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -393,5 +513,39 @@ fun QrCodeScreen(
                 }
             }
         }
+    }
+}
+
+private fun saveQrCodeToGallery(
+    context: android.content.Context,
+    bitmap: Bitmap,
+    owner: br.com.porteirointeligente.domain.model.Owner
+) {
+    try {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "qrcode_${owner.apartamento}_${owner.nome.replace(" ", "_")}.png")
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_PICTURES + "/PorteiroInteligente")
+            }
+            val uri = context.contentResolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                context.contentResolver.openOutputStream(uri)?.use { out ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                Toast.makeText(context, "QR Code salvo em Imagens/PorteiroInteligente!", Toast.LENGTH_LONG).show()
+                return
+            }
+        }
+        val cacheDir = File(context.cacheDir, "shared_images")
+        cacheDir.mkdirs()
+        val file = File(cacheDir, "qrcode_${owner.id}.png")
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+        Toast.makeText(context, "QR Code salvo com sucesso!", Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+        Log.e("QRCODE_SAVE", "Erro ao salvar QR Code", e)
+        Toast.makeText(context, "Não foi possível salvar o QR Code", Toast.LENGTH_SHORT).show()
     }
 }

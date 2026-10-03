@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Fingerprint
@@ -107,6 +108,7 @@ fun SettingsScreen(
     var showBackupPassphraseDialog by remember { mutableStateOf(false) }
     var showRestorePassphraseDialog by remember { mutableStateOf(false) }
     var showDeleteDataDialog by remember { mutableStateOf(false) }
+    var showClearVisitsDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var tempMessage by remember { mutableStateOf("") }
     var backupPassphrase by remember { mutableStateOf("") }
@@ -370,6 +372,17 @@ fun SettingsScreen(
                     Divider()
 
                     SettingsClickItem(
+                        icon = Icons.Default.DeleteSweep,
+                        iconBackground = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f),
+                        iconTint = MaterialTheme.colorScheme.error,
+                        title = "Limpar histórico de visitas",
+                        subtitle = "Apaga registros de entradas e saídas mantendo os moradores",
+                        onClick = { showClearVisitsDialog = true }
+                    )
+
+                    Divider()
+
+                    SettingsClickItem(
                         icon = Icons.Default.Delete,
                         iconBackground = MaterialTheme.colorScheme.errorContainer,
                         iconTint = MaterialTheme.colorScheme.onErrorContainer,
@@ -546,6 +559,27 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDataDialog = false }) { Text("Cancelar") }
+            }
+        )
+    }
+
+    if (showClearVisitsDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearVisitsDialog = false },
+            title = { Text("Limpar histórico de visitas?", fontWeight = FontWeight.Bold) },
+            text = {
+                Text("Esta ação apagará todo o histórico de entradas e saídas registradas. O morador e suas configurações não serão afetados.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearVisitsDialog = false
+                        viewModel.clearVisitsHistory()
+                    }
+                ) { Text("Limpar", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearVisitsDialog = false }) { Text("Cancelar") }
             }
         )
     }

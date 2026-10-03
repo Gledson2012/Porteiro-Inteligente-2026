@@ -43,6 +43,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -108,6 +109,11 @@ fun HomeScreen(
         is HomeUIState.Success -> {
             val ownerName = state.selectedOwner?.nome ?: ""
             val greeting = getGreeting()
+            val currentDate = remember {
+                java.text.SimpleDateFormat("EEEE, d 'de' MMMM", java.util.Locale("pt", "BR"))
+                    .format(java.util.Date())
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale("pt", "BR")) else it.toString() }
+            }
 
             Scaffold(
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -117,8 +123,8 @@ fun HomeScreen(
                         title = {
                             Column {
                                 Text(
-                                    text = greeting,
-                                    style = MaterialTheme.typography.titleMedium,
+                                    text = "$greeting • $currentDate",
+                                    style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                 )
                                 Text(
@@ -133,6 +139,15 @@ fun HomeScreen(
                                 OwnerAvatar(
                                     photoUri = state.selectedOwner?.photoUri,
                                     name = state.selectedOwner?.nome ?: ""
+                                )
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = onNavigateToScanner) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCodeScanner,
+                                    contentDescription = "Abrir Scanner",
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         },
@@ -197,7 +212,9 @@ fun HomeScreen(
                         StatsSection(
                             totalVisitsToday = state.totalVisitsToday,
                             activeVisitsCount = state.activeVisitsCount,
-                            totalOwners = state.allOwners.size
+                            totalOwners = state.allOwners.size,
+                            onViewHistory = onNavigateToHistory,
+                            onManageOwners = onNavigateToOwners
                         )
                     }
 
@@ -235,7 +252,10 @@ fun HomeScreen(
                         }
                     } else {
                         items(items = state.recentVisits, key = { it.id }) { visit ->
-                            VisitItem(visit = visit)
+                            VisitItem(
+                                visit = visit,
+                                onRegistrarSaida = viewModel::registrarSaida
+                            )
                         }
                     }
 
@@ -371,11 +391,38 @@ private fun EmptyOwnersCard(onManageOwners: () -> Unit) {
 }
 
 @Composable
-private fun StatsSection(totalVisitsToday: Int, activeVisitsCount: Int, totalOwners: Int) {
+private fun StatsSection(
+    totalVisitsToday: Int,
+    activeVisitsCount: Int,
+    totalOwners: Int,
+    onViewHistory: () -> Unit,
+    onManageOwners: () -> Unit
+) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        StatCard(icon = Icons.Default.CalendarMonth, value = "$totalVisitsToday", label = "Hoje", gradient = GradientGold, modifier = Modifier.weight(1f))
-        StatCard(icon = Icons.Default.Visibility, value = "$activeVisitsCount", label = "No local", gradient = GradientTeal, modifier = Modifier.weight(1f))
-        StatCard(icon = Icons.Default.People, value = "$totalOwners", label = "Moradores", gradient = GradientPrimary, modifier = Modifier.weight(1f))
+        StatCard(
+            icon = Icons.Default.CalendarMonth,
+            value = "$totalVisitsToday",
+            label = "Hoje",
+            gradient = GradientGold,
+            modifier = Modifier.weight(1f),
+            onClick = onViewHistory
+        )
+        StatCard(
+            icon = Icons.Default.Visibility,
+            value = "$activeVisitsCount",
+            label = "No local",
+            gradient = GradientTeal,
+            modifier = Modifier.weight(1f),
+            onClick = onViewHistory
+        )
+        StatCard(
+            icon = Icons.Default.People,
+            value = "$totalOwners",
+            label = "Moradores",
+            gradient = GradientPrimary,
+            modifier = Modifier.weight(1f),
+            onClick = onManageOwners
+        )
     }
 }
 
@@ -494,11 +541,23 @@ private fun WelcomeCard(
 }
 
 @Composable
-private fun StatCard(icon: ImageVector, value: String, label: String, gradient: List<Color>, modifier: Modifier = Modifier) {
+private fun StatCard(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    gradient: List<Color>,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
     Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
         modifier = modifier.height(110.dp),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp,
+            pressedElevation = 5.dp
+        ),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
             gradient[0].copy(alpha = 0.25f)

@@ -143,4 +143,12 @@ class SettingsViewModelTest {
 
         coVerify { ownerRepository.updateOwner(match { it.isOffline && it.offlineMessage == "Estou ausente" }) }
     }
+
+    @Test
+    fun `clearVisitsHistory should call visitRepository clearAll`() {
+        coEvery { visitRepository.clearAll() } just runs
+        viewModel = SettingsViewModel(ownerRepository, visitRepository, themeManager, backupManager, ownerSelectionManager, localDataStore, authRepository)
+        viewModel.clearVisitsHistory()
+        coVerify { visitRepository.clearAll() }
+    }
 }

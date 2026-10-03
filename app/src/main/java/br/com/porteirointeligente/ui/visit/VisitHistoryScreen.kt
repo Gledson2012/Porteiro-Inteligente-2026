@@ -147,17 +147,32 @@ fun VisitHistoryScreen(
                             MiniStatCard(
                                 value = "${state.visits.size}",
                                 label = "Total",
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
+                                selected = currentFilter == VisitHistoryViewModel.Filter.ALL,
+                                onClick = {
+                                    currentFilter = VisitHistoryViewModel.Filter.ALL
+                                    viewModel.setFilter(VisitHistoryViewModel.Filter.ALL)
+                                }
                             )
                             MiniStatCard(
                                 value = "$activeCount",
                                 label = "No local",
-                                color = Emerald
+                                color = Emerald,
+                                selected = currentFilter == VisitHistoryViewModel.Filter.ACTIVE,
+                                onClick = {
+                                    currentFilter = VisitHistoryViewModel.Filter.ACTIVE
+                                    viewModel.setFilter(VisitHistoryViewModel.Filter.ACTIVE)
+                                }
                             )
                             MiniStatCard(
                                 value = "${state.visits.count { it.status == VisitStatus.SAIDA_REGISTRADA }}",
                                 label = "Concluídas",
-                                color = MaterialTheme.colorScheme.secondary
+                                color = MaterialTheme.colorScheme.secondary,
+                                selected = currentFilter == VisitHistoryViewModel.Filter.COMPLETED,
+                                onClick = {
+                                    currentFilter = VisitHistoryViewModel.Filter.COMPLETED
+                                    viewModel.setFilter(VisitHistoryViewModel.Filter.COMPLETED)
+                                }
                             )
                         }
                     }
@@ -320,14 +335,20 @@ fun VisitHistoryScreen(
 private fun RowScope.MiniStatCard(
     value: String,
     label: String,
-    color: Color
+    color: Color,
+    selected: Boolean = false,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
         modifier = Modifier.weight(1f),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.08f)
-        )
+            containerColor = if (selected) color.copy(alpha = 0.2f) else color.copy(alpha = 0.08f)
+        ),
+        border = if (selected) androidx.compose.foundation.BorderStroke(1.5.dp, color) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -344,7 +365,8 @@ private fun RowScope.MiniStatCard(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = Slate400
+                color = if (selected) color else Slate400,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
@@ -378,6 +400,18 @@ fun FilterChips(
             selected = selectedFilter == VisitHistoryViewModel.Filter.COMPLETED,
             onClick = { onFilterSelected(VisitHistoryViewModel.Filter.COMPLETED) },
             label = { Text("Concluídas", fontWeight = FontWeight.Bold) },
+            shape = RoundedCornerShape(12.dp)
+        )
+        FilterChip(
+            selected = selectedFilter == VisitHistoryViewModel.Filter.WITH_PLATE,
+            onClick = { onFilterSelected(VisitHistoryViewModel.Filter.WITH_PLATE) },
+            label = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.DirectionsCar, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Com Placa", fontWeight = FontWeight.Bold)
+                }
+            },
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -525,24 +559,8 @@ fun HistoryVisitItem(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (!visit.placa.isNullOrBlank()) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.padding(top = 2.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DirectionsCar,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(13.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "Placa: ${visit.placa.uppercase()}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                MercosulPlateBadge(plate = visit.placa.uppercase())
                             }
                         }
                     }

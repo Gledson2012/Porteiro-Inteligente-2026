@@ -128,6 +128,20 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
+
+    /**
+     * Registra a saída rápida de uma visita diretamente da tela Início.
+     */
+    fun registrarSaida(visit: Visit) {
+        viewModelScope.launch {
+            visitRepository.updateVisit(
+                visit.copy(
+                    status = br.com.porteirointeligente.domain.model.VisitStatus.SAIDA_REGISTRADA,
+                    dataSaida = System.currentTimeMillis()
+                )
+            )
+        }
+    }
 }
 
 sealed interface HomeUIState {

@@ -37,6 +37,8 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -91,7 +93,8 @@ fun VisitItem(
     visit: Visit,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
-    initiallyExpanded: Boolean = false
+    initiallyExpanded: Boolean = false,
+    onRegistrarSaida: ((Visit) -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(initiallyExpanded) }
 
@@ -197,7 +200,10 @@ fun VisitItem(
                     ),
                     exit = fadeOut(animationSpec = tween(200))
                 ) {
-                    VisitItemExpandedDetails(visit = visit)
+                    VisitItemExpandedDetails(
+                        visit = visit,
+                        onRegistrarSaida = onRegistrarSaida
+                    )
                 }
             }
         }
@@ -413,7 +419,8 @@ private fun VisitItemTimeRow(
 @Composable
 private fun VisitItemExpandedDetails(
     visit: Visit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRegistrarSaida: ((Visit) -> Unit)? = null
 ) {
     Column(modifier = modifier.padding(top = 12.dp)) {
         HorizontalDivider(
@@ -463,6 +470,27 @@ private fun VisitItemExpandedDetails(
                 label = "Saída Registrada",
                 value = formatDateTime(visit.dataSaida)
             )
+        }
+
+        if (visit.status == VisitStatus.ENTRADA_REGISTRADA && onRegistrarSaida != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = { onRegistrarSaida(visit) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Registrar Saída", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

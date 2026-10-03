@@ -187,4 +187,27 @@ class HomeViewModelTest {
         assert(state != null) { "Expected Success state" }
         assert(state?.recentVisits?.size == 5) { "Expected only 5 recent visits, got ${state?.recentVisits?.size}" }
     }
+
+    @Test
+    fun `registrarSaida should update visit status to SAIDA_REGISTRADA and set dataSaida`() {
+        coEvery { ownerRepository.observeAllOwners() } returns flowOf(listOf(testOwner1))
+        every { ownerSelectionManager.selectedOwnerId } returns flowOf(1L)
+        coEvery { ownerSelectionManager.getSelectedOwnerId() } returns 1L
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(testVisit))
+        coEvery { visitRepository.updateVisit(any()) } just runs
+
+        viewModel = HomeViewModel(visitRepository, ownerRepository, ownerSelectionManager)
+
+        viewModel.registrarSaida(testVisit)
+
+        coVerify {
+            visitRepository.updateVisit(
+                match {
+                    it.id == testVisit.id &&
+                        it.status == VisitStatus.SAIDA_REGISTRADA &&
+                        it.dataSaida != null
+                }
+            )
+        }
+    }
 }

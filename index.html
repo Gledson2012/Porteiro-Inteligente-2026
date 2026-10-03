@@ -851,6 +851,105 @@
             box-shadow: 0 2px 8px rgba(255, 176, 0, 0.3);
         }
 
+        /* Mercosul Mini Plate Badge inside Phone */
+        .plate-mercosul-mini {
+            display: inline-flex;
+            flex-direction: column;
+            border: 1px solid #1D4ED8;
+            border-radius: 4px;
+            background: #FFFFFF;
+            overflow: hidden;
+            line-height: 1;
+            font-family: monospace;
+            font-weight: 800;
+            vertical-align: middle;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+            flex-shrink: 0;
+        }
+        .plate-mercosul-header {
+            background: #1E40AF;
+            color: #FFFFFF;
+            font-size: 6px;
+            letter-spacing: 0.6px;
+            padding: 1px 3px;
+            text-align: center;
+            font-weight: 800;
+        }
+        .plate-mercosul-code {
+            color: #0F172A;
+            font-size: 8.5px;
+            padding: 1.5px 3.5px;
+            letter-spacing: 0.8px;
+            text-align: center;
+        }
+
+        /* Interactive Phone Stat Cards */
+        .phone-stat-card.interactive {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .phone-stat-card.interactive:hover {
+            border-color: rgba(255, 176, 0, 0.35);
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-1px);
+        }
+
+        /* Quick Actions Grid on Home */
+        .phone-quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        .phone-quick-btn {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 7px 3px;
+            color: white;
+            font-size: 8px;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .phone-quick-btn:hover {
+            background: rgba(255, 176, 0, 0.12);
+            border-color: rgba(255, 176, 0, 0.35);
+            transform: translateY(-1px);
+        }
+        .phone-quick-icon {
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        /* Section Title Row inside Phone */
+        .phone-section-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1px;
+            margin-top: 2px;
+        }
+
+        /* Home Resident Card */
+        .phone-home-resident-card {
+            background: linear-gradient(135deg, rgba(255, 176, 0, 0.08), rgba(99, 102, 241, 0.05));
+            border: 1px solid rgba(255, 176, 0, 0.22);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        .phone-home-resident-card:hover {
+            border-color: rgba(255, 176, 0, 0.4);
+        }
 
         /* In-Phone Modal Overlay */
         .phone-modal-overlay {
@@ -1543,6 +1642,7 @@
             </a>
 
             <ul class="nav-links">
+                <li><a href="#hero" class="nav-link active">🏠 Início</a></li>
                 <li><a href="#simulador" class="nav-link">📱 Simulador</a></li>
                 <li><a href="#gerador-qr" class="nav-link">🖨️ Placas QR</a></li>
                 <li><a href="#funcionalidades" class="nav-link">✨ Recursos</a></li>
@@ -1567,6 +1667,7 @@
         </div>
         <!-- Mobile Drawer Navigation -->
         <div id="mobile-nav-drawer" class="mobile-nav-drawer">
+            <a href="#hero" class="mobile-nav-link active" onclick="toggleMobileMenu()">🏠 Início</a>
             <a href="#simulador" class="mobile-nav-link" onclick="toggleMobileMenu()">📱 Simulador Interativo</a>
             <a href="#gerador-qr" class="mobile-nav-link" onclick="toggleMobileMenu()">🖨️ Placas QR Portaria</a>
             <a href="#funcionalidades" class="mobile-nav-link" onclick="toggleMobileMenu()">✨ Recursos & Tecnologia</a>
@@ -1581,7 +1682,7 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="hero">
+    <header class="hero" id="hero">
         <div class="container hero-grid">
             <div class="hero-text">
                 <div class="hero-badge">
@@ -1639,58 +1740,91 @@
                         <!-- Screen Content Area -->
                         <div class="screen-container">
                             
-                            <!-- 1. HOME SCREEN -->
+                            <!-- 1. HOME SCREEN (INÍCIO) -->
                             <div id="screen-home" class="screen-content active">
+                                <!-- App Header -->
                                 <div class="phone-app-header">
                                     <div>
-                                        <div style="font-size: 10px; color: var(--text-muted);">Residencial Parque</div>
+                                        <div id="home-greeting-text" style="font-size: 9.5px; color: var(--text-muted); font-weight: 600;">Boa noite, Gledson</div>
                                         <div class="phone-app-title">
                                             Portaria Digital
                                             <span style="width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px var(--accent);"></span>
                                         </div>
                                     </div>
-                                    <button onclick="openScannerModal()" style="background: rgba(255,176,0,0.15); border: 1px solid rgba(255,176,0,0.3); border-radius: 8px; padding: 4px 8px; color: var(--primary); font-size: 10px; font-weight: 700; cursor: pointer;">
-                                        📷 Scanner
+                                    <button onclick="openScannerModal()" style="background: rgba(255,176,0,0.15); border: 1px solid rgba(255,176,0,0.3); border-radius: 8px; padding: 4px 8px; color: var(--primary); font-size: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <span>📷</span> Scanner
                                     </button>
                                 </div>
 
-                                <!-- QR Card -->
-                                <div class="phone-card" style="text-align: center; align-items: center; gap: 6px;">
-                                    <div style="font-size: 11px; font-weight: 800; color: white;">QR Code de Acesso do Morador</div>
-                                    
-                                    <!-- Dynamic Rendered QR Code Container -->
-                                    <div class="phone-qr-box" id="phone-qr-container" onclick="openQrZoomModal()" title="Clique para ampliar / testar">
-                                        <!-- Rendered dynamically by QRCode library -->
+                                <!-- Resident & Quick Access Card -->
+                                <div class="phone-home-resident-card">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                        <div class="phone-qr-box" id="phone-qr-container" onclick="openQrZoomModal()" title="Toque para ampliar ou testar" style="width: 48px; height: 48px; padding: 2px; margin: 0; flex-shrink: 0;">
+                                            <!-- Rendered dynamically -->
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 8px; font-weight: 800; color: #34D399; display: flex; align-items: center; gap: 4px;" id="home-portaria-status">
+                                                <span style="width: 5px; height: 5px; background: #34D399; border-radius: 50%; box-shadow: 0 0 5px #34D399;"></span>
+                                                PORTARIA OPERACIONAL
+                                            </div>
+                                            <div style="font-size: 11px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="mock-resident-name">Gledson Crist • Apto 42</div>
+                                            <div style="font-size: 8px; color: var(--text-muted); margin-top: 1px;">Entregador escaneia e abre direto no WhatsApp</div>
+                                        </div>
                                     </div>
-
-                                    <div style="font-size: 10px; font-weight: 700; color: var(--primary);" id="mock-resident-name">Gledson Crist • Apto 42</div>
-                                    <div style="font-size: 8px; color: var(--text-muted);">Entregador escaneia e abre direto o WhatsApp</div>
+                                    <button onclick="testWhatsAppClick()" style="background: rgba(255,176,0,0.15); border: 1px solid rgba(255,176,0,0.35); color: var(--primary); padding: 5px 8px; border-radius: 8px; font-size: 9px; font-weight: 800; cursor: pointer; flex-shrink: 0;" title="Testar abertura no WhatsApp">
+                                        💬 Testar
+                                    </button>
                                 </div>
 
-                                <!-- Live Metrics -->
+                                <!-- Live Interactive Metrics -->
                                 <div class="phone-stats-grid">
-                                    <div class="phone-stat-card">
+                                    <div class="phone-stat-card interactive" onclick="goToHistoryWithFilter('all')" title="Ver todas as visitas de hoje">
                                         <div class="phone-stat-val" id="stat-today">3</div>
                                         <div class="phone-stat-label">Hoje</div>
                                     </div>
-                                    <div class="phone-stat-card">
+                                    <div class="phone-stat-card interactive" onclick="goToHistoryWithFilter('active')" title="Ver quem está no condomínio agora">
                                         <div class="phone-stat-val" id="stat-active" style="color: var(--accent);">1</div>
                                         <div class="phone-stat-label">No Prédio</div>
                                     </div>
-                                    <div class="phone-stat-card">
+                                    <div class="phone-stat-card interactive" onclick="changeScreen('history')" title="Ver histórico completo">
                                         <div class="phone-stat-val" id="stat-month">24</div>
                                         <div class="phone-stat-label">Mês</div>
                                     </div>
                                 </div>
 
-                                <!-- Action Quick Buttons -->
-                                <div style="display: flex; gap: 6px; margin-top: 2px;">
-                                    <button onclick="openNewVisitModal()" style="flex: 1; padding: 9px; border-radius: 8px; border: none; background: var(--primary); font-size: 10px; font-weight: 800; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                        <span>+ Registrar Visita</span>
+                                <!-- Quick Actions Grid -->
+                                <div class="phone-quick-actions-grid">
+                                    <button onclick="openScannerModal()" class="phone-quick-btn" title="Ler QR Code da portaria">
+                                        <span class="phone-quick-icon">📷</span>
+                                        <span>Scanner QR</span>
                                     </button>
-                                    <button onclick="testWhatsAppClick()" style="flex: 1; padding: 9px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03); font-size: 10px; font-weight: 700; color: white; cursor: pointer;">
-                                        <span>Testar WhatsApp</span>
+                                    <button onclick="openNewVisitModal()" class="phone-quick-btn" title="Registrar nova visita manual">
+                                        <span class="phone-quick-icon">➕</span>
+                                        <span>Nova Visita</span>
                                     </button>
+                                    <button onclick="quickFilterPlates()" class="phone-quick-btn" title="Consultar veículos e placas Mercosul">
+                                        <span class="phone-quick-icon">🚗</span>
+                                        <span>Veículos</span>
+                                    </button>
+                                    <button onclick="toggleOfflineFromHome()" class="phone-quick-btn" id="home-btn-offline" title="Alternar modo ausente da portaria">
+                                        <span class="phone-quick-icon" id="home-icon-offline">🔔</span>
+                                        <span id="home-label-offline">Ausência</span>
+                                    </button>
+                                </div>
+
+                                <!-- Feed: Visitas Recentes -->
+                                <div class="phone-section-title-row">
+                                    <div style="font-size: 11px; font-weight: 800; color: white; display: flex; align-items: center; gap: 5px;">
+                                        <span>📋</span> Visitas Recentes
+                                    </div>
+                                    <button onclick="changeScreen('history')" style="background: none; border: none; color: var(--primary); font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;">
+                                        Ver todas →
+                                    </button>
+                                </div>
+
+                                <!-- Recent Visits Container -->
+                                <div id="home-recent-visits" style="display: flex; flex-direction: column; gap: 6px;">
+                                    <!-- Rendered dynamically by renderHomeRecentVisits() -->
                                 </div>
                             </div>
 
@@ -1699,71 +1833,150 @@
                                 <div class="phone-app-header">
                                     <div>
                                         <div class="phone-app-title">Livro de Visitas</div>
-                                        <div style="font-size: 9px; color: var(--text-muted);">Registro local cifrado (Room SQLite)</div>
+                                        <div style="font-size: 9px; color: var(--text-muted);">Registro local seguro (Room SQLite)</div>
                                     </div>
-                                    <button onclick="openNewVisitModal()" style="background: var(--primary); border: none; border-radius: 6px; padding: 3px 8px; color: #000; font-size: 10px; font-weight: 800; cursor: pointer;">
-                                        + Novo
-                                    </button>
+                                    <div style="display: flex; gap: 4px; align-items: center;">
+                                        <button onclick="exportVisitsCsv()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 6px; padding: 3px 6px; color: #fff; font-size: 9.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px;" title="Exportar Histórico em CSV">
+                                            <span>📊</span> CSV
+                                        </button>
+                                        <button onclick="openNewVisitModal()" style="background: var(--primary); border: none; border-radius: 6px; padding: 3px 8px; color: #000; font-size: 10px; font-weight: 800; cursor: pointer;">
+                                            + Novo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Mini Stat KPI Cards (Interactive Filters) -->
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 2px;">
+                                    <div id="stat-card-all" onclick="filterVisits('all')" style="background: rgba(255, 176, 0, 0.08); border: 1px solid var(--primary); border-radius: 8px; padding: 5px 6px; cursor: pointer; text-align: center; transition: all 0.2s;" title="Ver todas as visitas">
+                                        <div style="font-size: 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total</div>
+                                        <div id="hist-stat-total" style="font-size: 13px; font-weight: 800; color: white;">4</div>
+                                    </div>
+                                    <div id="stat-card-active" onclick="filterVisits('active')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 5px 6px; cursor: pointer; text-align: center; transition: all 0.2s;" title="Filtrar presentes no local">
+                                        <div style="font-size: 8px; color: #10b981; font-weight: 700; text-transform: uppercase;">No Local</div>
+                                        <div id="hist-stat-active" style="font-size: 13px; font-weight: 800; color: #10b981;">1</div>
+                                    </div>
+                                    <div id="stat-card-completed" onclick="filterVisits('completed')" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 5px 6px; cursor: pointer; text-align: center; transition: all 0.2s;" title="Filtrar visitas concluídas">
+                                        <div style="font-size: 8px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Concluídas</div>
+                                        <div id="hist-stat-completed" style="font-size: 13px; font-weight: 800; color: #cbd5e1;">3</div>
+                                    </div>
                                 </div>
 
                                 <!-- Live Search Bar inside Phone -->
                                 <div style="position: relative; margin-bottom: 2px;">
-                                    <input type="text" id="phone-search-input" class="phone-input" placeholder="Buscar visitante, apto..." oninput="onSearchVisitsLive(this.value)" style="padding-left: 26px; padding-right: 24px; font-size: 10px; height: 32px;" />
+                                    <input type="text" id="phone-search-input" class="phone-input" placeholder="Buscar visitante, apto, placa..." oninput="onSearchVisitsLive(this.value)" style="padding-left: 26px; padding-right: 24px; font-size: 10px; height: 32px;" />
                                     <span style="position: absolute; left: 8px; top: 7px; font-size: 11px; opacity: 0.6; pointer-events: none;">🔍</span>
                                     <button id="phone-search-clear" onclick="clearSearchVisits()" style="display: none; position: absolute; right: 8px; top: 7px; background: none; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer;">✕</button>
                                 </div>
 
                                 <!-- Filter Pills -->
-                                <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.03); padding: 3px; border-radius: 8px;">
-                                    <button id="filter-btn-all" onclick="filterVisits('all')" style="flex:1; border: none; background: var(--primary); color: #000; font-weight: 800; font-size: 9px; padding: 4px; border-radius: 6px; cursor: pointer;">Todas (<span id="count-all">3</span>)</button>
-                                    <button id="filter-btn-active" onclick="filterVisits('active')" style="flex:1; border: none; background: transparent; color: var(--text-muted); font-size: 9px; padding: 4px; border-radius: 6px; cursor: pointer;">No Prédio (<span id="count-active">1</span>)</button>
+                                <div style="display: flex; gap: 3px; background: rgba(255,255,255,0.03); padding: 3px; border-radius: 8px; overflow-x: auto;">
+                                    <button id="filter-btn-all" onclick="filterVisits('all')" style="flex:1; border: none; background: var(--primary); color: #000; font-weight: 800; font-size: 8.5px; padding: 4px 5px; border-radius: 6px; cursor: pointer; white-space: nowrap;">Todas (<span id="count-all">4</span>)</button>
+                                    <button id="filter-btn-active" onclick="filterVisits('active')" style="flex:1; border: none; background: transparent; color: var(--text-muted); font-size: 8.5px; padding: 4px 5px; border-radius: 6px; cursor: pointer; white-space: nowrap;">No Local (<span id="count-active">1</span>)</button>
+                                    <button id="filter-btn-completed" onclick="filterVisits('completed')" style="flex:1; border: none; background: transparent; color: var(--text-muted); font-size: 8.5px; padding: 4px 5px; border-radius: 6px; cursor: pointer; white-space: nowrap;">Concluídas (<span id="count-completed">3</span>)</button>
+                                    <button id="filter-btn-plates" onclick="filterVisits('plates')" style="flex:1; border: none; background: transparent; color: var(--text-muted); font-size: 8.5px; padding: 4px 5px; border-radius: 6px; cursor: pointer; white-space: nowrap;">🚗 Placas (<span id="count-plates">3</span>)</button>
                                 </div>
 
                                 <!-- Visitors List -->
-                                <div id="phone-visitors-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 340px;">
+                                <div id="phone-visitors-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: 290px;">
                                     <!-- Rendered dynamically by JS -->
                                 </div>
                             </div>
 
 
-                            <!-- 3. PROFILE SCREEN -->
+                            <!-- 3. PROFILE / QR CODE SCREEN -->
                             <div id="screen-profile" class="screen-content">
                                 <div class="phone-app-header">
-                                    <div class="phone-app-title">Dados do Morador</div>
-                                    <div style="font-size: 9px; color: var(--text-muted);">Gerador do QR Code</div>
-                                </div>
-
-                                <div class="phone-card" style="gap: 8px;">
                                     <div>
-                                        <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Nome Completo</label>
-                                        <input type="text" id="prof-input-name" class="phone-input" value="Gledson Crist" oninput="updateProfileLive()" />
+                                        <div class="phone-app-title">Meu QR Code</div>
+                                        <div style="font-size: 9px; color: var(--text-muted);">Acesso Seguro • LGPD Compliant</div>
                                     </div>
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                                        <div>
-                                            <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Apartamento</label>
-                                            <input type="text" id="prof-input-apt" class="phone-input" value="42" oninput="updateProfileLive()" />
-                                        </div>
-                                        <div>
-                                            <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Bloco</label>
-                                            <input type="text" id="prof-input-block" class="phone-input" value="B" oninput="updateProfileLive()" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">WhatsApp (com DDD)</label>
-                                        <input type="text" id="prof-input-phone" class="phone-input" value="(11) 99999-9999" oninput="updateProfileLive()" />
-                                    </div>
-                                    <div>
-                                        <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Condomínio</label>
-                                        <input type="text" id="prof-input-condo" class="phone-input" value="Residencial Parque" oninput="updateProfileLive()" />
-                                    </div>
-                                </div>
-
-                                <div style="display: flex; gap: 6px;">
-                                    <button onclick="changeScreen('home')" style="flex:1; padding: 10px; border-radius: 8px; border: none; background: var(--primary); font-size: 10px; font-weight: 800; color: #000; cursor: pointer;">
-                                        Salvar & Atualizar QR
+                                    <button onclick="openPrintableSheetFromPhone()" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 6px; padding: 3px 6px; color: #a5b4fc; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px;" title="Ver folha para impressão na portaria">
+                                        <span>🖨️</span> Folha A4
                                     </button>
-                                    <button onclick="downloadQrCodePng()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); font-size: 10px; color: white; cursor: pointer;" title="Baixar Imagem QR">
-                                        💾 PNG
+                                </div>
+
+                                <!-- Tab Switcher -->
+                                <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.04); padding: 3px; border-radius: 8px; margin-bottom: 8px;">
+                                    <button id="tab-profile-qr" onclick="switchProfileTab('qr')" style="flex: 1; border: none; background: var(--primary); color: #000; font-weight: 800; font-size: 9.5px; padding: 5px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                        📷 Ver QR Code
+                                    </button>
+                                    <button id="tab-profile-edit" onclick="switchProfileTab('edit')" style="flex: 1; border: none; background: transparent; color: var(--text-muted); font-size: 9.5px; padding: 5px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                        ✏️ Editar Dados
+                                    </button>
+                                </div>
+
+                                <!-- View 1: QR Code Card & Actions -->
+                                <div id="profile-view-qr" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div class="phone-card" style="padding: 0; overflow: hidden; border: 1px solid rgba(255, 176, 0, 0.25); text-align: center; gap: 0;">
+                                        <!-- Header com gradiente neon -->
+                                        <div style="background: linear-gradient(135deg, rgba(255, 176, 0, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%); padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                                            <div style="font-size: 11px; font-weight: 800; color: white;" id="qr-display-name">Gledson Crist</div>
+                                            <div style="font-size: 9px; color: var(--primary); font-weight: 700; margin-top: 2px;" id="qr-display-unit">Apto 42 • Bloco B • Residencial Parque</div>
+                                        </div>
+
+                                        <!-- QR Code Box -->
+                                        <div style="padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                                            <div class="phone-qr-box" id="profile-qr-display" onclick="openQrZoomModal()" title="Toque para ampliar em tela cheia" style="width: 120px; height: 120px; padding: 6px; cursor: pointer;">
+                                                <!-- Rendered dynamically -->
+                                            </div>
+                                            <div onclick="openQrZoomModal()" style="font-size: 8.5px; color: var(--primary); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                                                <span>🔍</span> Toque no código para ampliar
+                                            </div>
+                                            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 3px 8px; font-size: 8px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                                <span>🔗</span> porteiro-inteligente-2026.vercel.app/scan
+                                            </div>
+                                            <div id="profile-qr-status" style="font-size: 8px; font-weight: 700; color: #10b981; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                                <span style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; box-shadow: 0 0 4px #10b981;"></span> Código ativo e protegido (LGPD)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons Grid -->
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px;">
+                                        <button onclick="testWhatsAppClick()" style="padding: 8px 6px; border-radius: 8px; border: none; background: var(--primary); color: #000; font-size: 9px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>💬</span> Testar WhatsApp
+                                        </button>
+                                        <button onclick="downloadQrCodePng()" style="padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>💾</span> Salvar PNG
+                                        </button>
+                                        <button onclick="copyQrCodeLink()" style="padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: white; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>📋</span> Copiar Link
+                                        </button>
+                                        <button onclick="openPrintableSheetFromPhone()" style="padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.12); color: #a5b4fc; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>🖨️</span> Folha A4
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- View 2: Form Edit -->
+                                <div id="profile-view-edit" style="display: none; flex-direction: column; gap: 8px;">
+                                    <div class="phone-card" style="gap: 7px; padding: 10px;">
+                                        <div>
+                                            <label style="font-size: 8.5px; color: var(--text-muted); font-weight: 700;">Nome Completo</label>
+                                            <input type="text" id="prof-input-name" class="phone-input" value="Gledson Crist" oninput="updateProfileLive()" style="height: 30px; font-size: 9.5px;" />
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                            <div>
+                                                <label style="font-size: 8.5px; color: var(--text-muted); font-weight: 700;">Apartamento</label>
+                                                <input type="text" id="prof-input-apt" class="phone-input" value="42" oninput="updateProfileLive()" style="height: 30px; font-size: 9.5px;" />
+                                            </div>
+                                            <div>
+                                                <label style="font-size: 8.5px; color: var(--text-muted); font-weight: 700;">Bloco</label>
+                                                <input type="text" id="prof-input-block" class="phone-input" value="B" oninput="updateProfileLive()" style="height: 30px; font-size: 9.5px;" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 8.5px; color: var(--text-muted); font-weight: 700;">WhatsApp (com DDD)</label>
+                                            <input type="text" id="prof-input-phone" class="phone-input" value="(11) 99999-9999" oninput="updateProfileLive()" style="height: 30px; font-size: 9.5px;" />
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 8.5px; color: var(--text-muted); font-weight: 700;">Condomínio</label>
+                                            <input type="text" id="prof-input-condo" class="phone-input" value="Residencial Parque" oninput="updateProfileLive()" style="height: 30px; font-size: 9.5px;" />
+                                        </div>
+                                    </div>
+
+                                    <button onclick="switchProfileTab('qr')" style="width: 100%; padding: 9px; border-radius: 8px; border: none; background: var(--primary); font-size: 10px; font-weight: 800; color: #000; cursor: pointer;">
+                                        Salvar & Ver Meu QR Code
                                     </button>
                                 </div>
                             </div>
@@ -1771,14 +1984,43 @@
                             <!-- 4. SETTINGS SCREEN -->
                             <div id="screen-settings" class="screen-content">
                                 <div class="phone-app-header">
-                                    <div class="phone-app-title">Ajustes & Segurança</div>
+                                    <div>
+                                        <div class="phone-app-title">Ajustes & Segurança</div>
+                                        <div style="font-size: 9px; color: var(--text-muted);">Preferências, dados e privacidade</div>
+                                    </div>
+                                    <span style="font-size: 14px;">⚙️</span>
                                 </div>
 
+                                <!-- 1. Aparência do App -->
                                 <div class="phone-card" style="gap: 10px;">
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <div>
-                                            <div style="font-size: 11px; font-weight: 800; color: white;">Modo Ausência</div>
-                                            <div id="offline-desc-sub" style="font-size: 9px; color: var(--accent);">Status: Disponível (Normal)</div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 176, 0, 0.15); display: flex; align-items: center; justify-content: center; font-size: 13px;">🎨</div>
+                                            <div>
+                                                <div style="font-size: 11px; font-weight: 800; color: white;">Aparência do App</div>
+                                                <div style="font-size: 9px; color: var(--text-muted);">Tema do simulador em tempo real</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 6px; background: rgba(255,255,255,0.04); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                        <button id="theme-btn-dark" onclick="setSimulatorTheme('dark')" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--primary); background: rgba(255, 176, 0, 0.15); color: var(--primary); font-size: 9.5px; font-weight: 700; cursor: pointer; transition: 0.2s;">
+                                            🌙 Escuro
+                                        </button>
+                                        <button id="theme-btn-light" onclick="setSimulatorTheme('light')" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text-muted); font-size: 9.5px; font-weight: 700; cursor: pointer; transition: 0.2s;">
+                                            ☀️ Claro
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Modo Ausência -->
+                                <div class="phone-card" style="gap: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; font-size: 13px;">⛔</div>
+                                            <div>
+                                                <div style="font-size: 11px; font-weight: 800; color: white;">Modo Ausência</div>
+                                                <div id="offline-desc-sub" style="font-size: 9px; color: var(--accent);">Status: Disponível (Normal)</div>
+                                            </div>
                                         </div>
                                         <div id="offline-toggle" onclick="toggleOfflineMock()" style="width: 38px; height: 22px; background: rgba(255,255,255,0.1); border-radius: 100px; position: relative; cursor: pointer; transition: 0.2s;">
                                             <div id="offline-toggle-knob" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: 0.2s;"></div>
@@ -1786,21 +2028,81 @@
                                     </div>
 
                                     <div>
+                                        <label style="font-size: 9px; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 4px;">Duração Rápida</label>
+                                        <div style="display: flex; gap: 4px;">
+                                            <button type="button" class="duration-pill active" onclick="setOfflineDuration(1, this)" style="flex: 1; padding: 4px 6px; font-size: 9px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(255, 176, 0, 0.3); background: rgba(255, 176, 0, 0.12); color: var(--primary); cursor: pointer;">1 hora</button>
+                                            <button type="button" class="duration-pill" onclick="setOfflineDuration(4, this)" style="flex: 1; padding: 4px 6px; font-size: 9px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;">4 horas</button>
+                                            <button type="button" class="duration-pill" onclick="setOfflineDuration(24, this)" style="flex: 1; padding: 4px 6px; font-size: 9px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;">Até amanhã</button>
+                                        </div>
+                                    </div>
+
+                                    <div>
                                         <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Mensagem para o Entregador</label>
-                                        <textarea id="offline-custom-msg" class="phone-input" style="height: 55px; resize: none; font-size: 10px;">Ausente. Favor deixar entrega no Apto 41 com o Sr. José.</textarea>
+                                        <textarea id="offline-custom-msg" class="phone-input" style="height: 50px; resize: none; font-size: 10px;" onchange="saveOfflineCustomMsg(this.value)">Ausente. Favor deixar entrega no Apto 41 com o Sr. José.</textarea>
                                     </div>
                                 </div>
 
+                                <!-- 3. Segurança & Biometria -->
+                                <div class="phone-card" style="gap: 10px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; font-size: 13px;">🔒</div>
+                                            <div>
+                                                <div style="font-size: 11px; font-weight: 800; color: white;">Biometria / Face ID</div>
+                                                <div id="bio-desc-sub" style="font-size: 9px; color: var(--accent);">Desbloqueio rápido ativado</div>
+                                            </div>
+                                        </div>
+                                        <div id="bio-toggle" onclick="toggleBiometricMock()" style="width: 38px; height: 22px; background: var(--accent); border-radius: 100px; position: relative; cursor: pointer; transition: 0.2s;">
+                                            <div id="bio-toggle-knob" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 19px; transition: 0.2s;"></div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 6px 8px; border-radius: 6px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 6px; font-size: 9px; color: #6EE7B7;">
+                                        <span>🛡️</span>
+                                        <span><strong>FLAG_SECURE Ativo:</strong> Captura de tela bloqueada no Android</span>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Gestão de Dados (LGPD) -->
                                 <div class="phone-card" style="gap: 8px;">
-                                    <div style="font-size: 10px; font-weight: 800; color: white;">Backup & Privacidade (LGPD)</div>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button onclick="exportBackupJson()" style="flex:1; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: white; font-size: 9px; cursor: pointer;">
-                                            Exportar JSON
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 13px;">💾</div>
+                                        <div>
+                                            <div style="font-size: 11px; font-weight: 800; color: white;">Gestão de Dados (LGPD)</div>
+                                            <div style="font-size: 9px; color: var(--text-muted);">Backup cifrado e retenção de logs</div>
+                                        </div>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                        <button onclick="exportBackupJson()" style="padding: 7px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: white; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>📤</span> Exportar JSON
                                         </button>
-                                        <button onclick="resetDemoData()" style="flex:1; padding: 8px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); color: #FCA5A5; font-size: 9px; cursor: pointer;">
-                                            Resetar Dados
+                                        <button onclick="triggerImportJson()" style="padding: 7px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: white; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>📥</span> Importar JSON
                                         </button>
                                     </div>
+                                    <input type="file" id="backup-file-picker" accept=".json" style="display: none;" onchange="importBackupJson(event)" />
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                        <button onclick="clearVisitsHistoryMock()" style="padding: 7px; border-radius: 6px; border: 1px solid rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); color: #FCD34D; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>🧹</span> Limpar Visitas
+                                        </button>
+                                        <button onclick="resetDemoData()" style="padding: 7px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); color: #FCA5A5; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span>🔄</span> Resetar Demo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Sobre & Compartilhar -->
+                                <div class="phone-card" style="gap: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <div style="font-size: 10px; font-weight: 800; color: white;">Porteiro Inteligente 2026</div>
+                                            <div style="font-size: 8.5px; color: var(--text-muted);">v2.4.0 • Android 14+ & PWA Offline</div>
+                                        </div>
+                                        <span class="badge badge-active" style="font-size: 8px; padding: 2px 6px;">Oficial</span>
+                                    </div>
+                                    <button onclick="shareAppMock()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255, 176, 0, 0.3); background: rgba(255, 176, 0, 0.1); color: var(--primary); font-size: 9.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                        <span>📢</span> Compartilhar Aplicativo
+                                    </button>
                                 </div>
                             </div>
 
@@ -1830,6 +2132,10 @@
                                             <option value="Prestador">Prestador</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 9px; color: var(--text-muted); font-weight: 700;">Placa do Veículo (Opcional - Mercosul)</label>
+                                    <input type="text" id="new-visit-plate" class="phone-input" placeholder="Ex: BRA2E19" maxlength="8" style="text-transform: uppercase;" />
                                 </div>
                                 <button onclick="saveNewVisit()" style="padding: 10px; background: var(--primary); border: none; border-radius: 8px; font-weight: 800; color: #000; font-size: 11px; cursor: pointer;">
                                     Confirmar Entrada
@@ -1901,8 +2207,8 @@
                                 Histórico
                             </button>
                             <button id="nav-profile" onclick="changeScreen('profile')" class="phone-nav-btn">
-                                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                                Perfil/QR
+                                <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 2h2v3h-2v-3zm2 3h2v3h-2v-3zm-2 2h-3v-2h3v2zm4-2h2v2h-2v-2zm-4-4h2v2h-2v-2zm2-2h2v2h-2v-2z"/></svg>
+                                Meu QR
                             </button>
                             <button id="nav-settings" onclick="changeScreen('settings')" class="phone-nav-btn">
                                 <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
@@ -2367,9 +2673,10 @@
             currentFilter: 'all',
             searchQuery: '',
             visitors: [
-                { id: 1, name: "Carlos Lima", role: "Entrega Mercado Livre", apt: "42", time: "14:30", relative: "Há 12 min", status: "active", checkoutTime: null },
-                { id: 2, name: "Maria Souza", role: "Visita Familiar", apt: "15", time: "11:10", relative: "Há 3h", status: "completed", checkoutTime: "12:40" },
-                { id: 3, name: "José Silva", role: "Prestador Enel", apt: "04", time: "08:45", relative: "Há 5h", status: "completed", checkoutTime: "09:30" }
+                { id: 1, name: "Carlos Lima", role: "Entrega Mercado Livre", apt: "42", plate: "BRA2E19", time: "14:30", relative: "Há 12 min", status: "active", checkoutTime: null },
+                { id: 2, name: "Maria Souza", role: "Visita Familiar", apt: "15", plate: "RIO1K23", time: "11:10", relative: "Há 3h", status: "completed", checkoutTime: "12:40" },
+                { id: 3, name: "José Silva", role: "Prestador Enel", apt: "04", plate: "FLR9A88", time: "08:45", relative: "Há 5h", status: "completed", checkoutTime: "09:30" },
+                { id: 4, name: "Ana Beatriz Rocha", role: "Convidada", apt: "42", plate: "", time: "08:15", relative: "Há 6h", status: "completed", checkoutTime: "10:00" }
             ],
             phoneQrInstance: null,
             sheetQrInstance: null
@@ -2378,10 +2685,12 @@
         // Initialize clock and QR codes on load
         window.addEventListener('DOMContentLoaded', () => {
             updateLiveClock();
+            updateHomeGreeting();
             setInterval(updateLiveClock, 30000);
             renderPhoneQrCode();
             renderSheetQrCode();
             renderVisitorsList();
+            renderHomeRecentVisits();
             updateMetrics();
         });
 
@@ -2429,13 +2738,123 @@
             onSearchVisitsLive('');
         }
 
-        // Digital Clock
+        // Digital Clock & Dynamic Greeting
         function updateLiveClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const clockEl = document.getElementById('live-phone-clock');
             if (clockEl) clockEl.textContent = `${hours}:${minutes}`;
+            updateHomeGreeting();
+        }
+
+        function updateHomeGreeting() {
+            const greetingEl = document.getElementById('home-greeting-text');
+            if (!greetingEl) return;
+            const hour = new Date().getHours();
+            let greeting = "Boa noite";
+            if (hour >= 0 && hour < 6) greeting = "Boa madrugada";
+            else if (hour >= 6 && hour < 12) greeting = "Bom dia";
+            else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
+            const firstName = (appState.resident.name || 'Morador').split(' ')[0];
+            greetingEl.textContent = `${greeting}, ${firstName}`;
+        }
+
+        // Render Home Screen Recent Visits Feed
+        function renderHomeRecentVisits() {
+            const listEl = document.getElementById('home-recent-visits');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            const recent = appState.visitors.slice(0, 3);
+            if (recent.length === 0) {
+                listEl.innerHTML = `
+                    <div style="text-align: center; padding: 18px 10px; color: var(--text-muted); font-size: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.08);">
+                        <span style="font-size: 18px; display: block; margin-bottom: 4px;">🛡️</span>
+                        <span style="font-weight: 700; color: white;">Portaria Limpa</span>
+                        <div style="font-size: 8.5px; margin-top: 2px;">Nenhuma visita pendente no momento</div>
+                    </div>
+                `;
+                return;
+            }
+
+            recent.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'phone-list-item';
+                item.style.padding = '8px 10px';
+                
+                const initials = v.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                const isActive = v.status === 'active';
+                const statusBadge = isActive 
+                    ? `<span class="badge-status badge-active">No Prédio</span>` 
+                    : `<span class="badge-status badge-out">Saída ${v.checkoutTime || ''}</span>`;
+
+                const plateBadge = v.plate 
+                    ? `<div class="plate-mercosul-mini" title="Placa do Veículo (Mercosul)">
+                         <span class="plate-mercosul-header">BRASIL</span>
+                         <span class="plate-mercosul-code">${v.plate}</span>
+                       </div>`
+                    : '';
+
+                const actionBtn = isActive
+                    ? `<button class="btn-phone-action" onclick="registerExit(${v.id})" title="Registrar saída imediata">Saída</button>`
+                    : `<span style="font-size: 8px; color: var(--text-muted);">${v.time}</span>`;
+
+                item.innerHTML = `
+                    <div class="phone-list-avatar" style="width: 28px; height: 28px; font-size: 10px;">${initials}</div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                            <span style="font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px;">${v.name}</span>
+                            <span style="font-size: 8.5px; color: var(--primary); font-weight: 700;">Ap ${v.apt}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                            ${statusBadge}
+                            ${plateBadge}
+                            <span style="font-size: 8px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.role}</span>
+                        </div>
+                    </div>
+                    ${actionBtn}
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        // Quick Navigation Helpers
+        function goToHistoryWithFilter(filter) {
+            changeScreen('history');
+            filterVisits(filter);
+            playAudioBeep(700, 0.08);
+        }
+
+        function quickFilterPlates() {
+            changeScreen('history');
+            filterVisits('plates');
+            showDynamicIsland("Filtro: Veículos & Placas Mercosul 🚗", "🚗");
+            playAudioBeep(650, 0.1);
+        }
+
+        function toggleOfflineFromHome() {
+            toggleOfflineMock();
+            updateHomePortariaStatus();
+        }
+
+        function updateHomePortariaStatus() {
+            const statusEl = document.getElementById('home-portaria-status');
+            const iconEl = document.getElementById('home-icon-offline');
+            const labelEl = document.getElementById('home-label-offline');
+            if (!statusEl) return;
+
+            if (appState.resident.isOffline) {
+                statusEl.innerHTML = `<span style="width: 5px; height: 5px; background: #EF4444; border-radius: 50%; box-shadow: 0 0 5px #EF4444;"></span> MODO AUSENTE`;
+                statusEl.style.color = '#EF4444';
+                if (iconEl) iconEl.textContent = '🔕';
+                if (labelEl) labelEl.textContent = 'Ausente';
+            } else {
+                statusEl.innerHTML = `<span style="width: 5px; height: 5px; background: #34D399; border-radius: 50%; box-shadow: 0 0 5px #34D399;"></span> PORTARIA OPERACIONAL`;
+                statusEl.style.color = '#34D399';
+                if (iconEl) iconEl.textContent = '🔔';
+                if (labelEl) labelEl.textContent = 'Portaria';
+            }
         }
 
         // Change Simulator Screen Tabs
@@ -2449,31 +2868,138 @@
             if (targetBtn) targetBtn.classList.add('active');
         }
 
-        // Generate QR code for the phone simulator
+        // Generate QR code for the phone simulator (Home & Profile screens)
         function renderPhoneQrCode() {
             const container = document.getElementById('phone-qr-container');
-            if (!container) return;
-            container.innerHTML = '';
+            const profileDisplay = document.getElementById('profile-qr-display');
 
             const phone = appState.resident.phone.replace(/\D/g, '');
             const message = encodeURIComponent(`Olá ${appState.resident.name}, estou na portaria do ${appState.resident.condo} para entrega no Ap ${appState.resident.apt}.`);
             const qrText = `https://wa.me/55${phone}?text=${message}`;
 
-            try {
-                if (typeof QRCode !== 'undefined') {
-                    appState.phoneQrInstance = new QRCode(container, {
-                        text: qrText,
-                        width: 105,
-                        height: 105,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                } else {
-                    container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=105x105&data=${encodeURIComponent(qrText)}" alt="QR Code" width="105" height="105" />`;
+            if (container) {
+                container.innerHTML = '';
+                try {
+                    if (typeof QRCode !== 'undefined') {
+                        appState.phoneQrInstance = new QRCode(container, {
+                            text: qrText,
+                            width: 48,
+                            height: 48,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    } else {
+                        container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data=${encodeURIComponent(qrText)}" alt="QR Code" width="48" height="48" />`;
+                    }
+                } catch (e) {
+                    container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=48x48&data=${encodeURIComponent(qrText)}" alt="QR Code" width="48" height="48" />`;
                 }
-            } catch (e) {
-                container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=105x105&data=${encodeURIComponent(qrText)}" alt="QR Code" width="105" height="105" />`;
+            }
+
+            if (profileDisplay) {
+                profileDisplay.innerHTML = '';
+                try {
+                    if (typeof QRCode !== 'undefined') {
+                        new QRCode(profileDisplay, {
+                            text: qrText,
+                            width: 120,
+                            height: 120,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    } else {
+                        profileDisplay.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}" alt="QR Code" width="120" height="120" />`;
+                    }
+                } catch (e) {
+                    profileDisplay.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText)}" alt="QR Code" width="120" height="120" />`;
+                }
+            }
+
+            const nameEl = document.getElementById('qr-display-name');
+            const unitEl = document.getElementById('qr-display-unit');
+            if (nameEl) nameEl.textContent = appState.resident.name;
+            if (unitEl) unitEl.textContent = `Apto ${appState.resident.apt} • Bloco ${appState.resident.block} • ${appState.resident.condo}`;
+
+            const statusEl = document.getElementById('profile-qr-status');
+            if (statusEl) {
+                if (appState.resident.isOffline) {
+                    statusEl.innerHTML = `<span style="width: 5px; height: 5px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 4px #ef4444;"></span> Modo offline ativo (recados)`;
+                    statusEl.style.color = '#ef4444';
+                } else {
+                    statusEl.innerHTML = `<span style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; box-shadow: 0 0 4px #10b981;"></span> Código ativo e protegido (LGPD)`;
+                    statusEl.style.color = '#10b981';
+                }
+            }
+        }
+
+        function switchProfileTab(tab) {
+            const viewQr = document.getElementById('profile-view-qr');
+            const viewEdit = document.getElementById('profile-view-edit');
+            const tabQr = document.getElementById('tab-profile-qr');
+            const tabEdit = document.getElementById('tab-profile-edit');
+
+            if (tab === 'qr') {
+                if (viewQr) viewQr.style.display = 'flex';
+                if (viewEdit) viewEdit.style.display = 'none';
+                if (tabQr) {
+                    tabQr.style.background = 'var(--primary)';
+                    tabQr.style.color = '#000';
+                    tabQr.style.fontWeight = '800';
+                }
+                if (tabEdit) {
+                    tabEdit.style.background = 'transparent';
+                    tabEdit.style.color = 'var(--text-muted)';
+                    tabEdit.style.fontWeight = '600';
+                }
+                renderPhoneQrCode();
+            } else {
+                if (viewQr) viewQr.style.display = 'none';
+                if (viewEdit) viewEdit.style.display = 'flex';
+                if (tabEdit) {
+                    tabEdit.style.background = 'var(--primary)';
+                    tabEdit.style.color = '#000';
+                    tabEdit.style.fontWeight = '800';
+                }
+                if (tabQr) {
+                    tabQr.style.background = 'transparent';
+                    tabQr.style.color = 'var(--text-muted)';
+                    tabQr.style.fontWeight = '600';
+                }
+            }
+            playAudioBeep(600, 0.06);
+        }
+
+        function copyQrCodeLink() {
+            const phone = appState.resident.phone.replace(/\D/g, '');
+            const message = encodeURIComponent(`Olá ${appState.resident.name}, estou na portaria do ${appState.resident.condo} para entrega no Ap ${appState.resident.apt}.`);
+            const qrText = `https://wa.me/55${phone}?text=${message}`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(qrText).then(() => {
+                    playAudioBeep(800, 0.08);
+                    showToast("Link copiado para a área de transferência!");
+                    showDynamicIsland("Link do QR Code copiado", "📋");
+                }).catch(() => {
+                    prompt("Copie o link do seu QR Code:", qrText);
+                });
+            } else {
+                prompt("Copie o link do seu QR Code:", qrText);
+            }
+        }
+
+        function openPrintableSheetFromPhone() {
+            const sheetSection = document.getElementById('printable-sign-sheet');
+            if (sheetSection) {
+                sheetSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                sheetSection.style.boxShadow = '0 0 30px rgba(255, 176, 0, 0.4)';
+                setTimeout(() => {
+                    sheetSection.style.boxShadow = '';
+                }, 2000);
+                showToast("Folha A4 para portaria pronta para impressão!");
+                showDynamicIsland("Folha A4 pronta", "🖨️");
+                playAudioBeep(650, 0.1);
             }
         }
 
@@ -2510,13 +3036,26 @@
 
         // Live update profile from form fields
         function updateProfileLive() {
-            appState.resident.name = document.getElementById('prof-input-name').value || "Morador";
-            appState.resident.apt = document.getElementById('prof-input-apt').value || "42";
-            appState.resident.block = document.getElementById('prof-input-block').value || "B";
-            appState.resident.phone = document.getElementById('prof-input-phone').value || "11999999999";
-            appState.resident.condo = document.getElementById('prof-input-condo').value || "Residencial";
+            appState.resident.name = document.getElementById('prof-input-name')?.value || "Morador";
+            appState.resident.apt = document.getElementById('prof-input-apt')?.value || "42";
+            appState.resident.block = document.getElementById('prof-input-block')?.value || "B";
+            appState.resident.phone = document.getElementById('prof-input-phone')?.value || "11999999999";
+            appState.resident.condo = document.getElementById('prof-input-condo')?.value || "Residencial";
 
-            document.getElementById('mock-resident-name').textContent = `${appState.resident.name} • Apto ${appState.resident.apt}`;
+            const mockName = document.getElementById('mock-resident-name');
+            if (mockName) mockName.textContent = `${appState.resident.name} • Apto ${appState.resident.apt}`;
+
+            // Sync with printable sheet inputs
+            const genName = document.getElementById('gen-name');
+            const genUnit = document.getElementById('gen-unit');
+            const genCondo = document.getElementById('gen-condo');
+            const genPhone = document.getElementById('gen-phone');
+            if (genName) genName.value = appState.resident.name;
+            if (genUnit) genUnit.value = `Apto ${appState.resident.apt} - Bloco ${appState.resident.block}`;
+            if (genCondo) genCondo.value = appState.resident.condo;
+            if (genPhone) genPhone.value = appState.resident.phone;
+            updatePrintableSheet();
+
             renderPhoneQrCode();
         }
 
@@ -2533,7 +3072,7 @@
             renderSheetQrCode();
         }
 
-        // Visitors List Rendering with Interactive Checkout and Search
+        // Visitors List Rendering with Interactive Checkout, Delete, and Search
         function renderVisitorsList(filter = null) {
             if (filter) appState.currentFilter = filter;
             else filter = appState.currentFilter || 'all';
@@ -2545,6 +3084,10 @@
             let filtered = appState.visitors;
             if (filter === 'active') {
                 filtered = filtered.filter(v => v.status === 'active');
+            } else if (filter === 'completed') {
+                filtered = filtered.filter(v => v.status === 'completed');
+            } else if (filter === 'plates') {
+                filtered = filtered.filter(v => v.plate && v.plate.trim() !== '');
             }
 
             if (appState.searchQuery) {
@@ -2552,7 +3095,8 @@
                 filtered = filtered.filter(v => 
                     v.name.toLowerCase().includes(q) || 
                     v.apt.toLowerCase().includes(q) || 
-                    v.role.toLowerCase().includes(q)
+                    v.role.toLowerCase().includes(q) ||
+                    (v.plate && v.plate.toLowerCase().includes(q))
                 );
             }
 
@@ -2561,7 +3105,7 @@
                     <div style="text-align: center; padding: 28px 10px; color: var(--text-muted); font-size: 10px;">
                         <div style="font-size: 26px; margin-bottom: 8px;">🔍</div>
                         <div style="font-weight: 700; color: white;">Nenhum visitante encontrado</div>
-                        <div style="font-size: 9px; margin-top: 4px;">Tente buscar por outro termo</div>
+                        <div style="font-size: 9px; margin-top: 4px;">Tente buscar por outro termo ou limpe os filtros</div>
                     </div>
                 `;
                 updateMetrics();
@@ -2575,19 +3119,31 @@
                 const initials = v.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
                 const isActive = v.status === 'active';
                 const statusBadge = isActive 
-                    ? `<span class="badge-status badge-active">No Prédio</span>` 
+                    ? `<span class="badge-status badge-active">No Local</span>` 
                     : `<span class="badge-status badge-out">Saída ${v.checkoutTime || ''}</span>`;
+
+                const plateBadge = v.plate 
+                    ? `<div class="plate-mercosul-mini" style="margin-left: 4px;" title="Placa do Veículo (Mercosul)">
+                         <span class="plate-mercosul-header">BRASIL</span>
+                         <span class="plate-mercosul-code">${v.plate}</span>
+                       </div>`
+                    : '';
 
                 const actionBtn = isActive
                     ? `<button class="btn-phone-action" onclick="registerExit(${v.id})" title="Registrar saída">Saída</button>`
                     : ``;
+
+                const deleteBtn = `<button onclick="deleteVisitMock(${v.id})" title="Excluir registro" style="background: none; border: none; color: #ef4444; font-size: 10px; cursor: pointer; padding: 2px 4px; border-radius: 4px; opacity: 0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🗑️</button>`;
 
                 const timeLabel = v.relative ? `${v.time} • ${v.relative}` : v.time;
 
                 item.innerHTML = `
                     <div class="phone-list-avatar">${initials}</div>
                     <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${v.name}</div>
+                        <div style="font-weight: 700; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px;">
+                            <span>${v.name}</span>
+                            ${plateBadge}
+                        </div>
                         <div style="font-size: 9px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             ${v.role} • Ap ${v.apt}
                         </div>
@@ -2595,22 +3151,99 @@
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                         ${statusBadge}
-                        ${actionBtn}
+                        <div style="display: flex; gap: 3px; align-items: center;">
+                            ${actionBtn}
+                            ${deleteBtn}
+                        </div>
                     </div>
                 `;
                 listEl.appendChild(item);
             });
 
             updateMetrics();
+            renderHomeRecentVisits();
         }
 
         function filterVisits(type) {
             appState.currentFilter = type;
-            document.getElementById('filter-btn-all').style.background = type === 'all' ? 'var(--primary)' : 'transparent';
-            document.getElementById('filter-btn-all').style.color = type === 'all' ? '#000' : 'var(--text-muted)';
-            document.getElementById('filter-btn-active').style.background = type === 'active' ? 'var(--primary)' : 'transparent';
-            document.getElementById('filter-btn-active').style.color = type === 'active' ? '#000' : 'var(--text-muted)';
+            const filterTypes = ['all', 'active', 'completed', 'plates'];
+            filterTypes.forEach(f => {
+                const btn = document.getElementById(`filter-btn-${f}`);
+                if (btn) {
+                    btn.style.background = type === f ? 'var(--primary)' : 'transparent';
+                    btn.style.color = type === f ? '#000' : 'var(--text-muted)';
+                    btn.style.fontWeight = type === f ? '800' : '600';
+                }
+            });
+
+            // Update top stat cards selection state
+            const cardAll = document.getElementById('stat-card-all');
+            const cardActive = document.getElementById('stat-card-active');
+            const cardCompleted = document.getElementById('stat-card-completed');
+
+            if (cardAll) {
+                cardAll.style.borderColor = type === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.08)';
+                cardAll.style.background = type === 'all' ? 'rgba(255, 176, 0, 0.08)' : 'rgba(255,255,255,0.03)';
+            }
+            if (cardActive) {
+                cardActive.style.borderColor = type === 'active' ? '#10b981' : 'rgba(255,255,255,0.08)';
+                cardActive.style.background = type === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)';
+            }
+            if (cardCompleted) {
+                cardCompleted.style.borderColor = type === 'completed' ? '#94a3b8' : 'rgba(255,255,255,0.08)';
+                cardCompleted.style.background = type === 'completed' ? 'rgba(148, 163, 184, 0.1)' : 'rgba(255,255,255,0.03)';
+            }
+
             renderVisitorsList(type);
+        }
+
+        // Excluir registro de visita
+        function deleteVisitMock(id) {
+            const index = appState.visitors.findIndex(v => v.id === id);
+            if (index !== -1) {
+                const removed = appState.visitors.splice(index, 1)[0];
+                renderVisitorsList();
+                renderHomeRecentVisits();
+                playAudioBeep(450, 0.1);
+                showToast(`Registro de ${removed.name} excluído!`);
+                showDynamicIsland(`Excluído: ${removed.name}`, "🗑️");
+            }
+        }
+
+        // Exportar relatório em CSV com UTF-8 BOM
+        function exportVisitsCsv() {
+            if (!appState.visitors || appState.visitors.length === 0) {
+                showToast("Nenhuma visita para exportar!");
+                return;
+            }
+
+            const headers = ["ID", "Nome", "Finalidade", "Apartamento", "Placa", "Horário Entrada", "Status", "Horário Saída"];
+            const rows = appState.visitors.map(v => [
+                v.id,
+                `"${(v.name || '').replace(/"/g, '""')}"`,
+                `"${(v.role || '').replace(/"/g, '""')}"`,
+                `"${(v.apt || '').replace(/"/g, '""')}"`,
+                `"${(v.plate || '').replace(/"/g, '""')}"`,
+                `"${(v.time || '').replace(/"/g, '""')}"`,
+                v.status === 'active' ? 'No Local' : 'Concluída',
+                `"${(v.checkoutTime || '').replace(/"/g, '""')}"`
+            ]);
+
+            const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("\r\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            const today = new Date().toISOString().split('T')[0];
+            link.setAttribute("href", url);
+            link.setAttribute("download", `relatorio_visitas_${today}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            playAudioBeep(750, 0.12);
+            showToast("Relatório CSV de visitas exportado!");
+            showDynamicIsland("Relatório CSV gerado", "📊");
         }
 
         // Register checkout for a visitor
@@ -2624,6 +3257,7 @@
                 visitor.checkoutTime = `${hours}:${minutes}`;
                 visitor.relative = "Agora";
                 renderVisitorsList();
+                renderHomeRecentVisits();
                 playAudioBeep(600, 0.1);
                 showToast(`Saída de ${visitor.name} registrada!`);
                 showDynamicIsland(`Saída: ${visitor.name}`, "🚪");
@@ -2642,10 +3276,12 @@
             const nameInput = document.getElementById('new-visit-name');
             const aptInput = document.getElementById('new-visit-apt');
             const roleInput = document.getElementById('new-visit-role');
+            const plateInput = document.getElementById('new-visit-plate');
 
             const name = (nameInput.value || '').trim() || 'Entregador iFood';
             const apt = (aptInput.value || '').trim() || '42';
             const role = roleInput.value || 'Entrega';
+            const plate = (plateInput ? plateInput.value : '').trim().toUpperCase();
 
             const now = new Date();
             const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -2656,6 +3292,7 @@
                 name,
                 role,
                 apt,
+                plate,
                 time,
                 relative: "Agora",
                 status: 'active',
@@ -2664,11 +3301,13 @@
 
             closeNewVisitModal();
             nameInput.value = '';
+            if (plateInput) plateInput.value = '';
             renderVisitorsList();
+            renderHomeRecentVisits();
             playAudioBeep(880, 0.15);
             showToast(`Entrada de ${name} registrada!`);
             showDynamicIsland(`Entrada: ${name} (Ap ${apt})`, "✅");
-            changeScreen('history');
+            changeScreen('home');
         }
 
 
@@ -2816,6 +3455,8 @@
                 showDynamicIsland("Portaria: Online Disponível", "🟢");
                 playAudioBeep(750, 0.1);
             }
+            updateHomePortariaStatus();
+            renderPhoneQrCode();
         }
 
 
@@ -2827,17 +3468,29 @@
 
         function updateMetrics() {
             const activeCount = appState.visitors.filter(v => v.status === 'active').length;
+            const completedCount = appState.visitors.filter(v => v.status === 'completed').length;
+            const platesCount = appState.visitors.filter(v => v.plate && v.plate.trim() !== '').length;
             const totalToday = appState.visitors.length;
 
             const elToday = document.getElementById('stat-today');
             const elActive = document.getElementById('stat-active');
             const countAll = document.getElementById('count-all');
             const countActive = document.getElementById('count-active');
+            const countCompleted = document.getElementById('count-completed');
+            const countPlates = document.getElementById('count-plates');
+            const histTotal = document.getElementById('hist-stat-total');
+            const histActive = document.getElementById('hist-stat-active');
+            const histCompleted = document.getElementById('hist-stat-completed');
 
             if (elToday) elToday.textContent = totalToday;
             if (elActive) elActive.textContent = activeCount;
             if (countAll) countAll.textContent = totalToday;
             if (countActive) countActive.textContent = activeCount;
+            if (countCompleted) countCompleted.textContent = completedCount;
+            if (countPlates) countPlates.textContent = platesCount;
+            if (histTotal) histTotal.textContent = totalToday;
+            if (histActive) histActive.textContent = activeCount;
+            if (histCompleted) histCompleted.textContent = completedCount;
         }
 
         function exportBackupJson() {
@@ -2857,14 +3510,175 @@
             }
         }
 
+        function setSimulatorTheme(theme) {
+            const screen = document.querySelector('.phone-screen');
+            const darkBtn = document.getElementById('theme-btn-dark');
+            const lightBtn = document.getElementById('theme-btn-light');
+            if (!screen) return;
+
+            if (theme === 'light') {
+                screen.classList.add('light-mode');
+                if (darkBtn) {
+                    darkBtn.style.borderColor = 'transparent';
+                    darkBtn.style.background = 'transparent';
+                    darkBtn.style.color = 'var(--text-muted)';
+                }
+                if (lightBtn) {
+                    lightBtn.style.borderColor = 'var(--primary)';
+                    lightBtn.style.background = 'rgba(255, 176, 0, 0.15)';
+                    lightBtn.style.color = 'var(--primary-dark)';
+                }
+                showToast("Tema Claro ativado no simulador!");
+                showDynamicIsland("Tema: Modo Claro", "☀️");
+                playAudioBeep(700, 0.08);
+            } else {
+                screen.classList.remove('light-mode');
+                if (darkBtn) {
+                    darkBtn.style.borderColor = 'var(--primary)';
+                    darkBtn.style.background = 'rgba(255, 176, 0, 0.15)';
+                    darkBtn.style.color = 'var(--primary)';
+                }
+                if (lightBtn) {
+                    lightBtn.style.borderColor = 'transparent';
+                    lightBtn.style.background = 'transparent';
+                    lightBtn.style.color = 'var(--text-muted)';
+                }
+                showToast("Tema Escuro restaurado!");
+                showDynamicIsland("Tema: Modo Escuro", "🌙");
+                playAudioBeep(550, 0.08);
+            }
+        }
+
+        function setOfflineDuration(hours, btn) {
+            document.querySelectorAll('.duration-pill').forEach(p => {
+                p.classList.remove('active');
+                p.style.borderColor = 'rgba(255,255,255,0.08)';
+                p.style.background = 'rgba(255,255,255,0.03)';
+                p.style.color = 'var(--text-muted)';
+            });
+            if (btn) {
+                btn.classList.add('active');
+                btn.style.borderColor = 'rgba(255, 176, 0, 0.3)';
+                btn.style.background = 'rgba(255, 176, 0, 0.12)';
+                btn.style.color = 'var(--primary)';
+            }
+            const label = hours === 1 ? '1 hora' : hours === 4 ? '4 horas' : 'até amanhã';
+            showToast(`Duração da ausência definida: ${label}`);
+            showDynamicIsland(`Ausência: ${label}`, "⏱️");
+            playAudioBeep(600, 0.08);
+        }
+
+        function saveOfflineCustomMsg(val) {
+            appState.resident.offlineMessage = val;
+            renderPhoneQrCode();
+            showToast("Mensagem de ausência atualizada!");
+        }
+
+        function toggleBiometricMock() {
+            appState.biometricEnabled = !(appState.biometricEnabled ?? true);
+            const toggle = document.getElementById('bio-toggle');
+            const knob = document.getElementById('bio-toggle-knob');
+            const desc = document.getElementById('bio-desc-sub');
+            if (!toggle || !knob) return;
+
+            if (appState.biometricEnabled) {
+                toggle.style.background = 'var(--accent)';
+                knob.style.left = '19px';
+                if (desc) desc.textContent = "Desbloqueio rápido ativado";
+                showToast("Biometria / Face ID ativada");
+                showDynamicIsland("Biometria: Ativada", "🔒");
+                playAudioBeep(650, 0.1);
+            } else {
+                toggle.style.background = 'rgba(255,255,255,0.1)';
+                knob.style.left = '3px';
+                if (desc) desc.textContent = "Desbloqueio biométrico desligado";
+                showToast("Biometria desativada");
+                showDynamicIsland("Biometria: Desativada", "🔓");
+                playAudioBeep(400, 0.1);
+            }
+        }
+
+        function triggerImportJson() {
+            const input = document.getElementById('backup-file-picker');
+            if (input) input.click();
+        }
+
+        function importBackupJson(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.resident) {
+                        appState.resident = { ...appState.resident, ...data.resident };
+                    }
+                    if (Array.isArray(data.visitors)) {
+                        appState.visitors = data.visitors;
+                    }
+                    renderVisitorsList();
+                    renderHomeRecentVisits();
+                    renderPhoneQrCode();
+                    renderSheetQrCode();
+                    updateMetrics();
+                    updateHomePortariaStatus();
+                    showToast("Backup JSON importado e aplicado!");
+                    showDynamicIsland("Backup Restaurado", "✅");
+                    playAudioBeep(800, 0.15);
+                } catch (err) {
+                    showToast("Erro ao processar arquivo JSON.");
+                    playAudioBeep(300, 0.2);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function clearVisitsHistoryMock() {
+            if (confirm("Deseja realmente limpar todo o histórico de visitas? (Os dados do morador serão mantidos)")) {
+                appState.visitors = [];
+                renderVisitorsList();
+                renderHomeRecentVisits();
+                updateMetrics();
+                showToast("Histórico de visitas limpo com sucesso!");
+                showDynamicIsland("Histórico Zerado", "🧹");
+                playAudioBeep(500, 0.1);
+            }
+        }
+
+        function shareAppMock() {
+            const shareData = {
+                title: 'Porteiro Inteligente 2026',
+                text: 'Conheça o Porteiro Inteligente: app moderno para condomínios com QR Code e privacidade.',
+                url: window.location.href
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showToast("Link copiado para a área de transferência!");
+                    showDynamicIsland("Link do App Copiado", "📋");
+                }).catch(() => {
+                    showToast("Compartilhe: " + window.location.href);
+                });
+            }
+        }
+
         function downloadQrCodePng() {
-            const img = document.querySelector('#phone-qr-container img') || document.querySelector('#phone-qr-container canvas');
+            const img = document.querySelector('#profile-qr-display img') || 
+                        document.querySelector('#profile-qr-display canvas') ||
+                        document.querySelector('#zoom-qr-target img') ||
+                        document.querySelector('#zoom-qr-target canvas') ||
+                        document.querySelector('#phone-qr-container img') || 
+                        document.querySelector('#phone-qr-container canvas');
             if (!img) return;
             const link = document.createElement('a');
             link.download = `qrcode_apto_${appState.resident.apt}.png`;
             link.href = img.src || img.toDataURL("image/png");
             link.click();
-            showToast("QR Code baixado!");
+            playAudioBeep(700, 0.1);
+            showToast("QR Code PNG baixado com sucesso!");
+            showDynamicIsland(`QR Code Ap ${appState.resident.apt} salvo`, "💾");
         }
 
         function downloadSignQrPng() {

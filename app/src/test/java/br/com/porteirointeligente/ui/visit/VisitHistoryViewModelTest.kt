@@ -61,6 +61,19 @@ class VisitHistoryViewModelTest {
         status = VisitStatus.SAIDA_REGISTRADA
     )
 
+    private val visitWithPlate = Visit(
+        id = 3L,
+        ownerId = 1L,
+        nome = "Marcos",
+        documento = "RG789",
+        apartamento = "303",
+        telefone = "11977777777",
+        motivo = "Serviço",
+        placa = "BRA2E19",
+        dataEntrada = System.currentTimeMillis(),
+        status = VisitStatus.ENTRADA_REGISTRADA
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -129,6 +142,35 @@ class VisitHistoryViewModelTest {
         val state = viewModel.uiState.value as? VisitHistoryUIState.Success
         assert(state != null) { "Expected Success state" }
         assert(state?.filter == VisitHistoryViewModel.Filter.ALL) { "Expected ALL filter after switching back" }
+    }
+
+    @Test
+    fun `setFilter to COMPLETED should filter visits by SAIDA_REGISTRADA`() {
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit, completedVisit))
+        coEvery { visitRepository.observeVisitsByStatus(VisitStatus.SAIDA_REGISTRADA) } returns flowOf(listOf(completedVisit))
+
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
+        viewModel.setFilter(VisitHistoryViewModel.Filter.COMPLETED)
+
+        val state = viewModel.uiState.value as? VisitHistoryUIState.Success
+        assert(state != null) { "Expected Success state" }
+        assert(state?.filter == VisitHistoryViewModel.Filter.COMPLETED) { "Expected COMPLETED filter" }
+        assert(state?.visits?.size == 1) { "Expected 1 visit after filtering, got ${state?.visits?.size}" }
+        assert(state?.visits?.first()?.status == VisitStatus.SAIDA_REGISTRADA) { "Expected completed visit only" }
+    }
+
+    @Test
+    fun `setFilter to WITH_PLATE should filter visits having non-blank placa`() {
+        coEvery { visitRepository.observeAllVisits() } returns flowOf(listOf(activeVisit, completedVisit, visitWithPlate))
+
+        viewModel = VisitHistoryViewModel(visitRepository, ownerSelectionManager)
+        viewModel.setFilter(VisitHistoryViewModel.Filter.WITH_PLATE)
+
+        val state = viewModel.uiState.value as? VisitHistoryUIState.Success
+        assert(state != null) { "Expected Success state" }
+        assert(state?.filter == VisitHistoryViewModel.Filter.WITH_PLATE) { "Expected WITH_PLATE filter" }
+        assert(state?.visits?.size == 1) { "Expected 1 visit with plate, got ${state?.visits?.size}" }
+        assert(state?.visits?.first()?.placa == "BRA2E19") { "Expected visit with plate BRA2E19" }
     }
 
     @Test
