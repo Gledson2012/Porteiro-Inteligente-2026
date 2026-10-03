@@ -1,42 +1,40 @@
-# Porteiro Inteligente
+# Porteiro Inteligente 2026
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Kotlin-2.0-purple?logo=kotlin" alt="Kotlin">
-  <img src="https://img.shields.io/badge/Compose-BOM%202024.09-brightgreen?logo=jetpackcompose" alt="Compose">
-  <img src="https://img.shields.io/badge/Min%20SDK-23-orange?logo=android" alt="Min SDK 23">
-  <img src="https://img.shields.io/badge/Target%20SDK-35-green?logo=android" alt="Target SDK 35">
-  <img src="https://img.shields.io/badge/Architecture-MVVM-blue" alt="MVVM">
-  <img src="https://img.shields.io/badge/DI-Hilt-cyan" alt="Hilt">
+  <a href="https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.4.0"><img src="https://img.shields.io/badge/Release-v0.4.0-FFB000?style=for-the-badge&logo=android&logoColor=black" alt="Release v0.4.0"></a>
+  <a href="https://porteiro-inteligente-2026.vercel.app/"><img src="https://img.shields.io/badge/Demo%20Online-Vercel-black?style=for-the-badge&logo=vercel" alt="Vercel Demo"></a>
+  <img src="https://img.shields.io/badge/Kotlin-2.0-purple?style=for-the-badge&logo=kotlin" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Compose-BOM%202024.09-brightgreen?style=for-the-badge&logo=jetpackcompose" alt="Compose">
+  <img src="https://img.shields.io/badge/Target%20SDK-35-green?style=for-the-badge&logo=android" alt="Target SDK 35">
+  <img src="https://img.shields.io/badge/LGPD-100%25%20Offline-blue?style=for-the-badge&logo=shield" alt="LGPD">
 </p>
 
-Aplicativo Android nativo para gestão de portaria em condomínios. Moradores cadastram seu perfil, geram QR Code de acesso, e entregadores escaneiam para contato via WhatsApp.
+Aplicativo Android nativo para gestão de portaria em condomínios e controle de acessos 100% offline. Moradores cadastram seu perfil, geram QR Codes criptografados com contato direto no WhatsApp, e a portaria registra acessos instantaneamente.
+
+**Experimente online**: [porteiro-inteligente-2026.vercel.app](https://porteiro-inteligente-2026.vercel.app/)  
+**Download do APK**: [PorteiroInteligente.apk (v0.4.0)](https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.4.0)
 
 ---
 
-##   Funcionalidades
+## 📱 Navegação Principal
 
-###   Navegação principal
 | Aba | Descrição |
 |-----|-----------|
-| **Início** | Visão geral com boas-vindas, QR Code do morador, estatísticas do dia e visitas recentes |
-| **Histórico** | Registro completo de visitas com filtro (Todas / Ativas) e ação de registrar saída |
-| **Perfil/QR** | Cadastro e edição do morador, exibição do QR Code de acesso |
-| **Ajustes** | Tema (Claro/Escuro/Sistema), Modo Offline com mensagem personalizada, Backup e Restauração de dados |
+| **Início** | Visão geral com status em tempo real do morador (Disponível/Ausente), QR Code dinâmico, estatísticas consolidadas e check-out rápido de visitas recentes. |
+| **Histórico** | Livro de visitas digital com busca textual instantânea, filtros por categoria, status (Ativos/Finalizados), veículos com placa Mercosul e exportação em CSV. |
+| **QR Code** | Geração e pré-visualização ao vivo do QR Code de acesso, modal de zoom em alta definição e download de PNG para impressão de placas. |
+| **Ajustes** | Tema (Claro/Escuro/Sistema), Biometria/Face ID, Modo Ausência com atalhos de tempo (1h, 4h, até amanhã), Limpeza Segura de histórico e Backup JSON cifrado. |
 
-###   Recursos implementados
+### 🚀 Recursos em Destaque
 
-- **Cadastro de morador** com foto, nome, condomínio, endereço, CEP, apartamento e WhatsApp
-- **QR Code dinâmico** — payload híbrido RSA/AES-GCM, sem chave privada no APK
-- **Scanner de QR Code** com CameraX, lanterna e detecção em tempo real
-- **Modo Offline** — permite configurar mensagem de ausência exibida ao escanear o QR Code
-- **Registro de visitas** com nome, documento, apartamento, telefone e motivo
-- **Histórico com filtros** — visitas ativas (no prédio) e concluídas
-- **Backup e restauração** portátil cifrado por senha (perfil + visitas)
-- **Privacidade** — exclusão local da conta, moradores e visitas
-- **Tema dinâmico** Material You (Android 12+) opcional
-- **Modo escuro** completo
-- **Skeleton loading** animado no carregamento inicial
-- **Snapshot de QR Code** para salvar na galeria
+- **Criptografia Local de Ponta a Ponta**: AES-256 no Keystore e payload de QR Code híbrido RSA-2048 + AES-GCM.
+- **Autenticação Biométrica**: Acesso protegido por impressão digital ou reconhecimento facial (`BiometricPrompt`).
+- **Placas de Veículos (Mercosul)**: Suporte completo a veículos com validação de formato e badges com padrão visual oficial.
+- **Modo Ausente Inteligente**: Permite configurar duração rápida e mensagem customizada para entregadores sem expor o WhatsApp diretamente na placa física.
+- **Exportação de Relatórios em CSV**: Histórico de portaria compartilhável via WhatsApp, e-mail ou nuvem.
+- **Proteção Visual contra Captura (`FLAG_SECURE`)**: Prevenção de prints e gravações de tela para máxima privacidade dos condôminos.
+- **Feedback Sensorial Háptico e Sonoro**: Vibração e bip sonoro ao reconhecer QR Codes com sucesso.
+- **PWA & Simulador Web Interativo**: Simulador 1:1 na web com Service Worker offline e PWA instalável.
 
 ---
 
@@ -78,7 +76,7 @@ app/
 │   ├── AppViewModel.kt                     # Estado global do tema
 │   ├── data/
 │   │   ├── local/
-│   │   │   ├── AppDatabase.kt              # Room Database (v8, migrações não destrutivas)
+│   │   │   ├── AppDatabase.kt              # Room Database (v9, suporte a placas Mercosul)
 │   │   │   ├── LocalDataStore.kt           # Transações de backup/exclusão
 │   │   │   ├── dao/OwnerDao.kt             # CRUD morador
 │   │   │   ├── dao/VisitDao.kt             # CRUD visitas
@@ -97,15 +95,18 @@ app/
 │   │   ├── QrCodeAnalyzer.kt               # CameraX analyzer
 │   │   ├── CryptoUtil.kt                   # Compatibilidade com payload legado local
 │   │   ├── OfflineCryptoHelper.kt          # QR híbrido RSA/AES-GCM
-│   │   ├── KeyDerivation.kt                 # PBKDF2 para backup e senha local
-│   │   ├── LocalDataCrypto.kt                # AES-GCM dos campos pessoais locais
+│   │   ├── KeyDerivation.kt                # PBKDF2 para backup e senha local
+│   │   ├── LocalDataCrypto.kt              # AES-GCM dos campos pessoais locais
+│   │   ├── FeedbackHelper.kt               # Vibração tátil e áudio para scanner
+│   │   ├── BiometricHelper.kt              # Autenticação biométrica / Face ID
+│   │   ├── VisitReportExporter.kt          # Exportador de relatórios em CSV
 │   │   ├── PhotoSaver.kt                   # Salvar QR na galeria
-│   │   └── BackupManager.kt               # Backup .pib cifrado
+│   │   └── BackupManager.kt                # Backup .pib cifrado
 │   └── ui/
 │       ├── theme/                          # Color, Theme, Shape, Type
 │       ├── navigation/NavGraph.kt          # Bottom nav + rotas
 │       ├── components/
-│       │   ├── VisitItem.kt                # Card de visita
+│       │   ├── VisitItem.kt                # Card de visita modular com placa
 │       │   └── ShimmerEffect.kt            # Skeleton loading
 │       ├── home/HomeScreen.kt + ViewModel
 │       ├── visit/VisitHistoryScreen.kt + ViewModel
@@ -132,7 +133,7 @@ app/
 ### Passos
 
 ```bash
-git clone https://github.com/seu-usuario/Porteiro-Inteligente-2026.git
+git clone https://github.com/Gledson2012/Porteiro-Inteligente-2026.git
 cd Porteiro-Inteligente-2026
 ./gradlew assembleDebug
 ```
