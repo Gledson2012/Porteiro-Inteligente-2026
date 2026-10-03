@@ -1,6 +1,6 @@
 {
-  "versionCode": 3,
-  "versionName": "0.3.0",
+  "versionCode": 4,
+  "versionName": "0.4.0",
   "downloadUrl": "https://porteiro-inteligente-2026.vercel.app/PorteiroInteligente.apk",
-  "releaseNotes": "Interface moderna 2026, autenticação biométrica, exportação de relatórios em CSV, cadastro de placas veiculares e melhorias gerais."
+  "releaseNotes": "Melhorias completas nas abas Início, Histórico, QR Code e Ajustes: atalhos dinâmicos, pré-visualização ao vivo, filtros por placa/status, limpeza de histórico e tema claro/escuro no simulador."
 }
