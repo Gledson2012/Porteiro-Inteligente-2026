@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    {
+      "source": "/PorteiroInteligente.apk",
+      "destination": "https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/latest/download/PorteiroInteligente.apk",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/scan/:path*",
