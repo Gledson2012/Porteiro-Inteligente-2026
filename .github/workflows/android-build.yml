@@ -3,6 +3,7 @@ name: Android CI/CD
 on:
   push:
     branches: [ main, develop ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -10,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -51,7 +54,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: 🏗️ Build Release APK
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         run: ./gradlew assembleRelease --no-daemon
 
       - name: 📦 Upload Debug APK
@@ -63,12 +66,20 @@ jobs:
       # assembleRelease gera app-release.apk quando há assinatura e
       # app-release-unsigned.apk quando não há. O glob cobre os dois casos.
       - name: 📦 Upload Release APK
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
+
+      - name: 📦 Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/*.apk
+          generate_release_notes: true
+          fail_on_unmatched_files: true
 
       - name: 📊 Upload Test Results
         if: always()
