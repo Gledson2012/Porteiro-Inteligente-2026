@@ -419,9 +419,9 @@ fun SettingsScreen(
                         iconBackground = MaterialTheme.colorScheme.secondaryContainer,
                         iconTint = MaterialTheme.colorScheme.onSecondaryContainer,
                         title = "Site",
-                        subtitle = "porteiro-inteligente-2026.vercel.app",
+                        subtitle = BuildConfig.PUBLIC_ORIGIN.removePrefix("https://").removeSuffix("/"),
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://porteiro-inteligente-2026.vercel.app/"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PUBLIC_ORIGIN))
                             context.startActivity(intent)
                         }
                     )
@@ -438,7 +438,7 @@ fun SettingsScreen(
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_SUBJECT, "Porteiro Inteligente")
-                                putExtra(Intent.EXTRA_TEXT, "Baixe o Porteiro Inteligente — app para gestão de portaria em condomínios: https://porteiro-inteligente-2026.vercel.app")
+                                putExtra(Intent.EXTRA_TEXT, "Baixe o Porteiro Inteligente — app para gestão de portaria em condomínios: ${BuildConfig.PUBLIC_ORIGIN}")
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Compartilhar App"))
                         }

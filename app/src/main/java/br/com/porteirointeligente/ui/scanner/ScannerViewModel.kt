@@ -2,6 +2,7 @@ package br.com.porteirointeligente.ui.scanner
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.util.CryptoUtil
 import com.google.gson.JsonParser
@@ -34,7 +35,7 @@ class ScannerViewModel @Inject constructor(
                 // ============================================================
                 content.startsWith("https://porteiro-inteligente.web.app/scan/") ||
                 content.startsWith("https://project-v6x0x.vercel.app/scan/") ||
-                content.startsWith("https://porteiro-inteligente-2026.vercel.app/scan/") -> {
+                content.startsWith(BuildConfig.PUBLIC_SCAN_BASE) -> {
                     val idPart = when {
                         content.startsWith("https://porteiro-inteligente.web.app/scan/") -> {
                             content.substringAfter("https://porteiro-inteligente.web.app/scan/")
@@ -43,7 +44,7 @@ class ScannerViewModel @Inject constructor(
                             content.substringAfter("https://project-v6x0x.vercel.app/scan/")
                         }
                         else -> {
-                            content.substringAfter("https://porteiro-inteligente-2026.vercel.app/scan/")
+                            content.substringAfter(BuildConfig.PUBLIC_SCAN_BASE)
                         }
                     }
                     

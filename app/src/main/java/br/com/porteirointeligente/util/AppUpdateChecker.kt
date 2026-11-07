@@ -16,9 +16,8 @@ data class AppUpdateInfo(
 )
 
 object AppUpdateChecker {
-    private const val VERSION_URL =
-        "https://porteiro-inteligente-2026.vercel.app/app-version.json"
-    private const val DOWNLOAD_HOST = "porteiro-inteligente-2026.vercel.app"
+    private val VERSION_URL = "${BuildConfig.PUBLIC_ORIGIN}/app-version.json"
+    private val DOWNLOAD_HOST = Uri.parse(BuildConfig.PUBLIC_ORIGIN).host.orEmpty()
     private const val DOWNLOAD_PATH = "/PorteiroInteligente.apk"
 
     suspend fun check(): AppUpdateInfo? = withContext(Dispatchers.IO) {

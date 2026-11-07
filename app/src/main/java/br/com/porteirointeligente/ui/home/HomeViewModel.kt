@@ -2,6 +2,7 @@ package br.com.porteirointeligente.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Owner
@@ -116,7 +117,7 @@ class HomeViewModel @Inject constructor(
                 offlineMessage = "",
                 offlineUntil = null
             ) ?: return@launch
-            val newPayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+            val newPayload = BuildConfig.PUBLIC_SCAN_BASE + encryptedData
 
             ownerRepository.updateOwner(
                 owner.copy(

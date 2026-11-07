@@ -2,6 +2,7 @@ package br.com.porteirointeligente.ui.owner
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.data.repository.OwnerRepository
 import br.com.porteirointeligente.domain.model.Owner
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -64,7 +65,7 @@ class OwnerRegistrationViewModel @Inject constructor(
                         offlineUntil = offlineUntil
                     ) ?: throw IllegalStateException("Não foi possível gerar o QR Code.")
                     val updatedOwner = owner.copy(
-                        qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+                        qrCodePayload = BuildConfig.PUBLIC_SCAN_BASE + encryptedData
                     )
                     ownerRepository.updateOwner(updatedOwner)
                     updatedOwner
@@ -83,7 +84,7 @@ class OwnerRegistrationViewModel @Inject constructor(
                         offlineUntil = offlineUntil
                     ) ?: throw IllegalStateException("Não foi possível gerar o QR Code.")
                     val updatedOwner = createdOwner.copy(
-                        qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+                        qrCodePayload = BuildConfig.PUBLIC_SCAN_BASE + encryptedData
                     )
                     ownerRepository.updateOwner(updatedOwner)
                     updatedOwner

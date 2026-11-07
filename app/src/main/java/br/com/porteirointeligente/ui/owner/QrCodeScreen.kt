@@ -1,7 +1,11 @@
 package br.com.porteirointeligente.ui.owner
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.media.MediaScannerConnection
+import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import android.content.ClipData
@@ -35,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.ui.components.AppSignature
 import br.com.porteirointeligente.ui.components.ShimmerProfileCard
 import br.com.porteirointeligente.ui.theme.GradientNeon
@@ -281,7 +286,7 @@ fun QrCodeScreen(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Text(
-                                        text = "porteiro-inteligente-2026.vercel.app/scan",
+                                        text = BuildConfig.PUBLIC_ORIGIN.removePrefix("https://") + "/scan",
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -537,13 +542,36 @@ private fun saveQrCodeToGallery(
                 return
             }
         }
-        val cacheDir = File(context.cacheDir, "shared_images")
-        cacheDir.mkdirs()
-        val file = File(cacheDir, "qrcode_${owner.id}.png")
+        // API < 29: grava na pasta pública quando há permissão; caso contrário
+        // usa o diretório externo privado do app e informa o caminho real.
+        val fileName = "qrcode_${owner.apartamento}_${owner.nome.replace(" ", "_")}.png"
+        val canWritePublic = androidx.core.content.ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
+        val picturesDir = if (canWritePublic) {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        } else {
+            context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+                ?: context.filesDir
+        }
+        val targetDir = File(picturesDir, "PorteiroInteligente").apply { mkdirs() }
+        val file = File(targetDir, fileName)
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
         }
-        Toast.makeText(context, "QR Code salvo com sucesso!", Toast.LENGTH_SHORT).show()
+        MediaScannerConnection.scanFile(
+            context,
+            arrayOf(file.absolutePath),
+            arrayOf("image/png"),
+            null
+        )
+        val message = if (canWritePublic) {
+            "QR Code salvo em Imagens/PorteiroInteligente!"
+        } else {
+            "QR Code salvo em ${file.absolutePath}"
+        }
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     } catch (e: Exception) {
         Log.e("QRCODE_SAVE", "Erro ao salvar QR Code", e)
         Toast.makeText(context, "Não foi possível salvar o QR Code", Toast.LENGTH_SHORT).show()
