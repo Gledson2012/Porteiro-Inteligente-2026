@@ -6,8 +6,12 @@ gradle/
 gradlew
 gradlew.bat
 *.aab
+*.apk
 *.jks
 *.keystore
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
 
 # Local and repository-only files.
 .git/

@@ -3,7 +3,6 @@
 *.aar
 *.ap_
 *.aab
-!PorteiroInteligente.apk
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -44,6 +43,18 @@ captures/
 *.jks
 *.keystore
 keystore.properties
+app/release.keystore
+
+# Credenciais de publicação e service accounts
+app/play-account-key.json
+firebase-key.json
+service-account*.json
+*.pem
+
+# Banco local do backend
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
