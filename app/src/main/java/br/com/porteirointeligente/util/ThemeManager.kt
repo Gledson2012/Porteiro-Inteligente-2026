@@ -73,4 +73,11 @@ class ThemeManager @Inject constructor(
             preferences[BIOMETRIC_LOGIN_KEY] = enabled.toString()
         }
     }
+
+    /** Remove todas as preferências (usado ao apagar todos os dados). */
+    suspend fun clearAll() {
+        context.dataStore.edit { preferences ->
+            preferences.clear()
+        }
+    }
 }

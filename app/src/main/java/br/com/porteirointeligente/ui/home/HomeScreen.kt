@@ -52,12 +52,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import br.com.porteirointeligente.util.PhotoSaver
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -749,6 +751,7 @@ private fun OwnerAvatar(
     name: String,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .size(48.dp)
@@ -758,7 +761,9 @@ private fun OwnerAvatar(
     ) {
         if (!photoUri.isNullOrBlank()) {
             AsyncImage(
-                model = photoUri,
+                model = remember(photoUri) {
+                    PhotoSaver.resolvePhotoUri(context, photoUri)
+                },
                 contentDescription = "Avatar do morador",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

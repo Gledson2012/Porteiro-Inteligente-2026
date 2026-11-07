@@ -93,11 +93,21 @@ object VisitReportExporter {
     }
 
     private fun escapeCsv(value: String): String {
-        val needsQuotes = value.contains(";") || value.contains("\"") || value.contains("\n") || value.contains("\r")
-        return if (needsQuotes) {
-            "\"" + value.replace("\"", "\"\"") + "\""
+        // Neutraliza fórmulas do Excel/Google Sheets. Um nome como "=HYPERLINK(...)"
+        // não pode ser interpretado como fórmula ao abrir o relatório.
+        val sanitized = if (value.isNotEmpty() && value[0] in FORMULA_PREFIXES) {
+            "'$value"
         } else {
             value
         }
+        val needsQuotes = sanitized.contains(";") || sanitized.contains("\"") ||
+            sanitized.contains("\n") || sanitized.contains("\r")
+        return if (needsQuotes) {
+            "\"" + sanitized.replace("\"", "\"\"") + "\""
+        } else {
+            sanitized
+        }
     }
+
+    private val FORMULA_PREFIXES = charArrayOf('=', '+', '-', '@', '\t', '\r')
 }

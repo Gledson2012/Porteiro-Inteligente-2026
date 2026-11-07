@@ -28,6 +28,7 @@ import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.ui.theme.Emerald
 import br.com.porteirointeligente.ui.theme.GradientNeon
 import br.com.porteirointeligente.ui.theme.Slate400
+import br.com.porteirointeligente.util.PhotoSaver
 import br.com.porteirointeligente.util.StringUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -256,6 +257,7 @@ private fun OwnerManagementCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -294,7 +296,9 @@ private fun OwnerManagementCard(
                 // Avatar
                 Box {
                     AsyncImage(
-                        model = owner.photoUri,
+                        model = remember(owner.photoUri) {
+                            owner.photoUri?.let { PhotoSaver.resolvePhotoUri(context, it) }
+                        },
                         contentDescription = null,
                         modifier = Modifier
                             .size(52.dp)

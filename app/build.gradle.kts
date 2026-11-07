@@ -34,6 +34,13 @@ android {
         versionCode = 4
         versionName = "0.4.0"
 
+        // Domínio público centralizado. Pode ser sobrescrito no CI:
+        // -PpublicOrigin=https://outro-dominio.example
+        val publicOrigin = (project.findProperty("publicOrigin") as String?)
+            ?: "https://porteiro-inteligente-2026.vercel.app"
+        buildConfigField("String", "PUBLIC_ORIGIN", "\"$publicOrigin\"")
+        buildConfigField("String", "PUBLIC_SCAN_BASE", "\"$publicOrigin/scan/\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -181,9 +188,6 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
-
-    // Print
-    implementation("androidx.print:print:1.0.0")
 
 
 

@@ -241,7 +241,9 @@ fun CadastroScreen(
                     ) {
                         if (photoUri != null) {
                             AsyncImage(
-                                model = photoUri,
+                                model = remember(photoUri) {
+                                    photoUri?.let { PhotoSaver.resolvePhotoUri(context, it) }
+                                },
                                 contentDescription = "Foto do proprietário",
                                 modifier = Modifier
                                     .size(96.dp)

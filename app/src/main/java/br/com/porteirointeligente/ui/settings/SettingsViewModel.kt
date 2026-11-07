@@ -1,7 +1,9 @@
 package br.com.porteirointeligente.ui.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.porteirointeligente.BuildConfig
 import br.com.porteirointeligente.data.local.LocalDataStore
 import br.com.porteirointeligente.data.repository.AuthRepository
 import br.com.porteirointeligente.data.repository.OwnerRepository
@@ -9,14 +11,18 @@ import br.com.porteirointeligente.data.repository.VisitRepository
 import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.AppTheme
 import br.com.porteirointeligente.util.BackupManager
+import br.com.porteirointeligente.util.OnboardingManager
 import br.com.porteirointeligente.util.OwnerSelectionManager
+import br.com.porteirointeligente.util.PhotoSaver
 import br.com.porteirointeligente.util.ThemeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,8 +32,10 @@ class SettingsViewModel @Inject constructor(
     private val themeManager: ThemeManager,
     private val backupManager: BackupManager,
     private val ownerSelectionManager: OwnerSelectionManager,
+    private val onboardingManager: OnboardingManager,
     private val localDataStore: LocalDataStore,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val themeState: StateFlow<AppTheme> = themeManager.themeFlow
@@ -64,9 +72,6 @@ class SettingsViewModel @Inject constructor(
     private val _allOwners = MutableStateFlow<List<Owner>>(emptyList())
     val allOwners: StateFlow<List<Owner>> = _allOwners
 
-    /** ID do morador selecionado para configurações */
-    private val _selectedOwnerForSettings = MutableStateFlow<Long?>(null)
-
     private val _backupState = MutableStateFlow<BackupState>(BackupState.Idle)
     val backupState: StateFlow<BackupState> = _backupState
 
@@ -85,7 +90,6 @@ class SettingsViewModel @Inject constructor(
                 val current = if (selectedId != null) owners.find { it.id == selectedId }
                               else owners.firstOrNull()
                 _owner.value = current
-                _selectedOwnerForSettings.value = current?.id
             }
         }
     }
@@ -157,7 +161,7 @@ class SettingsViewModel @Inject constructor(
                 offlineMessage = message,
                 offlineUntil = until
             ) ?: return@launch
-            val newPayload = "https://porteiro-inteligente-2026.vercel.app/scan/$encryptedData"
+            val newPayload = BuildConfig.PUBLIC_SCAN_BASE + encryptedData
 
             ownerRepository.updateOwner(
                 currentOwner.copy(
@@ -171,7 +175,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun selecionarOwnerParaConfig(ownerId: Long) {
-        _selectedOwnerForSettings.value = ownerId
         _owner.value = _allOwners.value.find { it.id == ownerId }
     }
 
@@ -199,9 +202,20 @@ class SettingsViewModel @Inject constructor(
 
     fun deleteAllData() {
         viewModelScope.launch {
+            // Remove também os arquivos que não vivem no Room: fotos, cache de
+            // compartilhamento e preferências de tema/onboarding.
+            _allOwners.value.forEach { owner ->
+                owner.photoUri?.let { runCatching { PhotoSaver.deletePhoto(context, it) } }
+            }
+            runCatching { File(context.filesDir, "profile_photos").deleteRecursively() }
+            runCatching { File(context.cacheDir, "profile_photos_display").deleteRecursively() }
+            runCatching { File(context.cacheDir, "shared_images").deleteRecursively() }
+
             localDataStore.clearAll()
             authRepository.deleteAccount()
             runCatching { ownerSelectionManager.clearSelection() }
+            runCatching { onboardingManager.resetOnboarding() }
+            runCatching { themeManager.clearAll() }
         }
     }
 
