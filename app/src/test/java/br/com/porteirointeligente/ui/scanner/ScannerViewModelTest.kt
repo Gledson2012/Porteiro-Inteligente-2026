@@ -1,26 +1,21 @@
 package br.com.porteirointeligente.ui.scanner
 
 import br.com.porteirointeligente.data.repository.OwnerRepository
+import br.com.porteirointeligente.domain.model.Owner
 import br.com.porteirointeligente.util.CryptoUtil
-import br.com.porteirointeligente.util.OfflineCryptoHelper
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -42,22 +37,20 @@ class ScannerViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         MockKAnnotations.init(this)
-        mockkObject(OfflineCryptoHelper)
-        
+
         every { ownerRepository.observeAllOwners() } returns flowOf(emptyList())
         coEvery { ownerRepository.getOwnerById(any()) } returns null
-        
+
         viewModel = ScannerViewModel(ownerRepository, cryptoUtil)
     }
 
     @After
     fun tearDown() {
-        unmockkObject(OfflineCryptoHelper)
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `onQrCodeDetected with generic wa-me link should emit OpenWhatsApp event and not load local owners`() = runTest(testDispatcher) {
+    fun `onQrCodeDetected with generic wa-me link should emit OpenWhatsApp event`() = runTest(testDispatcher) {
         val testUrl = "https://wa.me/5511999998888?text=Olá"
         val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
         val job = launch {
@@ -76,12 +69,11 @@ class ScannerViewModelTest {
 
     @Test
     fun `onQrCodeDetected with invalid QR Code should emit InvalidQrCode event`() = runTest(testDispatcher) {
-        every { OfflineCryptoHelper.decryptOwnerData(any()) } returns null
         val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
         val job = launch {
             viewModel.uiEvent.collect { events.add(it) }
         }
-        
+
         viewModel.onQrCodeDetected("https://invalid-url.com")
         advanceUntilIdle()
 
@@ -92,66 +84,55 @@ class ScannerViewModelTest {
     }
 
     @Test
-    fun `onQrCodeDetected with new LGPD link and online owner should emit OpenWhatsApp`() = runTest(testDispatcher) {
-        val idPart = "some_encrypted_data"
-        val url = "https://porteiro-inteligente-2026.vercel.app/scan/$idPart"
-        
-        val mockJson = mockk<JSONObject>()
-        every { mockJson.optString("n", "") } returns "João Silva"
-        every { mockJson.optString("p", "") } returns "11999998888"
-        every { mockJson.optInt("o", 0) } returns 0
-        every { mockJson.optString("m", "") } returns ""
-        
-        every { OfflineCryptoHelper.decryptOwnerData(idPart) } returns mockJson
-        
+    fun `v2 link without local match forwards the encrypted URL to the backend`() = runTest(testDispatcher) {
+        // decryptOwnerData retorna null em produção: o app não guarda a chave
+        // privada do QR. Sem morador local com o mesmo payload, o backend valida.
+        val url = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.payload-sem-correspondencia"
+
         val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
-        val job = launch {
-            viewModel.uiEvent.collect { events.add(it) }
-        }
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
 
         viewModel.onQrCodeDetected(url)
         advanceUntilIdle()
-        
-        assert(events.isNotEmpty()) { "Expected events to be emitted" }
+
         val event = events.first()
         assert(event is ScannerViewModel.ScannerUiEvent.OpenWhatsApp)
-        assert((event as ScannerViewModel.ScannerUiEvent.OpenWhatsApp).url.contains("5511999998888"))
+        assert((event as ScannerViewModel.ScannerUiEvent.OpenWhatsApp).url == url)
         job.cancel()
     }
 
     @Test
-    fun `onQrCodeDetected with new LGPD link and offline owner should emit ShowOfflineMessage`() = runTest(testDispatcher) {
-        val idPart = "some_encrypted_data"
-        val url = "https://porteiro-inteligente-2026.vercel.app/scan/$idPart"
-        
-        val mockJson = mockk<JSONObject>()
-        every { mockJson.optString("n", "") } returns "João Silva"
-        every { mockJson.optString("p", "") } returns "11999998888"
-        every { mockJson.optInt("o", 0) } returns 1
-        every { mockJson.optString("m", "") } returns "Estou ausente no momento"
-        
-        every { OfflineCryptoHelper.decryptOwnerData(idPart) } returns mockJson
-        
+    fun `v2 link matching the stored payload uses local phone and offline status`() = runTest(testDispatcher) {
+        val url = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.payload-local"
+        val savedOwner = Owner(
+            id = 1L,
+            nome = "Morador Local",
+            endereco = "Rua 1",
+            apartamento = "42",
+            telefone = "11988887777",
+            qrCodePayload = url,
+            isOffline = true,
+            offlineMessage = "Estou ausente no momento"
+        )
+        coEvery { ownerRepository.getOwnerById(1L) } returns savedOwner
+
         val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
-        val job = launch {
-            viewModel.uiEvent.collect { events.add(it) }
-        }
+        val job = launch { viewModel.uiEvent.collect { events.add(it) } }
 
         viewModel.onQrCodeDetected(url)
         advanceUntilIdle()
-        
-        assert(events.isNotEmpty()) { "Expected events to be emitted" }
+
         val event = events.first()
         assert(event is ScannerViewModel.ScannerUiEvent.ShowOfflineMessage)
-        val showOfflineEvent = event as ScannerViewModel.ScannerUiEvent.ShowOfflineMessage
-        assert(showOfflineEvent.message == "Estou ausente no momento")
-        assert(showOfflineEvent.url.contains("5511999998888"))
+        val offlineEvent = event as ScannerViewModel.ScannerUiEvent.ShowOfflineMessage
+        assert(offlineEvent.message == "Estou ausente no momento")
+        assert(offlineEvent.url.contains("5511988887777"))
         job.cancel()
     }
 
     @Test
     fun `onQrCodeDetected with forged owner id must not use local phone`() = runTest(testDispatcher) {
-        val savedOwner = br.com.porteirointeligente.domain.model.Owner(
+        val savedOwner = Owner(
             id = 1L,
             nome = "Morador Local",
             endereco = "Rua 1",
@@ -160,7 +141,6 @@ class ScannerViewModelTest {
             qrCodePayload = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.valid-payload"
         )
         coEvery { ownerRepository.getOwnerById(1L) } returns savedOwner
-        every { OfflineCryptoHelper.decryptOwnerData(any()) } returns null
 
         val forgedUrl = "https://porteiro-inteligente-2026.vercel.app/scan/v2.1.forged-payload"
         val events = mutableListOf<ScannerViewModel.ScannerUiEvent>()
