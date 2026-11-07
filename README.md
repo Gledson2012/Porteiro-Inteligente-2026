@@ -238,6 +238,8 @@ O APK de produção deve ser assinado e publicado em
 versione o APK no repositório: o arquivo `*.apk` é ignorado e o backend redireciona
 `/PorteiroInteligente.apk` para a release mais recente.
 
+Instruções de build assinado, CI e backup da keystore: [SIGNING.md](SIGNING.md).
+
 O backend não usa mais o ID do QR como fallback público: somente payloads criptograficamente válidos
 são aceitos. QR v2 não precisa consultar o banco quando `QR_PRIVATE_KEY` está configurada.
 
