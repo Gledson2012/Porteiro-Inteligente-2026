@@ -1,7 +1,7 @@
 # Porteiro Inteligente 2026
 
 <p align="center">
-  <a href="https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.4.0"><img src="https://img.shields.io/badge/Release-v0.4.0-FFB000?style=for-the-badge&logo=android&logoColor=black" alt="Release v0.4.0"></a>
+  <a href="https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/Release-v0.5.0-FFB000?style=for-the-badge&logo=android&logoColor=black" alt="Release v0.5.0"></a>
   <a href="https://porteiro-inteligente-2026.vercel.app/"><img src="https://img.shields.io/badge/Demo%20Online-Vercel-black?style=for-the-badge&logo=vercel" alt="Vercel Demo"></a>
   <img src="https://img.shields.io/badge/Kotlin-2.0-purple?style=for-the-badge&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Compose-BOM%202024.09-brightgreen?style=for-the-badge&logo=jetpackcompose" alt="Compose">
@@ -14,7 +14,7 @@ Aplicativo Android nativo para gestão de portaria em condomínios e controle de
 > **Escopo offline:** cadastro, histórico, backup e QR Code no mesmo aparelho funcionam sem internet. Quando o QR é lido por outro dispositivo, a página `/scan` depende do backend configurado com `QR_PRIVATE_KEY`. O app também consulta ViaCEP (preenchimento de endereço) e o verificador de atualizações; ambas as chamadas falham silenciosamente sem rede.
 
 **Experimente online**: [porteiro-inteligente-2026.vercel.app](https://porteiro-inteligente-2026.vercel.app/)  
-**Download do APK**: [PorteiroInteligente.apk (v0.4.0)](https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.4.0)
+**Download do APK**: [PorteiroInteligente.apk (v0.5.0)](https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.5.0)
 
 ---
 

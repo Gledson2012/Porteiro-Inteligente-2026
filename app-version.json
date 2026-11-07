@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "0.4.0",
+  "versionCode": 5,
+  "versionName": "0.5.0",
   "downloadUrl": "https://porteiro-inteligente-2026.vercel.app/PorteiroInteligente.apk",
-  "releaseNotes": "Melhorias completas nas abas Início, Histórico, QR Code e Ajustes: atalhos dinâmicos, pré-visualização ao vivo, filtros por placa/status, limpeza de histórico e tema claro/escuro no simulador."
+  "releaseNotes": "Versão de segurança e qualidade: fotos de perfil cifradas no Keystore, relatórios CSV protegidos contra fórmulas, exclusão completa de dados, login do backend endurecido e salvamento de QR Code corrigido em Android antigo. APK agora assinado com chave de release própria — pode ser necessário desinstalar a versão anterior uma única vez."
 }

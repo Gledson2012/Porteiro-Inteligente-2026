@@ -172,7 +172,7 @@ const MAX_SCAN_PAYLOAD_LENGTH = 4096;
 const DEFAULT_CORS_ORIGINS = ['https://porteiro-inteligente-2026.vercel.app'];
 const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN || DEFAULT_CORS_ORIGINS[0];
 const RELEASES_URL = process.env.RELEASES_URL ||
-  'https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/latest';
+  'https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/latest/download/PorteiroInteligente.apk';
 const CORS_ORIGINS = new Set(
   (process.env.CORS_ORIGINS || DEFAULT_CORS_ORIGINS.join(','))
     .split(',')
