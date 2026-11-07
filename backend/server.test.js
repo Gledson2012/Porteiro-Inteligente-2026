@@ -134,6 +134,39 @@ test('vercel configuration rejects an ephemeral SQLite path', () => {
   });
 });
 
+test('login uses the same response for unknown user and wrong password', async (t) => {
+  try {
+    require('./db').getDatabase();
+  } catch (_) {
+    t.skip('SQLite indisponível neste ambiente');
+    return;
+  }
+  await withServer(async server => {
+    const username = `porteiro_${Date.now()}`;
+    const password = 'senha-segura-123';
+
+    const registered = await request(server, 'POST', '/api/register', { username, password });
+    assert.equal(registered.status, 201);
+
+    const wrongPassword = await request(server, 'POST', '/api/login', {
+      username,
+      password: 'senha-errada-123'
+    });
+    const unknownUser = await request(server, 'POST', '/api/login', {
+      username: `${username}_inexistente`,
+      password
+    });
+
+    assert.equal(wrongPassword.status, 401);
+    assert.equal(unknownUser.status, 401);
+    assert.deepEqual(JSON.parse(wrongPassword.body), JSON.parse(unknownUser.body));
+
+    const success = await request(server, 'POST', '/api/login', { username, password });
+    assert.equal(success.status, 200);
+    assert.equal(typeof JSON.parse(success.body).token, 'string');
+  });
+});
+
 test('in-memory SQLite is not treated as persistent on Vercel', () => {
   const result = spawnSync(process.execPath, ['-e',
     "process.stdout.write(JSON.stringify(require('./db').databaseStatus()))"

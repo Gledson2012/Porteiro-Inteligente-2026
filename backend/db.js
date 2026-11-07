@@ -132,6 +132,17 @@ function initializeTables() {
   ensureColumn('visits', 'motivo', "TEXT DEFAULT ''");
   ensureColumn('visits', 'dataSaida', 'INTEGER');
   ensureColumn('visits', 'status', "TEXT DEFAULT 'ENTRADA_REGISTRADA'");
+
+  // Bancos antigos não tinham userId. Quando existe exatamente um usuário,
+  // podemos vincular os moradores órfãos sem risco de misturar dados. Com
+  // mais de um usuário a associação é ambígua e permanece nula de propósito.
+  db.exec(`
+    UPDATE owners
+    SET userId = (SELECT id FROM users ORDER BY id LIMIT 1)
+    WHERE userId IS NULL
+      AND (SELECT COUNT(*) FROM users) = 1
+  `);
+
   db.exec('CREATE INDEX IF NOT EXISTS index_owners_userId ON owners(userId)');
   db.exec('CREATE INDEX IF NOT EXISTS index_visits_ownerId ON visits(ownerId)');
 }

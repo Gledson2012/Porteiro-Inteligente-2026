@@ -171,6 +171,8 @@ const JWT_ISSUER = 'porteiro-inteligente';
 const MAX_SCAN_PAYLOAD_LENGTH = 4096;
 const DEFAULT_CORS_ORIGINS = ['https://porteiro-inteligente-2026.vercel.app'];
 const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN || DEFAULT_CORS_ORIGINS[0];
+const RELEASES_URL = process.env.RELEASES_URL ||
+  'https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/latest';
 const CORS_ORIGINS = new Set(
   (process.env.CORS_ORIGINS || DEFAULT_CORS_ORIGINS.join(','))
     .split(',')
@@ -184,7 +186,15 @@ if (!SECRET_KEY) {
   throw new Error('SECRET_KEY deve ter pelo menos 32 caracteres.');
 }
 
-app.set('trust proxy', 1);
+// Só confie em X-Forwarded-For quando a aplicação estiver atrás de um proxy
+// controlado (Vercel, por exemplo). Sem isso, um cliente poderia forjar o IP
+// usado pelo rate limit.
+const TRUST_PROXY = process.env.TRUST_PROXY;
+if (TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+} else if (TRUST_PROXY && /^\d+$/.test(TRUST_PROXY)) {
+  app.set('trust proxy', Number(TRUST_PROXY));
+}
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -385,8 +395,13 @@ function authenticateToken(req, res, next) {
 // Rotas de Autenticação
 // =====================
 
+// Hash descartável usado quando o usuário não existe. Comparar contra ele
+// mantém o tempo de resposta próximo ao de uma senha errada e reduz a
+// enumeração de usuários por diferença de latência.
+const DUMMY_PASSWORD_HASH = '$2b$10$WfsfLSj69GdAaJF2lVPZDuldPVuVZRC81W1FBxVvTtq.Vz2VfG/q.';
+
 // POST /api/register - Registra um novo usuário
-app.post('/api/register', authRateLimit, requireDatabase, (req, res) => {
+app.post('/api/register', authRateLimit, requireDatabase, async (req, res) => {
   try {
     if (!SECRET_KEY) {
       return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
@@ -404,7 +419,8 @@ app.post('/api/register', authRateLimit, requireDatabase, (req, res) => {
       return res.status(409).json({ error: 'Usuário já existe' });
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    // Hash assíncrono não bloqueia o event loop durante o custo do bcrypt.
+    const hashedPassword = await bcrypt.hash(password, 10);
     const stmt = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
     const result = stmt.run(normalizedUsername, hashedPassword);
 
@@ -417,7 +433,7 @@ app.post('/api/register', authRateLimit, requireDatabase, (req, res) => {
 });
 
 // POST /api/login - Efetua login e retorna um token
-app.post('/api/login', authRateLimit, requireDatabase, (req, res) => {
+app.post('/api/login', authRateLimit, requireDatabase, async (req, res) => {
   try {
     if (!SECRET_KEY) {
       return res.status(503).json({ error: 'Autenticação não configurada no servidor' });
@@ -431,7 +447,12 @@ app.post('/api/login', authRateLimit, requireDatabase, (req, res) => {
     const db = getDatabase();
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(normalizedUsername);
 
-    if (!user || !bcrypt.compareSync(password, user.password)) {
+    // Sempre execute o bcrypt, mesmo sem usuário, e devolva a mesma mensagem.
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user ? user.password : DUMMY_PASSWORD_HASH
+    );
+    if (!user || !passwordMatches) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
@@ -461,8 +482,10 @@ app.get('/qrcode.min.js', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'qrcode.min.js'));
 });
 
+// O APK de produção é assinado e publicado no GitHub Releases. Nunca sirva
+// um build debug versionado no repositório.
 app.get('/PorteiroInteligente.apk', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'PorteiroInteligente.apk'));
+  res.redirect(302, RELEASES_URL);
 });
 
 app.get('/app-version.json', (req, res) => {
