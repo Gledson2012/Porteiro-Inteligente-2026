@@ -6,10 +6,12 @@
   <img src="https://img.shields.io/badge/Kotlin-2.0-purple?style=for-the-badge&logo=kotlin" alt="Kotlin">
   <img src="https://img.shields.io/badge/Compose-BOM%202024.09-brightgreen?style=for-the-badge&logo=jetpackcompose" alt="Compose">
   <img src="https://img.shields.io/badge/Target%20SDK-35-green?style=for-the-badge&logo=android" alt="Target SDK 35">
-  <img src="https://img.shields.io/badge/LGPD-100%25%20Offline-blue?style=for-the-badge&logo=shield" alt="LGPD">
+  <img src="https://img.shields.io/badge/LGPD-Dados%20Locais-blue?style=for-the-badge&logo=shield" alt="LGPD">
 </p>
 
-Aplicativo Android nativo para gestão de portaria em condomínios e controle de acessos 100% offline. Moradores cadastram seu perfil, geram QR Codes criptografados com contato direto no WhatsApp, e a portaria registra acessos instantaneamente.
+Aplicativo Android nativo para gestão de portaria em condomínios e controle de acessos **local-first**. Moradores cadastram seu perfil, geram QR Codes criptografados com contato direto no WhatsApp, e a portaria registra acessos instantaneamente.
+
+> **Escopo offline:** cadastro, histórico, backup e QR Code no mesmo aparelho funcionam sem internet. Quando o QR é lido por outro dispositivo, a página `/scan` depende do backend configurado com `QR_PRIVATE_KEY`. O app também consulta ViaCEP (preenchimento de endereço) e o verificador de atualizações; ambas as chamadas falham silenciosamente sem rede.
 
 **Experimente online**: [porteiro-inteligente-2026.vercel.app](https://porteiro-inteligente-2026.vercel.app/)  
 **Download do APK**: [PorteiroInteligente.apk (v0.4.0)](https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/tag/v0.4.0)
@@ -27,7 +29,7 @@ Aplicativo Android nativo para gestão de portaria em condomínios e controle de
 
 ### 🚀 Recursos em Destaque
 
-- **Criptografia Local de Ponta a Ponta**: AES-256 no Keystore e payload de QR Code híbrido RSA-2048 + AES-GCM.
+- **Criptografia Local**: AES-256 no Keystore para campos do Room e fotos de perfil; payload de QR Code híbrido RSA-2048 + AES-GCM.
 - **Autenticação Biométrica**: Acesso protegido por impressão digital ou reconhecimento facial (`BiometricPrompt`).
 - **Placas de Veículos (Mercosul)**: Suporte completo a veículos com validação de formato e badges com padrão visual oficial.
 - **Modo Ausente Inteligente**: Permite configurar duração rápida e mensagem customizada para entregadores sem expor o WhatsApp diretamente na placa física.
@@ -128,7 +130,7 @@ app/
 - Android Studio Hedgehog (2023.1.1) ou superior
 - JDK 17+
 - Android SDK 35
-- Gradle 8.7 (wrapper incluso)
+- Gradle 8.13 (wrapper incluso)
 
 ### Passos
 
@@ -225,9 +227,16 @@ O Express em `backend/` é usado pela página pública `/scan` e pelas rotas aut
 Copie `.env.example`, configure `SECRET_KEY` e a chave privada RSA correspondente à chave pública
 embutida em `OfflineCryptoHelper.kt` como `QR_PRIVATE_KEY`. Nunca versione a chave privada.
 
-O APK continua deliberadamente offline e não sincroniza automaticamente com essas rotas REST. O
-backend é independente e só deve ser habilitado quando houver necessidade de publicação do QR ou de
-uma futura integração de sincronização.
+O APK não sincroniza automaticamente com essas rotas REST: o banco local (Room) é a fonte de
+verdade do aplicativo. O backend é necessário para o fluxo de QR Code lido em outro dispositivo e
+para uma futura integração de sincronização.
+
+### Distribuição
+
+O APK de produção deve ser assinado e publicado em
+[GitHub Releases](https://github.com/Gledson2012/Porteiro-Inteligente-2026/releases/latest). Nunca
+versione o APK no repositório: o arquivo `*.apk` é ignorado e o backend redireciona
+`/PorteiroInteligente.apk` para a release mais recente.
 
 O backend não usa mais o ID do QR como fallback público: somente payloads criptograficamente válidos
 são aceitos. QR v2 não precisa consultar o banco quando `QR_PRIVATE_KEY` está configurada.
